@@ -4,15 +4,11 @@ import { site } from '@/lib/site';
 ---
 
 <BaseLayout title={site.name} description={site.tagline} pathname="/">
-  <main class="home-shell">
+  <main class="home-shell placeholder-shell">
     <section class="home-intro" aria-labelledby="home-title">
       <h1 id="home-title">PE Toolbox</h1>
-      <p>{site.tagline}</p>
-      <div class="home-links">
-        <a class="button-link" href="/articles/buck-inductor-selection/">How to Select an Inductor for a Buck Converter</a>
-        <a class="button-link button-link--secondary" href="/tools/buck-inductor-ripple-calculator/">Buck Inductor Ripple Calculator</a>
-      </div>
-      <p class="muted">More tools and guides are under development.</p>
+      <p>Practical tools for power electronics engineers.</p>
+      <p class="muted">The website is currently under private development.</p>
     </section>
   </main>
 </BaseLayout>

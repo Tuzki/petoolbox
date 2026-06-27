@@ -125,6 +125,12 @@ a:hover {
   max-width: 760px;
 }
 
+.placeholder-shell {
+  min-height: calc(100vh - 216px);
+  display: flex;
+  align-items: center;
+}
+
 .articles-index {
   max-width: 920px;
 }
