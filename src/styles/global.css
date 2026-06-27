@@ -125,6 +125,57 @@ a:hover {
   max-width: 760px;
 }
 
+.articles-index {
+  max-width: 920px;
+}
+
+.article-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.article-list__item {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  padding: 18px;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.article-list__item:hover {
+  border-color: #9cc4e8;
+  color: var(--color-text);
+}
+
+.article-list__item span {
+  color: var(--color-blue);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.article-list__item strong {
+  color: #111827;
+  font-size: 1.18rem;
+  line-height: 1.35;
+}
+
+.article-list__item p {
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+.article-list__item time {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
 h1,
 h2,
 h3,

@@ -1,0 +1,36 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const articles = (await getCollection('articles', ({ data }) => !(import.meta.env.PROD && data.draft)))
+  .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
+---
+
+<BaseLayout
+  title="Articles"
+  description="Engineering articles and design guides from PE Toolbox."
+  pathname="/articles/"
+>
+  <main class="page-shell articles-index">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <span>Articles</span>
+    </nav>
+    <section aria-labelledby="articles-title">
+      <h1 id="articles-title">Articles</h1>
+      <div class="article-list">
+        {articles.map((article) => (
+          <a class="article-list__item" href={`/articles/${article.slug}/`}>
+            <span>{article.data.category.replace('-', ' ')}</span>
+            <strong>{article.data.title}</strong>
+            <p>{article.data.description}</p>
+            <time datetime={article.data.publishedAt.toISOString()}>
+              {article.data.publishedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+            </time>
+          </a>
+        ))}
+      </div>
+    </section>
+  </main>
+</BaseLayout>

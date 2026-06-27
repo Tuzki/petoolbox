@@ -20,6 +20,8 @@ test('desktop article layout contains sidebar toc and tool rail', () => {
   assert.match(articleHtml, /class="article-sidebar"/);
   assert.match(articleHtml, /On this page/);
   assert.match(articleHtml, /Tools for This Design/);
+  assert.match(articleHtml, /href="\/articles\/">Articles<\/a>/);
+  assert.equal(articleHtml.includes('class="related-articles"'), false);
   assert.match(articleCss, /grid-template-columns:minmax\(0,820px\) minmax\(280px,320px\)/);
   assert.match(articleCss, /position:sticky/);
 });
@@ -41,4 +43,11 @@ test('primary tool appears before article body for mobile reading', () => {
   assert.ok(descriptionIndex > -1);
   assert.ok(mobileToolIndex > descriptionIndex);
   assert.ok(articleGridIndex > mobileToolIndex);
+});
+
+test('planned tool cards are rendered as non-links', () => {
+  assert.match(articleHtml, /aria-label="Output Capacitor Calculator planned tool"/);
+  assert.match(articleHtml, /aria-label="Buck Converter Designer planned tool"/);
+  assert.equal(articleHtml.includes('href="/tools/buck-inductor-ripple-calculator/">Output Capacitor Calculator'), false);
+  assert.equal(articleHtml.includes('href="/tools/buck-inductor-ripple-calculator/">Buck Converter Designer'), false);
 });

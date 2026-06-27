@@ -7,14 +7,20 @@ export async function getStaticPaths() {
 
   return articles.map((article) => ({
     params: { slug: article.slug },
-    props: { article }
+    props: {
+      article,
+      relatedArticles: articles
+        .filter((candidate) => candidate.slug !== article.slug)
+        .filter((candidate) => candidate.data.category === article.data.category)
+        .slice(0, 3)
+    }
   }));
 }
 
-const { article } = Astro.props;
+const { article, relatedArticles } = Astro.props;
 const { Content, headings } = await render(article);
 ---
 
-<ArticleLayout article={article} headings={headings}>
+<ArticleLayout article={article} headings={headings} relatedArticles={relatedArticles}>
   <Content />
 </ArticleLayout>
