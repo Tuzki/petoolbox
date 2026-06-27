@@ -7,10 +7,19 @@ type Props = {
 };
 
 const { tool, primary = false } = Astro.props;
+const label = primary ? 'Primary Tool' : tool.status === 'planned' ? 'Planned' : 'Related Tool';
 ---
 
-<a class:list={['tool-card', { 'tool-card--primary': primary }]} href={tool.href}>
-  <span class="tool-card__label">{primary ? 'Primary Tool' : 'Related Tool'}</span>
-  <strong>{tool.title}</strong>
-  <span>{tool.description}</span>
-</a>
+{tool.status === 'available' && tool.href ? (
+  <a class:list={['tool-card', { 'tool-card--primary': primary }]} href={tool.href}>
+    <span class="tool-card__label">{label}</span>
+    <strong>{tool.title}</strong>
+    <span>{tool.description}</span>
+  </a>
+) : (
+  <article class:list={['tool-card', 'tool-card--planned', { 'tool-card--primary': primary }]} aria-label={`${tool.title} planned tool`}>
+    <span class="tool-card__label">{label}</span>
+    <strong>{tool.title}</strong>
+    <span>{tool.description}</span>
+  </article>
+)}

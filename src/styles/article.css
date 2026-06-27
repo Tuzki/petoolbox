@@ -234,6 +234,14 @@
   color: var(--color-text);
 }
 
+.tool-card--planned {
+  cursor: default;
+}
+
+.tool-card--planned:hover {
+  border-color: var(--color-border);
+}
+
 .tool-card--primary {
   border-color: #88bce8;
   background: var(--color-blue-soft);
@@ -273,6 +281,40 @@
 .related-articles h2 {
   margin: 0 0 12px;
   font-size: 1.25rem;
+}
+
+.related-articles__list {
+  display: grid;
+  gap: 12px;
+}
+
+.related-article-card {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  padding: 14px;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.related-article-card span {
+  color: var(--color-blue);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.related-article-card strong {
+  color: #111827;
+}
+
+.related-article-card small {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 @media (max-width: 920px) {

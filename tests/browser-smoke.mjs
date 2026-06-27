@@ -47,6 +47,10 @@ try {
         stickyPosition: sticky ? getComputedStyle(sticky).position : null,
         stickyDoesNotOverlapFooter: stickyRect && footerRect ? stickyRect.bottom <= footerRect.top || footerRect.top > innerHeight : true,
         primaryToolText: mobileTool?.textContent ?? '',
+        breadcrumbArticlesHref: document.querySelector('.breadcrumb a[href="/articles/"]')?.getAttribute('href') ?? null,
+        relatedArticlesVisible: !!document.querySelector('.related-articles'),
+        plannedToolLinks: Array.from(document.querySelectorAll('a')).filter((link) => /Output Capacitor Calculator|Buck Converter Designer/.test(link.textContent ?? '')).length,
+        plannedToolCards: document.querySelectorAll('.tool-card--planned').length,
         h1: document.querySelector('h1')?.textContent?.trim() ?? ''
       };
     });
@@ -54,6 +58,10 @@ try {
     assert.equal(result.innerWidth, viewport.width, `${viewport.name} viewport width`);
     assert.equal(result.noPageHorizontalScroll, true, `${viewport.name} page-level horizontal overflow`);
     assert.equal(result.h1, 'How to Select an Inductor for a Buck Converter');
+    assert.equal(result.breadcrumbArticlesHref, '/articles/', `${viewport.name} breadcrumb articles link`);
+    assert.equal(result.relatedArticlesVisible, false, `${viewport.name} self related articles hidden`);
+    assert.equal(result.plannedToolLinks, 0, `${viewport.name} planned tools should not be links`);
+    assert.ok(result.plannedToolCards >= 2, `${viewport.name} planned tool cards`);
 
     if (viewport.width >= 920) {
       assert.equal(result.sidebarDisplay, 'block', `${viewport.name} sidebar visible`);
@@ -86,6 +94,25 @@ try {
     fullPage: true
   });
   await toolPage.close();
+
+  const articlesPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const articlesResponse = await articlesPage.goto(`${baseUrl}/articles/`, { waitUntil: 'domcontentloaded' });
+  assert.equal(articlesResponse?.status(), 200, 'articles index is not 200');
+  const articlesResult = await articlesPage.evaluate(() => ({
+    innerWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+    noPageHorizontalScroll: document.documentElement.scrollWidth <= innerWidth,
+    title: document.querySelector('h1')?.textContent?.trim() ?? '',
+    hasArticle: document.body.textContent?.includes('How to Select an Inductor for a Buck Converter') ?? false
+  }));
+  assert.equal(articlesResult.noPageHorizontalScroll, true, 'articles index mobile horizontal overflow');
+  assert.equal(articlesResult.title, 'Articles');
+  assert.equal(articlesResult.hasArticle, true);
+  await articlesPage.screenshot({
+    path: new URL('articles-index-mobile-390.png', outputDir).pathname,
+    fullPage: true
+  });
+  await articlesPage.close();
 } finally {
   await browser.close();
 }

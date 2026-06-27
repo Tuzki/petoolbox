@@ -1,7 +1,6 @@
 ---
 title: "Draft Article Smoke Test"
 description: "A draft article used to verify production filtering."
-slug: "draft-hidden-test"
 category: "engineering-articles"
 primaryTool: null
 relatedTools: []

@@ -10,9 +10,10 @@ import '@/styles/article.css';
 type Props = {
   article: CollectionEntry<'articles'>;
   headings: MarkdownHeading[];
+  relatedArticles: CollectionEntry<'articles'>[];
 };
 
-const { article, headings } = Astro.props;
+const { article, headings, relatedArticles } = Astro.props;
 const primaryTool = getTool(article.data.primaryTool);
 const relatedTools = getTools(article.data.relatedTools);
 const published = article.data.publishedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
@@ -24,7 +25,7 @@ const updated = article.data.updatedAt.toLocaleDateString('en-US', { year: 'nume
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <a href="/">Home</a>
       <span aria-hidden="true">/</span>
-      <a href="/articles/buck-inductor-selection/">Articles</a>
+      <a href="/articles/">Articles</a>
       <span aria-hidden="true">/</span>
       <span>{article.data.title}</span>
     </nav>
@@ -54,9 +55,19 @@ const updated = article.data.updatedAt.toLocaleDateString('en-US', { year: 'nume
       </aside>
     </div>
 
-    <section class="related-articles" aria-labelledby="related-articles-title">
-      <h2 id="related-articles-title">Related Articles</h2>
-      <a href="/articles/buck-inductor-selection/">How to Select an Inductor for a Buck Converter</a>
-    </section>
+    {relatedArticles.length > 0 && (
+      <section class="related-articles" aria-labelledby="related-articles-title">
+        <h2 id="related-articles-title">Related Articles</h2>
+        <div class="related-articles__list">
+          {relatedArticles.map((relatedArticle) => (
+            <a class="related-article-card" href={`/articles/${relatedArticle.slug}/`}>
+              <span>{relatedArticle.data.category.replace('-', ' ')}</span>
+              <strong>{relatedArticle.data.title}</strong>
+              <small>{relatedArticle.data.description}</small>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
   </main>
 </BaseLayout>
