@@ -1,0 +1,16 @@
+---
+import type { ToolInfo } from '@/lib/tools';
+
+type Props = {
+  tool: ToolInfo;
+  primary?: boolean;
+};
+
+const { tool, primary = false } = Astro.props;
+---
+
+<a class:list={['tool-card', { 'tool-card--primary': primary }]} href={tool.href}>
+  <span class="tool-card__label">{primary ? 'Primary Tool' : 'Related Tool'}</span>
+  <strong>{tool.title}</strong>
+  <span>{tool.description}</span>
+</a>
