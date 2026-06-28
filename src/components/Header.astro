@@ -36,7 +36,7 @@ const currentPath = Astro.url.pathname;
               >
                 <span aria-hidden="true">▾</span>
               </button>
-              <div class="mega-menu" id={`mega-${item.id}`} data-menu-panel hidden>
+              <div class:list={['mega-menu', `mega-menu--${item.id}`]} id={`mega-${item.id}`} data-menu-panel hidden>
                 <div class="mega-menu__grid">
                   {item.sections.map((section) => (
                     <section class="mega-menu__section" aria-labelledby={`mega-${item.id}-${section.label.toLowerCase().replaceAll(' ', '-')}`}>
@@ -80,7 +80,7 @@ const currentPath = Astro.url.pathname;
     <button
       class="mobile-menu-button"
       type="button"
-      aria-label="Open navigation menu"
+      aria-label="Toggle navigation menu"
       aria-expanded="false"
       aria-controls="mobile-navigation"
       data-mobile-menu-button
@@ -219,11 +219,23 @@ const currentPath = Astro.url.pathname;
       });
     });
 
+    const resetMobileSubmenus = () => {
+      header.querySelectorAll<HTMLButtonElement>('[data-mobile-submenu-toggle]').forEach((button) => {
+        button.setAttribute('aria-expanded', 'false');
+        const icon = button.querySelector('span');
+        if (icon) icon.textContent = '+';
+      });
+      header.querySelectorAll<HTMLElement>('.mobile-nav__submenu').forEach((submenu) => {
+        submenu.hidden = true;
+      });
+    };
+
     const closeMobileMenu = () => {
       if (!mobileButton || !mobileNav) return;
       mobileNav.hidden = true;
       mobileButton.setAttribute('aria-expanded', 'false');
       header.classList.remove('site-header--mobile-open');
+      resetMobileSubmenus();
     };
 
     mobileButton?.addEventListener('click', (event) => {

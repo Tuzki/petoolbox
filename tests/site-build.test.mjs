@@ -121,6 +121,9 @@ test('primary navigation exposes mvp structure without planned dead links', () =
   }
 
   assert.equal((html.match(/<button[^>]+data-menu-toggle/g) ?? []).length, 2);
+  assert.match(html, /class="mega-menu mega-menu--topology-designers"/);
+  assert.match(html, /class="mega-menu mega-menu--engineering-calculators"/);
+  assert.match(html, /aria-label="Toggle navigation menu"/);
   assert.match(html, /href="\/topology-designers\/"/);
   assert.match(html, /href="\/tools\/"/);
   assert.match(html, /href="\/magnetics\/"/);

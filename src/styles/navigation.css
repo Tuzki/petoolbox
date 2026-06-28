@@ -109,7 +109,7 @@
   z-index: 100;
 }
 
-.site-nav__item:nth-child(2) .mega-menu {
+.mega-menu--engineering-calculators {
   width: min(680px, calc(100vw - 32px));
 }
 
@@ -125,7 +125,7 @@
   gap: 18px;
 }
 
-.site-nav__item:nth-child(2) .mega-menu__grid {
+.mega-menu--engineering-calculators .mega-menu__grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 

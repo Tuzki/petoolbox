@@ -25,6 +25,35 @@ const viewports = [
 try {
   for (const viewport of viewports) {
     const page = await browser.newPage({ viewport });
+    await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded' });
+
+    const homeResult = await page.evaluate(() => {
+      const bodyStyle = getComputedStyle(document.body);
+      const heroStyle = getComputedStyle(document.querySelector('.home-intro'));
+
+      return {
+        innerWidth,
+        noPageHorizontalScroll: document.documentElement.scrollWidth <= innerWidth,
+        bodyBackgroundImage: bodyStyle.backgroundImage,
+        bodyBackgroundSize: bodyStyle.backgroundSize,
+        heroBackgroundImage: heroStyle.backgroundImage,
+        heroBackgroundSize: heroStyle.backgroundSize,
+        h1: document.querySelector('h1')?.textContent?.trim() ?? ''
+      };
+    });
+
+    assert.equal(homeResult.noPageHorizontalScroll, true, `${viewport.name} home page-level horizontal overflow`);
+    assert.equal(homeResult.h1, 'PE Toolbox', `${viewport.name} home h1`);
+    assert.match(homeResult.bodyBackgroundImage, /linear-gradient/, `${viewport.name} graph-paper body background`);
+    assert.match(homeResult.bodyBackgroundSize, /96px 96px/, `${viewport.name} major grid background size`);
+    assert.match(homeResult.bodyBackgroundSize, /24px 24px/, `${viewport.name} minor grid background size`);
+    assert.equal(homeResult.heroBackgroundSize.includes('24px 24px'), false, `${viewport.name} hero does not duplicate page grid`);
+
+    await page.screenshot({
+      path: new URL(`home-${viewport.name}.png`, outputDir).pathname,
+      fullPage: true
+    });
+
     await page.goto(`${baseUrl}/articles/buck-inductor-selection/`, { waitUntil: 'domcontentloaded' });
 
     const result = await page.evaluate(() => {
@@ -119,6 +148,7 @@ try {
       assert.equal(await page.locator('#mega-engineering-calculators').isVisible(), false, 'escape closes calculators menu');
     } else {
       const menuButton = page.locator('[data-mobile-menu-button]');
+      assert.equal(await menuButton.getAttribute('aria-label'), 'Toggle navigation menu', `${viewport.name} mobile menu label`);
       await menuButton.click();
       assert.equal(await menuButton.getAttribute('aria-expanded'), 'true', `${viewport.name} mobile menu opens`);
       assert.equal(await page.locator('#mobile-navigation').isVisible(), true, `${viewport.name} mobile nav visible`);
@@ -134,6 +164,11 @@ try {
       assert.equal(await page.locator('#mobile-engineering-calculators a', { hasText: 'RC Time Constant Calculator' }).count(), 0, `${viewport.name} planned mobile item is not a link`);
       await page.keyboard.press('Escape');
       assert.equal(await menuButton.getAttribute('aria-expanded'), 'false', `${viewport.name} escape closes mobile menu`);
+      await menuButton.click();
+      assert.equal(await page.locator('#mobile-topology-designers').isVisible(), false, `${viewport.name} topology accordion resets after close`);
+      assert.equal(await page.locator('#mobile-engineering-calculators').isVisible(), false, `${viewport.name} calculators accordion resets after close`);
+      assert.equal(await page.locator('[aria-controls="mobile-topology-designers"]').getAttribute('aria-expanded'), 'false', `${viewport.name} topology toggle resets`);
+      await page.keyboard.press('Escape');
     }
 
     if (viewport.width < 920) {
