@@ -19,9 +19,26 @@
   position: relative;
 }
 
+.site-header__mark {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 32px;
+  color: var(--color-blue);
+}
+
+.site-header__mark path,
+.site-header__mark circle {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .site-header__nav {
   flex: 1 1 auto;
   justify-content: flex-end;
+  gap: 8px;
 }
 
 .site-nav__item {
@@ -99,18 +116,14 @@
   position: absolute;
   top: calc(100% - 1px);
   left: 50%;
-  width: min(780px, calc(100vw - 32px));
+  width: min(620px, calc(100vw - 32px));
   transform: translateX(-50%);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-large);
   background: var(--color-surface-elevated);
-  box-shadow: var(--shadow-elevated);
-  padding: 24px;
+  box-shadow: var(--shadow-small);
+  padding: 20px;
   z-index: 100;
-}
-
-.mega-menu--engineering-calculators {
-  width: min(680px, calc(100vw - 32px));
 }
 
 .mega-menu[hidden],
@@ -121,12 +134,8 @@
 
 .mega-menu__grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.mega-menu--engineering-calculators .mega-menu__grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .mega-menu__section h2,
@@ -193,17 +202,16 @@ a.mobile-nav__subitem:hover {
   color: var(--color-blue-dark);
 }
 
-.mega-menu__all-link {
-  display: inline-flex;
-  min-height: 40px;
-  align-items: center;
-  width: 100%;
-  margin-top: 20px;
-  border-top: 1px solid var(--color-border);
-  padding-top: 16px;
-  color: var(--color-blue);
-  font-weight: 700;
-  text-decoration: none;
+.status-pill--beta {
+  border-color: #9cc4e8;
+  background: var(--color-blue-soft);
+  color: var(--color-blue-dark);
+}
+
+.status-pill--coming-soon {
+  border-color: var(--color-border);
+  background: var(--color-surface-muted);
+  color: var(--color-muted);
 }
 
 .site-header__language {
@@ -303,7 +311,6 @@ a.mobile-nav__subitem:hover {
   .site-nav__link,
   .site-nav__toggle,
   .mega-menu__entry,
-  .mega-menu__all-link,
   .mobile-menu-button,
   .mobile-nav__toggle,
   .mobile-nav__subitem {
@@ -311,8 +318,7 @@ a.mobile-nav__subitem:hover {
   }
 
   a.mega-menu__entry:hover,
-  a.mobile-nav__subitem:hover,
-  .mega-menu__all-link:hover {
+  a.mobile-nav__subitem:hover {
     transform: translateY(-1px);
   }
 }
@@ -325,7 +331,7 @@ a.mobile-nav__subitem:hover {
   color: var(--color-border);
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 980px) {
   .site-header .site-header__nav,
   .site-header .site-header__language {
     display: none;

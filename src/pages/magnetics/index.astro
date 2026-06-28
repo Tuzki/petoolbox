@@ -1,5 +1,9 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import ToolCard from '@/components/ToolCard.astro';
+import { getToolsByCategory } from '@/data/tools';
+
+const tools = getToolsByCategory('magnetics');
 ---
 
 <BaseLayout
@@ -16,10 +20,8 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
     <section aria-labelledby="magnetics-title">
       <h1 id="magnetics-title">Magnetics Design</h1>
       <p>Magnetics design tools will cover inductor and transformer workflows used in power electronics converters.</p>
-      <div class="status-card-grid">
-        <article class="status-card"><strong>Inductor Designer</strong><span>Planned</span></article>
-        <article class="status-card"><strong>Flyback Transformer Designer</strong><span>Planned</span></article>
-        <article class="status-card"><strong>LLC Transformer Designer</strong><span>Planned</span></article>
+      <div class="tool-card-grid tool-card-grid--category">
+        {tools.map((tool) => <ToolCard tool={tool} />)}
       </div>
     </section>
   </main>

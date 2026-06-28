@@ -1,5 +1,9 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import ToolCard from '@/components/ToolCard.astro';
+import { getToolsByCategory } from '@/data/tools';
+
+const tools = getToolsByCategory('control');
 ---
 
 <BaseLayout
@@ -16,12 +20,8 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
     <section aria-labelledby="control-title">
       <h1 id="control-title">Control Design</h1>
       <p>Control design tools will focus on loop-shaping workflows for common converter families.</p>
-      <div class="status-card-grid">
-        <article class="status-card"><strong>Buck Control Loop Designer</strong><span>Planned</span></article>
-        <article class="status-card"><strong>Boost Control Loop Designer</strong><span>Planned</span></article>
-        <article class="status-card"><strong>Boost PFC Control Loop Designer</strong><span>Planned</span></article>
-        <article class="status-card"><strong>Flyback Control Loop Designer</strong><span>Planned</span></article>
-        <article class="status-card"><strong>LLC Control Loop Designer</strong><span>Planned</span></article>
+      <div class="tool-card-grid tool-card-grid--category">
+        {tools.map((tool) => <ToolCard tool={tool} />)}
       </div>
     </section>
   </main>

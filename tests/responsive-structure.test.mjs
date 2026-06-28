@@ -46,8 +46,8 @@ test('primary tool appears before article body for mobile reading', () => {
 });
 
 test('planned tool cards are rendered as non-links', () => {
-  assert.match(articleHtml, /aria-label="Output Capacitor Calculator planned tool"/);
-  assert.match(articleHtml, /aria-label="Buck Converter Designer planned tool"/);
+  assert.match(articleHtml, /aria-label="Output Capacitor Calculator Coming Soon tool"/);
+  assert.match(articleHtml, /aria-label="Buck Converter Designer Coming Soon tool"/);
   assert.equal(articleHtml.includes('href="/tools/buck-inductor-ripple-calculator/">Output Capacitor Calculator'), false);
   assert.equal(articleHtml.includes('href="/tools/buck-inductor-ripple-calculator/">Buck Converter Designer'), false);
 });

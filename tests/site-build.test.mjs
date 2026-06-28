@@ -8,6 +8,8 @@ const dist = join(root, 'dist');
 const articlePath = join(dist, 'articles', 'buck-inductor-selection', 'index.html');
 const articlesIndexPath = join(dist, 'articles', 'index.html');
 const toolPath = join(dist, 'tools', 'buck-inductor-ripple-calculator', 'index.html');
+const aboutPath = join(dist, 'about', 'index.html');
+const homePath = join(dist, 'index.html');
 const categoryPaths = [
   join(dist, 'topology-designers', 'index.html'),
   join(dist, 'tools', 'index.html'),
@@ -62,6 +64,7 @@ test('production build emits the article and tool pages', () => {
   assert.ok(existsSync(articlePath), 'article page was not generated');
   assert.ok(existsSync(articlesIndexPath), 'articles index page was not generated');
   assert.ok(existsSync(toolPath), 'tool placeholder page was not generated');
+  assert.ok(existsSync(aboutPath), 'about page was not generated');
   for (const path of categoryPaths) {
     assert.ok(existsSync(path), `${path} was not generated`);
   }
@@ -92,37 +95,29 @@ test('article frontmatter includes required metadata fields', () => {
   }
 });
 
-test('article page includes automatic tool links and private noindex', () => {
+test('article page includes automatic tool cards and private noindex', () => {
   const html = read(articlePath);
   assert.match(html, /Buck Inductor Ripple Calculator/);
   assert.match(html, /Output Capacitor Calculator/);
   assert.match(html, /Buck Converter Designer/);
-  assert.match(html, /href="\/tools\/buck-inductor-ripple-calculator\/"/);
+  assert.equal(html.includes('href="/tools/buck-inductor-ripple-calculator/">Buck Inductor Ripple Calculator'), false);
   assert.equal(html.includes('href="/tools/buck-inductor-ripple-calculator/">Output Capacitor Calculator'), false);
   assert.equal(html.includes('href="/tools/buck-inductor-ripple-calculator/">Buck Converter Designer'), false);
-  assert.match(html, />Planned</);
+  assert.match(html, />Coming Soon</);
   assert.match(html, /rel="canonical" href="https:\/\/petoolbox\.tech\/articles\/buck-inductor-selection\/"/);
   assert.match(html, /name="robots" content="noindex, nofollow"/);
 });
 
-test('primary navigation exposes mvp structure without planned dead links', () => {
+test('primary navigation exposes compact header and tools menu', () => {
   const html = read(articlePath);
-  const expectedTopLevel = [
-    'Topology Designers',
-    'Engineering Calculators',
-    'Magnetics Design',
-    'Control Design',
-    'Simulation',
-    'Articles'
-  ];
+  const topLevelLabels = Array.from(html.matchAll(/class="site-nav__link[^"]*"[^>]*>\s*([^<]+)\s*<\/a>/g)).map((match) => match[1].trim());
 
-  for (const label of expectedTopLevel) {
-    assert.match(html, new RegExp(label));
-  }
-
-  assert.equal((html.match(/<button[^>]+data-menu-toggle/g) ?? []).length, 2);
-  assert.match(html, /class="mega-menu mega-menu--topology-designers"/);
-  assert.match(html, /class="mega-menu mega-menu--engineering-calculators"/);
+  assert.deepEqual(topLevelLabels, ['Tools', 'Articles', 'About']);
+  assert.equal((html.match(/<button[^>]+data-menu-toggle/g) ?? []).length, 1);
+  assert.match(html, /class="mega-menu mega-menu--tools"/);
+  assert.match(html, /Design Workflows/);
+  assert.match(html, /Engineering Tools/);
+  assert.match(html, /Featured/);
   assert.match(html, /aria-label="Toggle navigation menu"/);
   assert.match(html, /href="\/topology-designers\/"/);
   assert.match(html, /href="\/tools\/"/);
@@ -130,8 +125,10 @@ test('primary navigation exposes mvp structure without planned dead links', () =
   assert.match(html, /href="\/control\/"/);
   assert.match(html, /href="\/simulation\/"/);
   assert.match(html, /href="\/articles\/"/);
+  assert.match(html, /href="\/about\/"/);
   assert.match(html, /href="\/tools\/buck-inductor-ripple-calculator\/"/);
   assert.match(html, /Buck Inductor Ripple Calculator/);
+  assert.match(html, /Coming Soon/);
   assert.match(html, /<span class="language-link language-link--active" aria-current="true">EN<\/span>/);
   assert.equal(html.includes('class="language-link language-link--active" href="/"'), false);
   assert.match(html, /aria-disabled="true" title="Chinese version coming soon"/);
@@ -139,6 +136,45 @@ test('primary navigation exposes mvp structure without planned dead links', () =
   assert.equal(html.includes('href="/topology-designers/buck-converter-designer'), false);
   assert.equal(html.includes('href="/tools/rc-time-constant'), false);
   assert.equal(/dark mode|theme toggle/i.test(html), false);
+});
+
+test('homepage renders engineering tool directory content', () => {
+  const html = read(homePath);
+  for (const label of ['All', 'Topology', 'Calculators', 'Magnetics', 'Control', 'Simulation']) {
+    assert.match(html, new RegExp(`>\\s*${label}\\s*<`));
+  }
+
+  const expectedTools = [
+    'Buck Converter Designer',
+    'Boost Converter Designer',
+    'Boost PFC Designer',
+    'Flyback Converter Designer',
+    'LLC Resonant Converter Designer',
+    'RC Time Constant Calculator',
+    'Voltage Divider Calculator',
+    'Buck Inductor Ripple Calculator',
+    'RC Snubber Calculator',
+    'RCD Snubber Calculator',
+    'Magnetics Designer',
+    'Buck Control Loop Designer',
+    'Boost Control Loop Designer',
+    'Boost PFC Control Loop Designer',
+    'Flyback Control Loop Designer',
+    'LLC Control Loop Designer',
+    'PULSE'
+  ];
+
+  for (const title of expectedTools) {
+    assert.match(html, new RegExp(title.replace(/[()]/g, '\\$&')));
+  }
+
+  assert.match(html, /aria-pressed="true"[\s\S]*>\s*All\s*</);
+  assert.match(html, /data-tool-status="coming-soon"[\s\S]*Buck Inductor Ripple Calculator/);
+  assert.equal(html.includes('Buck Inductor Ripple Calculator</strong><span class="directory-card__description"'), true);
+  assert.equal(html.includes('status-pill status-pill--available'), false);
+  assert.match(html, /data-tool-status="beta"[\s\S]*PULSE/);
+  assert.match(html, /How to Select an Inductor for a Buck Converter/);
+  assert.match(html, /View all articles/);
 });
 
 test('article page uses filename slug, hides self recommendations, and has correct breadcrumb', () => {
@@ -169,8 +205,17 @@ test('category pages have titles and private noindex', () => {
   for (const [path, title] of expected) {
     const html = read(path);
     assert.match(html, new RegExp(`<h1[^>]*>${title}</h1>`));
+    assert.match(html, /class="directory-card/);
     assert.match(html, /name="robots" content="noindex, nofollow"/);
   }
+});
+
+test('about page has a single h1 and private noindex', () => {
+  const html = read(aboutPath);
+  assert.match(html, /<h1[^>]*>About PE Toolbox<\/h1>/);
+  assert.equal((html.match(/<h1/g) ?? []).length, 1);
+  assert.match(html, /Topology design/);
+  assert.match(html, /name="robots" content="noindex, nofollow"/);
 });
 
 test('robots.txt disallows crawling in private mode', () => {

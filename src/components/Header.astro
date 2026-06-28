@@ -1,73 +1,78 @@
 ---
 import { site } from '@/lib/site';
-import { languageNavigation, productNavigation, isActivePath } from '@/data/navigation';
+import { languageNavigation, primaryNavigation, toolsMenuSections, isActivePath } from '@/data/navigation';
 import '@/styles/navigation.css';
 
 const currentPath = Astro.url.pathname;
+const toolsNav = primaryNavigation[0];
+const directNavItems = primaryNavigation.slice(1);
+const toolsActive = isActivePath(currentPath, toolsNav.href)
+  || currentPath.startsWith('/topology-designers/')
+  || currentPath.startsWith('/magnetics/')
+  || currentPath.startsWith('/control/')
+  || currentPath.startsWith('/simulation/');
 ---
 
 <header class="site-header" data-site-header>
   <div class="site-header__inner">
     <a class="site-header__brand" href="/" aria-label="PE Toolbox home">
-      <span class="site-header__mark" aria-hidden="true">PE</span>
+      <svg class="site-header__mark" viewBox="0 0 44 32" aria-hidden="true" focusable="false">
+        <path d="M3 18h7l3-8 6 16 5-20 5 12h12" />
+        <circle cx="10" cy="18" r="2" />
+        <circle cx="41" cy="18" r="2" />
+      </svg>
       <span>{site.name}</span>
     </a>
 
     <nav class="site-header__nav" aria-label="Primary navigation">
-      {productNavigation.map((item) => (
-        <div class:list={['site-nav__item', { 'site-nav__item--has-menu': item.sections }]} data-nav-item>
-          <a
-            class:list={['site-nav__link', { 'site-nav__link--active': isActivePath(currentPath, item.href) }]}
-            href={item.href}
-            aria-current={isActivePath(currentPath, item.href) ? 'page' : undefined}
-          >
-            {item.label}
-          </a>
-          {item.sections && (
-            <>
-              <button
-                class="site-nav__toggle"
-                type="button"
-                aria-label={`Toggle ${item.label} menu`}
-                aria-expanded="false"
-                aria-haspopup="true"
-                aria-controls={`mega-${item.id}`}
-                data-menu-toggle
-              >
-                <span aria-hidden="true">▾</span>
-              </button>
-              <div class:list={['mega-menu', `mega-menu--${item.id}`]} id={`mega-${item.id}`} data-menu-panel hidden>
-                <div class="mega-menu__grid">
-                  {item.sections.map((section) => (
-                    <section class="mega-menu__section" aria-labelledby={`mega-${item.id}-${section.label.toLowerCase().replaceAll(' ', '-')}`}>
-                      <h2 id={`mega-${item.id}-${section.label.toLowerCase().replaceAll(' ', '-')}`}>{section.label}</h2>
-                      <ul>
-                        {section.children.map((child) => (
-                          <li>
-                            {child.status === 'available' && child.href ? (
-                              <a class="mega-menu__entry" href={child.href}>
-                                <span>{child.label}</span>
-                                <span class="status-pill status-pill--available">Available</span>
-                              </a>
-                            ) : (
-                              <span class="mega-menu__entry mega-menu__entry--planned">
-                                <span>{child.label}</span>
-                                <span class="status-pill">Planned</span>
-                              </span>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
+      <div class:list={['site-nav__item', 'site-nav__item--has-menu', { 'site-nav__item--active': toolsActive }]} data-nav-item>
+        <a
+          class:list={['site-nav__link', { 'site-nav__link--active': toolsActive }]}
+          href={toolsNav.href}
+          aria-current={toolsActive && currentPath === toolsNav.href ? 'page' : undefined}
+        >
+          {toolsNav.label}
+        </a>
+        <button
+          class="site-nav__toggle"
+          type="button"
+          aria-label="Toggle Tools menu"
+          aria-expanded="false"
+          aria-haspopup="true"
+          aria-controls="mega-tools"
+          data-menu-toggle
+        >
+          <span aria-hidden="true">▾</span>
+        </button>
+        <div class="mega-menu mega-menu--tools" id="mega-tools" data-menu-panel hidden>
+          <div class="mega-menu__grid">
+            {toolsMenuSections.map((section) => (
+              <section class="mega-menu__section" aria-labelledby={`mega-tools-${section.label.toLowerCase().replaceAll(' ', '-')}`}>
+                <h2 id={`mega-tools-${section.label.toLowerCase().replaceAll(' ', '-')}`}>{section.label}</h2>
+                <ul>
+                  {section.links.map((link) => (
+                    <li>
+                      <a class="mega-menu__entry" href={link.href}>
+                        <span>{link.label}</span>
+                        {link.status && <span class="status-pill">{link.status}</span>}
+                      </a>
+                    </li>
                   ))}
-                </div>
-                <a class="mega-menu__all-link" href={item.href}>
-                  View All {item.label} <span aria-hidden="true">→</span>
-                </a>
-              </div>
-            </>
-          )}
+                </ul>
+              </section>
+            ))}
+          </div>
         </div>
+      </div>
+
+      {directNavItems.map((item) => (
+        <a
+          class:list={['site-nav__link', { 'site-nav__link--active': isActivePath(currentPath, item.href) }]}
+          href={item.href}
+          aria-current={isActivePath(currentPath, item.href) ? 'page' : undefined}
+        >
+          {item.label}
+        </a>
       ))}
     </nav>
 
@@ -91,50 +96,31 @@ const currentPath = Astro.url.pathname;
 
   <nav class="mobile-nav" id="mobile-navigation" aria-label="Mobile navigation" data-mobile-nav hidden>
     <div class="mobile-nav__inner">
-      {productNavigation.map((item) => (
-        item.sections ? (
-          <div class="mobile-nav__group">
-            <div class="mobile-nav__row">
-              <a href={item.href} class="mobile-nav__link" data-mobile-link>{item.label}</a>
-              <button
-                class="mobile-nav__toggle"
-                type="button"
-                aria-label={`Toggle ${item.label}`}
-                aria-expanded="false"
-                aria-controls={`mobile-${item.id}`}
-                data-mobile-submenu-toggle
-              >
-                <span aria-hidden="true">+</span>
-              </button>
-            </div>
-            <div class="mobile-nav__submenu" id={`mobile-${item.id}`} hidden>
-              {item.sections.map((section) => (
-                <section class="mobile-nav__section" aria-labelledby={`mobile-${item.id}-${section.label.toLowerCase().replaceAll(' ', '-')}`}>
-                  <h2 id={`mobile-${item.id}-${section.label.toLowerCase().replaceAll(' ', '-')}`}>{section.label}</h2>
-                  <ul>
-                    {section.children.map((child) => (
-                      <li>
-                        {child.status === 'available' && child.href ? (
-                          <a class="mobile-nav__subitem" href={child.href} data-mobile-link>
-                            <span>{child.label}</span>
-                            <span class="status-pill status-pill--available">Available</span>
-                          </a>
-                        ) : (
-                          <span class="mobile-nav__subitem mobile-nav__subitem--planned">
-                            <span>{child.label}</span>
-                            <span class="status-pill">Planned</span>
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <a class="mobile-nav__standalone" href={item.href} data-mobile-link>{item.label}</a>
-        )
+      <div class="mobile-nav__group">
+        <div class="mobile-nav__row">
+          <a href="/tools/" class="mobile-nav__link" data-mobile-link>Tools</a>
+          <button
+            class="mobile-nav__toggle"
+            type="button"
+            aria-label="Toggle Tools"
+            aria-expanded="false"
+            aria-controls="mobile-tools"
+            data-mobile-submenu-toggle
+          >
+            <span aria-hidden="true">+</span>
+          </button>
+        </div>
+        <div class="mobile-nav__submenu" id="mobile-tools" hidden>
+          {toolsMenuSections.flatMap((section) => section.links).map((link) => (
+            <a class="mobile-nav__subitem" href={link.href} data-mobile-link>
+              <span>{link.label}</span>
+              {link.status && <span class="status-pill">{link.status}</span>}
+            </a>
+          ))}
+        </div>
+      </div>
+      {directNavItems.map((item) => (
+        <a class="mobile-nav__standalone" href={item.href} data-mobile-link>{item.label}</a>
       ))}
       <div class="mobile-nav__language" aria-label="Language">
         <span class="language-link language-link--active" aria-current="true">{languageNavigation[0].label}</span>
@@ -193,7 +179,7 @@ const currentPath = Astro.url.pathname;
 
       item.addEventListener('mouseenter', () => openDesktopMenu(item));
       item.addEventListener('mouseleave', () => {
-        closeTimer = window.setTimeout(() => closeDesktopMenu(item), 180);
+        closeTimer = window.setTimeout(() => closeDesktopMenu(item), 160);
       });
       toggle.addEventListener('pointerdown', () => {
         pointerFocusGuard = true;
@@ -207,7 +193,7 @@ const currentPath = Astro.url.pathname;
       item.addEventListener('focusout', () => {
         closeTimer = window.setTimeout(() => {
           if (!item.contains(document.activeElement)) closeDesktopMenu(item);
-        }, 180);
+        }, 160);
       });
       toggle.addEventListener('click', (event) => {
         event.stopPropagation();
@@ -245,6 +231,7 @@ const currentPath = Astro.url.pathname;
       mobileNav.hidden = !willOpen;
       mobileButton.setAttribute('aria-expanded', String(willOpen));
       header.classList.toggle('site-header--mobile-open', willOpen);
+      if (!willOpen) resetMobileSubmenus();
       closeAllDesktopMenus();
     });
 

@@ -1,10 +1,28 @@
 ---
+import { footerTools, languageNavigation } from '@/data/navigation';
 import { site } from '@/lib/site';
 ---
 
 <footer class="site-footer">
   <div class="site-footer__inner">
-    <p>&copy; 2026 {site.name}</p>
-    <p>{site.tagline}</p>
+    <div class="site-footer__brand">
+      <strong>{site.name}</strong>
+      <p>{site.tagline}.</p>
+    </div>
+    <nav class="site-footer__nav" aria-label="Footer tools">
+      <h2>Tools</h2>
+      {footerTools.map((item) => <a href={item.href}>{item.label}</a>)}
+    </nav>
+    <nav class="site-footer__nav" aria-label="Footer resources">
+      <h2>Resources</h2>
+      <a href="/articles/">Articles</a>
+      <a href="/about/">About</a>
+      <a href="https://github.com/Tuzki/petoolbox">GitHub</a>
+    </nav>
+    <div class="site-footer__nav" aria-label="Footer language">
+      <h2>Language</h2>
+      <span>{languageNavigation[0].label}</span>
+      <span>{languageNavigation[1].label} — Coming Soon</span>
+    </div>
   </div>
 </footer>

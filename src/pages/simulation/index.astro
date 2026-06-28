@@ -1,5 +1,9 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import ToolCard from '@/components/ToolCard.astro';
+import { getToolsByCategory } from '@/data/tools';
+
+const tools = getToolsByCategory('simulation');
 ---
 
 <BaseLayout
@@ -16,11 +20,8 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
     <section aria-labelledby="simulation-title">
       <h1 id="simulation-title">Simulation</h1>
       <p>Simulation will introduce the PULSE workflow for schematic entry, solving, and waveform inspection.</p>
-      <div class="status-card-grid">
-        <article class="status-card"><strong>PULSE Studio</strong><span>Planned</span></article>
-        <article class="status-card"><strong>PULSE Schematic</strong><span>Planned</span></article>
-        <article class="status-card"><strong>PULSE Solver</strong><span>Planned</span></article>
-        <article class="status-card"><strong>PULSE Scope</strong><span>Planned</span></article>
+      <div class="tool-card-grid tool-card-grid--category">
+        {tools.map((tool) => <ToolCard tool={tool} />)}
       </div>
     </section>
   </main>
