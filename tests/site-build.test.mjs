@@ -8,6 +8,13 @@ const dist = join(root, 'dist');
 const articlePath = join(dist, 'articles', 'buck-inductor-selection', 'index.html');
 const articlesIndexPath = join(dist, 'articles', 'index.html');
 const toolPath = join(dist, 'tools', 'buck-inductor-ripple-calculator', 'index.html');
+const categoryPaths = [
+  join(dist, 'topology-designers', 'index.html'),
+  join(dist, 'tools', 'index.html'),
+  join(dist, 'magnetics', 'index.html'),
+  join(dist, 'control', 'index.html'),
+  join(dist, 'simulation', 'index.html')
+];
 
 function read(path) {
   return readFileSync(path, 'utf8');
@@ -55,6 +62,9 @@ test('production build emits the article and tool pages', () => {
   assert.ok(existsSync(articlePath), 'article page was not generated');
   assert.ok(existsSync(articlesIndexPath), 'articles index page was not generated');
   assert.ok(existsSync(toolPath), 'tool placeholder page was not generated');
+  for (const path of categoryPaths) {
+    assert.ok(existsSync(path), `${path} was not generated`);
+  }
 });
 
 test('draft articles are not generated in production output', () => {
@@ -95,6 +105,36 @@ test('article page includes automatic tool links and private noindex', () => {
   assert.match(html, /name="robots" content="noindex, nofollow"/);
 });
 
+test('primary navigation exposes mvp structure without planned dead links', () => {
+  const html = read(articlePath);
+  const expectedTopLevel = [
+    'Topology Designers',
+    'Engineering Calculators',
+    'Magnetics Design',
+    'Control Design',
+    'Simulation',
+    'Articles'
+  ];
+
+  for (const label of expectedTopLevel) {
+    assert.match(html, new RegExp(label));
+  }
+
+  assert.equal((html.match(/<button[^>]+data-menu-toggle/g) ?? []).length, 2);
+  assert.match(html, /href="\/topology-designers\/"/);
+  assert.match(html, /href="\/tools\/"/);
+  assert.match(html, /href="\/magnetics\/"/);
+  assert.match(html, /href="\/control\/"/);
+  assert.match(html, /href="\/simulation\/"/);
+  assert.match(html, /href="\/articles\/"/);
+  assert.match(html, /href="\/tools\/buck-inductor-ripple-calculator\/"/);
+  assert.match(html, /Buck Inductor Ripple Calculator/);
+  assert.match(html, /aria-disabled="true" title="Chinese version coming soon"/);
+  assert.equal(html.includes('href="/topology-designers/buck-converter-designer'), false);
+  assert.equal(html.includes('href="/tools/rc-time-constant'), false);
+  assert.equal(/dark mode|theme toggle/i.test(html), false);
+});
+
 test('article page uses filename slug, hides self recommendations, and has correct breadcrumb', () => {
   const html = read(articlePath);
   assert.match(html, /Home/);
@@ -111,6 +151,22 @@ test('articles index lists non-draft articles', () => {
   assert.match(html, /name="robots" content="noindex, nofollow"/);
 });
 
+test('category pages have titles and private noindex', () => {
+  const expected = [
+    [categoryPaths[0], 'Topology Designers'],
+    [categoryPaths[1], 'Engineering Calculators'],
+    [categoryPaths[2], 'Magnetics Design'],
+    [categoryPaths[3], 'Control Design'],
+    [categoryPaths[4], 'Simulation']
+  ];
+
+  for (const [path, title] of expected) {
+    const html = read(path);
+    assert.match(html, new RegExp(`<h1[^>]*>${title}</h1>`));
+    assert.match(html, /name="robots" content="noindex, nofollow"/);
+  }
+});
+
 test('robots.txt disallows crawling in private mode', () => {
   const robots = read(join(dist, 'robots.txt'));
   assert.match(robots, /User-agent: \*/);
@@ -118,12 +174,7 @@ test('robots.txt disallows crawling in private mode', () => {
 });
 
 test('internal links in generated pages resolve to generated files', () => {
-  const htmlFiles = [
-    join(dist, 'index.html'),
-    articlesIndexPath,
-    articlePath,
-    toolPath
-  ];
+  const htmlFiles = findHtmlFiles(dist);
 
   for (const file of htmlFiles) {
     const html = read(file);
@@ -139,3 +190,19 @@ test('internal links in generated pages resolve to generated files', () => {
     }
   }
 });
+
+function findHtmlFiles(directory) {
+  const entries = readdirSync(directory, { withFileTypes: true });
+  const files = [];
+
+  for (const entry of entries) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...findHtmlFiles(path));
+    } else if (entry.isFile() && entry.name.endsWith('.html')) {
+      files.push(path);
+    }
+  }
+
+  return files;
+}

@@ -1,0 +1,26 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Magnetics Design"
+  description="Planned magnetics design tools for inductors and transformers."
+  pathname="/magnetics/"
+>
+  <main class="page-shell category-page">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <span>Magnetics Design</span>
+    </nav>
+    <section aria-labelledby="magnetics-title">
+      <h1 id="magnetics-title">Magnetics Design</h1>
+      <p>Magnetics design tools will cover inductor and transformer workflows used in power electronics converters.</p>
+      <div class="status-card-grid">
+        <article class="status-card"><strong>Inductor Designer</strong><span>Planned</span></article>
+        <article class="status-card"><strong>Flyback Transformer Designer</strong><span>Planned</span></article>
+        <article class="status-card"><strong>LLC Transformer Designer</strong><span>Planned</span></article>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

@@ -1,0 +1,28 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Engineering Calculators"
+  description="Power electronics engineering calculators for quick design checks."
+  pathname="/tools/"
+>
+  <main class="page-shell category-page">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <span>Engineering Calculators</span>
+    </nav>
+    <section aria-labelledby="tools-title">
+      <h1 id="tools-title">Engineering Calculators</h1>
+      <p>PE Toolbox will provide practical electrical and power-stage calculators for fast engineering checks.</p>
+      <div class="status-card-grid">
+        <article class="status-card"><strong>RC Time Constant Calculator</strong><span>Planned</span></article>
+        <article class="status-card"><strong>Voltage Divider Calculator</strong><span>Planned</span></article>
+        <a class="status-card status-card--available" href="/tools/buck-inductor-ripple-calculator/"><strong>Buck Inductor Ripple Calculator</strong><span>Available</span></a>
+        <article class="status-card"><strong>RC Snubber Calculator</strong><span>Planned</span></article>
+        <article class="status-card"><strong>RCD Snubber Calculator</strong><span>Planned</span></article>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

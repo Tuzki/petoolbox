@@ -1,0 +1,28 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Control Design"
+  description="Planned control loop design workflows for power converters."
+  pathname="/control/"
+>
+  <main class="page-shell category-page">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <span>Control Design</span>
+    </nav>
+    <section aria-labelledby="control-title">
+      <h1 id="control-title">Control Design</h1>
+      <p>Control design tools will focus on loop-shaping workflows for common converter families.</p>
+      <div class="status-card-grid">
+        <article class="status-card"><strong>Buck Control Loop Designer</strong><span>Planned</span></article>
+        <article class="status-card"><strong>Boost Control Loop Designer</strong><span>Planned</span></article>
+        <article class="status-card"><strong>Boost PFC Control Loop Designer</strong><span>Planned</span></article>
+        <article class="status-card"><strong>Flyback Control Loop Designer</strong><span>Planned</span></article>
+        <article class="status-card"><strong>LLC Control Loop Designer</strong><span>Planned</span></article>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

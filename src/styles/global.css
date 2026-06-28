@@ -176,6 +176,59 @@ a:hover {
   font-size: 0.9rem;
 }
 
+.category-page p {
+  max-width: 760px;
+  color: var(--color-muted);
+  font-size: 1.06rem;
+  line-height: 1.7;
+}
+
+.status-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 26px;
+  max-width: 920px;
+}
+
+.status-card {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  padding: 16px;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.status-card--available:hover {
+  border-color: #9cc4e8;
+  color: var(--color-text);
+}
+
+.status-card strong {
+  color: #111827;
+  line-height: 1.35;
+}
+
+.status-card span {
+  width: fit-content;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  color: var(--color-muted);
+  padding: 3px 8px;
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.status-card--available span {
+  border-color: #9cc4e8;
+  background: var(--color-blue-soft);
+  color: var(--color-blue-dark);
+}
+
 h1,
 h2,
 h3,
