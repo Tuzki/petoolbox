@@ -129,7 +129,10 @@ test('primary navigation exposes mvp structure without planned dead links', () =
   assert.match(html, /href="\/articles\/"/);
   assert.match(html, /href="\/tools\/buck-inductor-ripple-calculator\/"/);
   assert.match(html, /Buck Inductor Ripple Calculator/);
+  assert.match(html, /<span class="language-link language-link--active" aria-current="true">EN<\/span>/);
+  assert.equal(html.includes('class="language-link language-link--active" href="/"'), false);
   assert.match(html, /aria-disabled="true" title="Chinese version coming soon"/);
+  assert.equal(html.includes('href="/zh'), false);
   assert.equal(html.includes('href="/topology-designers/buck-converter-designer'), false);
   assert.equal(html.includes('href="/tools/rc-time-constant'), false);
   assert.equal(/dark mode|theme toggle/i.test(html), false);

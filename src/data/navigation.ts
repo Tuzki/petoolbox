@@ -105,7 +105,7 @@ export const productNavigation: NavigationItem[] = [
 ];
 
 export const languageNavigation = [
-  { label: 'EN', status: 'available' as const, href: '/' },
+  { label: 'EN', status: 'available' as const },
   { label: '中文', status: 'planned' as const, title: 'Chinese version coming soon' }
 ];
 

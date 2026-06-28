@@ -15,6 +15,9 @@ const browser = await chromium.launch({
 
 const viewports = [
   { name: 'desktop-1440', width: 1440, height: 900 },
+  { name: 'desktop-1280', width: 1280, height: 800 },
+  { name: 'tablet-1180', width: 1180, height: 800 },
+  { name: 'tablet-1024', width: 1024, height: 768 },
   { name: 'mobile-390', width: 390, height: 844 },
   { name: 'mobile-430', width: 430, height: 844 }
 ];
@@ -53,6 +56,12 @@ try {
         plannedToolCards: document.querySelectorAll('.tool-card--planned').length,
         topLevelNavLabels: Array.from(document.querySelectorAll('.site-nav__link')).map((link) => link.textContent?.trim()),
         menuToggleCount: document.querySelectorAll('[data-menu-toggle]').length,
+        activeLanguageTag: document.querySelector('.language-link--active')?.tagName.toLowerCase(),
+        activeLanguageHref: document.querySelector('.language-link--active')?.getAttribute('href'),
+        activeLanguageCurrent: document.querySelector('.language-link--active')?.getAttribute('aria-current'),
+        chineseLanguageTag: document.querySelector('.language-link--disabled')?.tagName.toLowerCase(),
+        chineseLanguageHref: document.querySelector('.language-link--disabled')?.getAttribute('href'),
+        chineseLanguageDisabled: document.querySelector('.language-link--disabled')?.getAttribute('aria-disabled'),
         hasDarkModeText: /dark mode|theme toggle/i.test(document.body.textContent ?? ''),
         h1: document.querySelector('h1')?.textContent?.trim() ?? ''
       };
@@ -74,9 +83,15 @@ try {
       'Articles'
     ]);
     assert.equal(result.menuToggleCount, 2, `${viewport.name} only two desktop dropdown toggles`);
+    assert.equal(result.activeLanguageTag, 'span', `${viewport.name} EN is not a link`);
+    assert.equal(result.activeLanguageHref, null, `${viewport.name} EN has no href`);
+    assert.equal(result.activeLanguageCurrent, 'true', `${viewport.name} EN current language`);
+    assert.equal(result.chineseLanguageTag, 'span', `${viewport.name} Chinese is not a link`);
+    assert.equal(result.chineseLanguageHref, null, `${viewport.name} Chinese has no href`);
+    assert.equal(result.chineseLanguageDisabled, 'true', `${viewport.name} Chinese disabled`);
     assert.equal(result.hasDarkModeText, false, `${viewport.name} dark mode text absent`);
 
-    if (viewport.width >= 920) {
+    if (viewport.width > 1180) {
       assert.equal(result.sidebarDisplay, 'block', `${viewport.name} sidebar visible`);
       assert.equal(result.mobileToolDisplay, 'none', `${viewport.name} mobile tool hidden`);
       assert.equal(result.mobileTocDisplay, 'none', `${viewport.name} mobile toc hidden`);
@@ -103,13 +118,6 @@ try {
       await page.keyboard.press('Escape');
       assert.equal(await page.locator('#mega-engineering-calculators').isVisible(), false, 'escape closes calculators menu');
     } else {
-      assert.equal(result.sidebarDisplay, 'none', `${viewport.name} sidebar hidden`);
-      assert.equal(result.mobileToolDisplay, 'block', `${viewport.name} mobile primary tool visible`);
-      assert.equal(result.mobileTocDisplay, 'block', `${viewport.name} mobile toc visible`);
-      assert.equal(result.mobileTocTag, 'details', `${viewport.name} mobile toc is collapsible`);
-      assert.ok(result.summaryMinHeight >= 44, `${viewport.name} toc summary touch target`);
-      assert.match(result.primaryToolText, /Buck Inductor Ripple Calculator/);
-
       const menuButton = page.locator('[data-mobile-menu-button]');
       await menuButton.click();
       assert.equal(await menuButton.getAttribute('aria-expanded'), 'true', `${viewport.name} mobile menu opens`);
@@ -126,6 +134,15 @@ try {
       assert.equal(await page.locator('#mobile-engineering-calculators a', { hasText: 'RC Time Constant Calculator' }).count(), 0, `${viewport.name} planned mobile item is not a link`);
       await page.keyboard.press('Escape');
       assert.equal(await menuButton.getAttribute('aria-expanded'), 'false', `${viewport.name} escape closes mobile menu`);
+    }
+
+    if (viewport.width < 920) {
+      assert.equal(result.sidebarDisplay, 'none', `${viewport.name} sidebar hidden`);
+      assert.equal(result.mobileToolDisplay, 'block', `${viewport.name} mobile primary tool visible`);
+      assert.equal(result.mobileTocDisplay, 'block', `${viewport.name} mobile toc visible`);
+      assert.equal(result.mobileTocTag, 'details', `${viewport.name} mobile toc is collapsible`);
+      assert.ok(result.summaryMinHeight >= 44, `${viewport.name} toc summary touch target`);
+      assert.match(result.primaryToolText, /Buck Inductor Ripple Calculator/);
     }
 
     await page.screenshot({

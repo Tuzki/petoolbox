@@ -6,6 +6,7 @@ import { site } from '@/lib/site';
 <BaseLayout title={site.name} description={site.tagline} pathname="/">
   <main class="home-shell">
     <section class="home-intro" aria-labelledby="home-title">
+      <p class="home-eyebrow">Power Electronics Engineering Tools</p>
       <h1 id="home-title">PE Toolbox</h1>
       <p>{site.tagline}</p>
       <div class="home-links">
@@ -13,6 +14,13 @@ import { site } from '@/lib/site';
         <a class="button-link button-link--secondary" href="/tools/buck-inductor-ripple-calculator/">Buck Inductor Ripple Calculator</a>
       </div>
       <p class="muted">More tools and guides are under development.</p>
+      <div class="home-overview" aria-label="Product areas">
+        <span>Topology Designers</span>
+        <span>Engineering Calculators</span>
+        <span>Magnetics Design</span>
+        <span>Control Design</span>
+        <span>Simulation</span>
+      </div>
     </section>
   </main>
 </BaseLayout>
