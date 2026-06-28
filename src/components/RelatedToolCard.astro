@@ -1,5 +1,6 @@
 ---
 import type { ToolInfo } from '@/lib/tools';
+import { formatToolStatus } from '@/lib/tools';
 
 type Props = {
   tool: ToolInfo;
@@ -7,7 +8,7 @@ type Props = {
 };
 
 const { tool, primary = false } = Astro.props;
-const label = primary ? 'Primary Tool' : tool.status === 'planned' ? 'Planned' : 'Related Tool';
+const label = primary ? 'Primary Tool' : formatToolStatus(tool.status);
 ---
 
 {tool.status === 'available' && tool.href ? (
@@ -17,7 +18,7 @@ const label = primary ? 'Primary Tool' : tool.status === 'planned' ? 'Planned' :
     <span>{tool.description}</span>
   </a>
 ) : (
-  <article class:list={['tool-card', 'tool-card--planned', { 'tool-card--primary': primary }]} aria-label={`${tool.title} planned tool`}>
+  <article class:list={['tool-card', 'tool-card--planned', { 'tool-card--primary': primary }]} aria-label={`${tool.title} ${formatToolStatus(tool.status)} tool`}>
     <span class="tool-card__label">{label}</span>
     <strong>{tool.title}</strong>
     <span>{tool.description}</span>

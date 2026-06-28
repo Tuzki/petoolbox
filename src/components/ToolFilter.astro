@@ -1,0 +1,42 @@
+---
+import { toolCategories } from '@/data/tools';
+---
+
+<div class="tool-filter" aria-label="Tool categories" data-tool-filter>
+  {toolCategories.map((category) => (
+    <button
+      class="tool-filter__button"
+      type="button"
+      data-filter-button
+      data-filter={category.id}
+      aria-pressed={category.id === 'all' ? 'true' : 'false'}
+    >
+      {category.label}
+    </button>
+  ))}
+</div>
+
+<script>
+  const filterRoot = document.querySelector('[data-tool-filter]');
+  const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-tool-card]'));
+
+  if (filterRoot) {
+    const buttons = Array.from(filterRoot.querySelectorAll<HTMLButtonElement>('[data-filter-button]'));
+
+    const applyFilter = (filter: string) => {
+      buttons.forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.dataset.filter === filter));
+      });
+      cards.forEach((card) => {
+        const visible = filter === 'all' || card.dataset.toolCategory === filter;
+        card.hidden = !visible;
+      });
+    };
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => {
+        applyFilter(button.dataset.filter ?? 'all');
+      });
+    });
+  }
+</script>

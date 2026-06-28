@@ -1,18 +1,94 @@
 ---
+import { getCollection } from 'astro:content';
+import ToolCard from '@/components/ToolCard.astro';
+import ToolFilter from '@/components/ToolFilter.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getDirectoryTools } from '@/data/tools';
 import { site } from '@/lib/site';
+
+const directoryTools = getDirectoryTools();
+const articles = (await getCollection('articles'))
+  .filter((article) => !article.data.draft)
+  .sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime())
+  .slice(0, 3);
+
+const values = [
+  {
+    title: 'Power-electronics focused',
+    text: 'Built for converter design, magnetics, control and simulation.'
+  },
+  {
+    title: 'No registration required',
+    text: 'Use tools directly in the browser.'
+  },
+  {
+    title: 'Engineering formulas and assumptions',
+    text: 'Each tool explains its model, units and limitations.'
+  },
+  {
+    title: 'Open simulation ecosystem',
+    text: 'PULSE connects design workflows with simulation.'
+  }
+];
 ---
 
-<BaseLayout title={site.name} description={site.tagline} pathname="/">
+<BaseLayout title={site.name} description="Power electronics design tools, calculators, control workflows and simulation resources." pathname="/">
   <main class="home-shell">
-    <section class="home-intro" aria-labelledby="home-title">
-      <h1 id="home-title">PE Toolbox</h1>
-      <p>{site.tagline}</p>
-      <div class="home-links">
-        <a class="button-link" href="/articles/buck-inductor-selection/">How to Select an Inductor for a Buck Converter</a>
-        <a class="button-link button-link--secondary" href="/tools/buck-inductor-ripple-calculator/">Buck Inductor Ripple Calculator</a>
+    <section class="home-hero" aria-labelledby="home-title">
+      <p class="home-eyebrow">Power Electronics Design Tools</p>
+      <h1 id="home-title">Design power converters faster.</h1>
+      <p>Topology design, engineering calculations, magnetics, control-loop design and simulation tools for power electronics engineers.</p>
+      <a class="home-hero__link" href="#tool-directory">Explore the tools below ↓</a>
+    </section>
+
+    <section class="tool-directory" id="tool-directory" aria-labelledby="tool-directory-title">
+      <div class="section-heading">
+        <p class="section-eyebrow">Tool Directory</p>
+        <h2 id="tool-directory-title">Power electronics workflows in one place.</h2>
       </div>
-      <p class="muted">More tools and guides are under development.</p>
+      <ToolFilter />
+      <div class="tool-card-grid">
+        {directoryTools.map((tool) => <ToolCard tool={tool} />)}
+      </div>
+    </section>
+
+    <section class="home-section" aria-labelledby="why-title">
+      <div class="section-heading">
+        <p class="section-eyebrow">Why PE Toolbox?</p>
+        <h2 id="why-title">Focused on practical engineering work.</h2>
+      </div>
+      <div class="value-grid">
+        {values.map((value) => (
+          <article class="value-card">
+            <h3>{value.title}</h3>
+            <p>{value.text}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="home-section" aria-labelledby="latest-articles-title">
+      <div class="section-heading section-heading--row">
+        <div>
+          <p class="section-eyebrow">Latest Articles</p>
+          <h2 id="latest-articles-title">Engineering notes and design guides.</h2>
+        </div>
+        <a href="/articles/">View all articles →</a>
+      </div>
+      <div class="latest-article-grid">
+        {articles.map((article) => (
+          <a class="article-list__item" href={`/articles/${article.id.replace(/\.md$/, '')}/`}>
+            <span>{article.data.category}</span>
+            <strong>{article.data.title}</strong>
+            <p>{article.data.description}</p>
+            <time datetime={article.data.publishedAt.toISOString()}>{article.data.publishedAt.toLocaleDateString('en', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            })}</time>
+          </a>
+        ))}
+      </div>
     </section>
   </main>
 </BaseLayout>

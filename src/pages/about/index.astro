@@ -1,0 +1,29 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="About"
+  description="About PE Toolbox and its focus on practical power electronics engineering workflows."
+  pathname="/about/"
+>
+  <main class="page-shell about-page">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <span>About</span>
+    </nav>
+    <section class="content-panel" aria-labelledby="about-title">
+      <h1 id="about-title">About PE Toolbox</h1>
+      <p>PE Toolbox is a practical collection of design tools, calculators, control workflows and simulation resources for power electronics engineers.</p>
+      <p>The project focuses on moving engineering validation earlier and reducing the time from specifications to a working design.</p>
+      <div class="scope-list" aria-label="Current scope">
+        <span>Topology design</span>
+        <span>Engineering calculations</span>
+        <span>Magnetics</span>
+        <span>Control</span>
+        <span>PULSE simulation</span>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

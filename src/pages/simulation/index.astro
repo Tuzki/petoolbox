@@ -1,0 +1,28 @@
+---
+import ToolCard from '@/components/ToolCard.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getToolsByCategory } from '@/data/tools';
+
+const tools = getToolsByCategory('simulation');
+---
+
+<BaseLayout
+  title="Simulation"
+  description="PULSE simulation resources planned for PE Toolbox."
+  pathname="/simulation/"
+>
+  <main class="page-shell category-page">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <span>Simulation</span>
+    </nav>
+    <section aria-labelledby="simulation-title">
+      <h1 id="simulation-title">Simulation</h1>
+      <p>Simulation will introduce the PULSE workflow for schematic entry, solving and waveform inspection.</p>
+      <div class="tool-card-grid tool-card-grid--category">
+        {tools.map((tool) => <ToolCard tool={tool} />)}
+      </div>
+    </section>
+  </main>
+</BaseLayout>

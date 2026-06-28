@@ -1,16 +1,274 @@
 ---
 import { site } from '@/lib/site';
+import { languageNavigation, productNavigation, isActivePath } from '@/data/navigation';
+
+const currentPath = Astro.url.pathname;
 ---
 
-<header class="site-header">
+<header class="site-header" data-site-header>
   <div class="site-header__inner">
     <a class="site-header__brand" href="/" aria-label="PE Toolbox home">
-      <span class="site-header__mark" aria-hidden="true">PE</span>
+      <svg class="site-header__mark" viewBox="0 0 44 32" aria-hidden="true" focusable="false">
+        <path d="M3 18h7l3-8 6 16 5-20 5 12h12" />
+        <circle cx="10" cy="18" r="2" />
+        <circle cx="41" cy="18" r="2" />
+      </svg>
       <span>{site.name}</span>
     </a>
+
     <nav class="site-header__nav" aria-label="Primary navigation">
-      <a href="/articles/buck-inductor-selection/">Articles</a>
-      <a href="/tools/buck-inductor-ripple-calculator/">Tools</a>
+      {productNavigation.map((item) => (
+        <div class:list={['site-nav__item', { 'site-nav__item--has-menu': item.sections }]} data-nav-item={item.sections ? true : undefined}>
+          <a
+            class:list={['site-nav__link', { 'site-nav__link--active': isActivePath(currentPath, item.href) }]}
+            href={item.href}
+            aria-current={isActivePath(currentPath, item.href) ? 'page' : undefined}
+          >
+            {item.label}
+          </a>
+          {item.sections && (
+            <>
+              <button
+                class="site-nav__toggle"
+                type="button"
+                aria-label={`Toggle ${item.label} menu`}
+                aria-expanded="false"
+                aria-haspopup="true"
+                aria-controls={`mega-${item.id}`}
+                data-menu-toggle
+              >
+                <span aria-hidden="true">▾</span>
+              </button>
+              <div class:list={['mega-menu', `mega-menu--${item.id}`]} id={`mega-${item.id}`} data-menu-panel hidden>
+                <div class="mega-menu__grid">
+                  {item.sections.map((section) => (
+                    <section class="mega-menu__section" aria-labelledby={`mega-${item.id}-${section.label.toLowerCase().replaceAll(' ', '-')}`}>
+                      <h2 id={`mega-${item.id}-${section.label.toLowerCase().replaceAll(' ', '-')}`}>{section.label}</h2>
+                      <ul>
+                        {section.children.map((child) => (
+                          <li>
+                            {child.href ? (
+                              <a class="mega-menu__entry" href={child.href}>
+                                <span>{child.label}</span>
+                                <span class="status-pill">{child.status}</span>
+                              </a>
+                            ) : (
+                              <span class="mega-menu__entry mega-menu__entry--disabled">
+                                <span>{child.label}</span>
+                                <span class="status-pill">{child.status}</span>
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
+                <a class="mega-menu__all-link" href={item.href}>
+                  View All {item.label} <span aria-hidden="true">→</span>
+                </a>
+              </div>
+            </>
+          )}
+        </div>
+      ))}
     </nav>
+
+    <div class="site-header__language" aria-label="Language">
+      <span class="language-link language-link--active" aria-current="true">{languageNavigation[0].label}</span>
+      <span aria-hidden="true">|</span>
+      <span class="language-link language-link--disabled" aria-disabled="true" title={languageNavigation[1].title}>{languageNavigation[1].label}</span>
+    </div>
+
+    <button
+      class="mobile-menu-button"
+      type="button"
+      aria-label="Toggle navigation menu"
+      aria-expanded="false"
+      aria-controls="mobile-navigation"
+      data-mobile-menu-button
+    >
+      <span aria-hidden="true">☰</span>
+    </button>
   </div>
+
+  <nav class="mobile-nav" id="mobile-navigation" aria-label="Mobile navigation" data-mobile-nav hidden>
+    <div class="mobile-nav__inner">
+      {productNavigation.map((item) => (
+        item.sections ? (
+          <div class="mobile-nav__group">
+            <div class="mobile-nav__row">
+              <a href={item.href} class="mobile-nav__link" data-mobile-link>{item.label}</a>
+              <button
+                class="mobile-nav__toggle"
+                type="button"
+                aria-label={`Toggle ${item.label}`}
+                aria-expanded="false"
+                aria-controls={`mobile-${item.id}`}
+                data-mobile-submenu-toggle
+              >
+                <span aria-hidden="true">+</span>
+              </button>
+            </div>
+            <div class="mobile-nav__submenu" id={`mobile-${item.id}`} hidden>
+              {item.sections.flatMap((section) => section.children).map((child) => (
+                child.href ? (
+                  <a class="mobile-nav__subitem" href={child.href} data-mobile-link>
+                    <span>{child.label}</span>
+                    <span class="status-pill">{child.status}</span>
+                  </a>
+                ) : (
+                  <span class="mobile-nav__subitem mobile-nav__subitem--disabled">
+                    <span>{child.label}</span>
+                    <span class="status-pill">{child.status}</span>
+                  </span>
+                )
+              ))}
+            </div>
+          </div>
+        ) : (
+          <a class="mobile-nav__standalone" href={item.href} data-mobile-link>{item.label}</a>
+        )
+      ))}
+      <div class="mobile-nav__language" aria-label="Language">
+        <span class="language-link language-link--active" aria-current="true">{languageNavigation[0].label}</span>
+        <span aria-hidden="true">|</span>
+        <span class="language-link language-link--disabled" aria-disabled="true" title={languageNavigation[1].title}>{languageNavigation[1].label}</span>
+      </div>
+    </div>
+  </nav>
 </header>
+
+<script>
+  const header = document.querySelector('[data-site-header]');
+
+  if (header) {
+    const desktopItems = Array.from(header.querySelectorAll('[data-nav-item]'));
+    const mobileButton = header.querySelector<HTMLButtonElement>('[data-mobile-menu-button]');
+    const mobileNav = header.querySelector<HTMLElement>('[data-mobile-nav]');
+    let closeTimer: number | undefined;
+    let pointerFocusGuard = false;
+
+    const closeDesktopMenu = (item: Element | null) => {
+      const panel = item?.querySelector<HTMLElement>('[data-menu-panel]');
+      const toggle = item?.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+      if (!panel || !toggle) return;
+      panel.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+      item?.removeAttribute('data-open-source');
+      item?.classList.remove('site-nav__item--open');
+    };
+
+    const closeAllDesktopMenus = () => {
+      desktopItems.forEach((item) => closeDesktopMenu(item));
+    };
+
+    const openDesktopMenu = (item: Element, source = 'passive') => {
+      const panel = item.querySelector<HTMLElement>('[data-menu-panel]');
+      const toggle = item.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+      if (!panel || !toggle) return;
+      if (closeTimer) window.clearTimeout(closeTimer);
+      desktopItems.forEach((candidate) => {
+        if (candidate !== item) closeDesktopMenu(candidate);
+      });
+      panel.hidden = false;
+      toggle.setAttribute('aria-expanded', 'true');
+      item.setAttribute('data-open-source', source);
+      item.classList.add('site-nav__item--open');
+    };
+
+    desktopItems.forEach((item) => {
+      const toggle = item.querySelector('[data-menu-toggle]');
+      const panel = item.querySelector('[data-menu-panel]');
+      if (!toggle || !panel) return;
+
+      item.addEventListener('mouseenter', () => openDesktopMenu(item));
+      item.addEventListener('mouseleave', () => {
+        closeTimer = window.setTimeout(() => closeDesktopMenu(item), 180);
+      });
+      toggle.addEventListener('pointerdown', () => {
+        pointerFocusGuard = true;
+        window.setTimeout(() => {
+          pointerFocusGuard = false;
+        }, 0);
+      });
+      item.addEventListener('focusin', () => {
+        if (!pointerFocusGuard) openDesktopMenu(item);
+      });
+      item.addEventListener('focusout', () => {
+        closeTimer = window.setTimeout(() => {
+          if (!item.contains(document.activeElement)) closeDesktopMenu(item);
+        }, 180);
+      });
+      toggle.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (toggle.getAttribute('aria-expanded') === 'true' && item.getAttribute('data-open-source') === 'click') {
+          closeDesktopMenu(item);
+        } else {
+          openDesktopMenu(item, 'click');
+        }
+      });
+    });
+
+    const resetMobileSubmenus = () => {
+      header.querySelectorAll<HTMLButtonElement>('[data-mobile-submenu-toggle]').forEach((button) => {
+        button.setAttribute('aria-expanded', 'false');
+        const icon = button.querySelector('span');
+        if (icon) icon.textContent = '+';
+      });
+      header.querySelectorAll<HTMLElement>('.mobile-nav__submenu').forEach((submenu) => {
+        submenu.hidden = true;
+      });
+    };
+
+    const closeMobileMenu = () => {
+      if (!mobileButton || !mobileNav) return;
+      mobileNav.hidden = true;
+      mobileButton.setAttribute('aria-expanded', 'false');
+      header.classList.remove('site-header--mobile-open');
+      resetMobileSubmenus();
+    };
+
+    mobileButton?.addEventListener('click', (event) => {
+      if (!mobileButton || !mobileNav) return;
+      event.stopPropagation();
+      const willOpen = mobileButton.getAttribute('aria-expanded') !== 'true';
+      mobileNav.hidden = !willOpen;
+      mobileButton.setAttribute('aria-expanded', String(willOpen));
+      header.classList.toggle('site-header--mobile-open', willOpen);
+      if (!willOpen) resetMobileSubmenus();
+      closeAllDesktopMenus();
+    });
+
+    header.querySelectorAll('[data-mobile-submenu-toggle]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const targetId = button.getAttribute('aria-controls');
+        const submenu = targetId ? header.querySelector<HTMLElement>(`#${targetId}`) : null;
+        if (!submenu) return;
+        const willOpen = button.getAttribute('aria-expanded') !== 'true';
+        submenu.hidden = !willOpen;
+        button.setAttribute('aria-expanded', String(willOpen));
+        const icon = button.querySelector('span');
+        if (icon) icon.textContent = willOpen ? '−' : '+';
+      });
+    });
+
+    header.querySelectorAll('[data-mobile-link]').forEach((link) => {
+      link.addEventListener('click', () => closeMobileMenu());
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!header.contains(event.target as Node | null)) {
+        closeAllDesktopMenus();
+        closeMobileMenu();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeAllDesktopMenus();
+        closeMobileMenu();
+      }
+    });
+  }
+</script>

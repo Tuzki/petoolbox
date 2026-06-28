@@ -1,0 +1,28 @@
+---
+import ToolCard from '@/components/ToolCard.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getToolsByCategory } from '@/data/tools';
+
+const tools = getToolsByCategory('control');
+---
+
+<BaseLayout
+  title="Control Design"
+  description="Planned control loop design workflows for power converters."
+  pathname="/control/"
+>
+  <main class="page-shell category-page">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <span>Control Design</span>
+    </nav>
+    <section aria-labelledby="control-title">
+      <h1 id="control-title">Control Design</h1>
+      <p>Control design tools will focus on loop-shaping workflows for common converter families.</p>
+      <div class="tool-card-grid tool-card-grid--category">
+        {tools.map((tool) => <ToolCard tool={tool} />)}
+      </div>
+    </section>
+  </main>
+</BaseLayout>

@@ -5,9 +5,18 @@ import test from 'node:test';
 
 const root = process.cwd();
 const dist = join(root, 'dist');
+const homePath = join(dist, 'index.html');
 const articlePath = join(dist, 'articles', 'buck-inductor-selection', 'index.html');
 const articlesIndexPath = join(dist, 'articles', 'index.html');
 const toolPath = join(dist, 'tools', 'buck-inductor-ripple-calculator', 'index.html');
+const aboutPath = join(dist, 'about', 'index.html');
+const categoryPaths = [
+  join(dist, 'topology-designers', 'index.html'),
+  join(dist, 'tools', 'index.html'),
+  join(dist, 'magnetics', 'index.html'),
+  join(dist, 'control', 'index.html'),
+  join(dist, 'simulation', 'index.html')
+];
 
 function read(path) {
   return readFileSync(path, 'utf8');
@@ -51,10 +60,10 @@ function parseFrontmatter(file) {
   return data;
 }
 
-test('production build emits the article and tool pages', () => {
-  assert.ok(existsSync(articlePath), 'article page was not generated');
-  assert.ok(existsSync(articlesIndexPath), 'articles index page was not generated');
-  assert.ok(existsSync(toolPath), 'tool placeholder page was not generated');
+test('production build emits all public routes in private mode', () => {
+  for (const path of [homePath, articlePath, articlesIndexPath, toolPath, aboutPath, ...categoryPaths]) {
+    assert.ok(existsSync(path), `${path} was not generated`);
+  }
 });
 
 test('draft articles are not generated in production output', () => {
@@ -82,15 +91,98 @@ test('article frontmatter includes required metadata fields', () => {
   }
 });
 
-test('article page includes automatic tool links and private noindex', () => {
+test('header preserves fixed six-column product information architecture', () => {
+  const html = read(homePath);
+  const nav = html.match(/<nav class="site-header__nav"[\s\S]*?<\/nav>/)?.[0] ?? '';
+  const topLevelLabels = Array.from(nav.matchAll(/class="site-nav__link[^"]*"[^>]*>\s*([^<]+)\s*<\/a>/g)).map((match) => match[1].trim());
+
+  assert.deepEqual(topLevelLabels, [
+    'Topology Designers',
+    'Engineering Calculators',
+    'Magnetics Design',
+    'Control Design',
+    'Simulation',
+    'Articles'
+  ]);
+  assert.equal(topLevelLabels.includes('Tools'), false);
+  assert.equal(topLevelLabels.includes('About'), false);
+  assert.equal((html.match(/<button[^>]+data-menu-toggle/g) ?? []).length, 2);
+  assert.match(html, /id="mega-topology-designers"/);
+  assert.match(html, /id="mega-engineering-calculators"/);
+  assert.match(html, /Non-Isolated/);
+  assert.match(html, /AC-DC/);
+  assert.match(html, /Isolated/);
+  assert.match(html, /Resonant/);
+  assert.match(html, /Basic Circuits/);
+  assert.match(html, /Power Stage/);
+  assert.match(html, /Protection/);
+  assert.match(html, /View All Topology Designers/);
+  assert.match(html, /View All Engineering Calculators/);
+});
+
+test('language controls are non-clickable placeholders', () => {
+  const html = read(homePath);
+  assert.match(html, /<span class="language-link language-link--active" aria-current="true">EN<\/span>/);
+  assert.equal(html.includes('class="language-link language-link--active" href='), false);
+  assert.match(html, /aria-disabled="true" title="Chinese version coming soon"/);
+  assert.equal(html.includes('href="/zh'), false);
+});
+
+test('homepage renders complete tool directory and true statuses', () => {
+  const html = read(homePath);
+  for (const label of ['All', 'Topology', 'Calculators', 'Magnetics', 'Control', 'Simulation']) {
+    assert.match(html, new RegExp(`>\\s*${label}\\s*<`));
+  }
+
+  const expectedTools = [
+    'Buck Converter Designer',
+    'Boost Converter Designer',
+    'Boost PFC Designer',
+    'Flyback Converter Designer',
+    'LLC Resonant Converter Designer',
+    'RC Time Constant Calculator',
+    'Voltage Divider Calculator',
+    'Buck Inductor Ripple Calculator',
+    'RC Snubber Calculator',
+    'RCD Snubber Calculator',
+    'Magnetics Designer',
+    'Buck Control Loop Designer',
+    'Boost Control Loop Designer',
+    'Boost PFC Control Loop Designer',
+    'Flyback Control Loop Designer',
+    'LLC Control Loop Designer',
+    'PULSE'
+  ];
+
+  for (const title of expectedTools) {
+    assert.match(html, new RegExp(title.replace(/[()]/g, '\\$&')));
+  }
+
+  assert.match(html, /aria-pressed="true"[\s\S]*>\s*All\s*</);
+  assert.match(html, /data-tool-status="coming-soon"[\s\S]*Buck Inductor Ripple Calculator/);
+  assert.equal(html.includes('Buck Inductor Ripple Calculator</strong><span class="directory-card__description"'), true);
+  assert.equal(html.includes('status-pill status-pill--available'), false);
+  assert.match(html, /data-tool-status="beta"[\s\S]*PULSE/);
+  assert.match(html, /How to Select an Inductor for a Buck Converter/);
+  assert.match(html, /View all articles/);
+});
+
+test('coming soon tools do not create fake links', () => {
+  const html = read(homePath);
+  assert.equal(html.includes('href="/tools/rc-time-constant'), false);
+  assert.equal(html.includes('href="/topology-designers/buck-converter-designer'), false);
+  assert.equal(html.includes('href="/tools/buck-inductor-ripple-calculator/" data-tool-card'), false);
+});
+
+test('article page includes automatic tool cards and private noindex', () => {
   const html = read(articlePath);
   assert.match(html, /Buck Inductor Ripple Calculator/);
   assert.match(html, /Output Capacitor Calculator/);
   assert.match(html, /Buck Converter Designer/);
-  assert.match(html, /href="\/tools\/buck-inductor-ripple-calculator\/"/);
+  assert.equal(html.includes('href="/tools/buck-inductor-ripple-calculator/">Buck Inductor Ripple Calculator'), false);
   assert.equal(html.includes('href="/tools/buck-inductor-ripple-calculator/">Output Capacitor Calculator'), false);
   assert.equal(html.includes('href="/tools/buck-inductor-ripple-calculator/">Buck Converter Designer'), false);
-  assert.match(html, />Planned</);
+  assert.match(html, />Coming Soon</);
   assert.match(html, /rel="canonical" href="https:\/\/petoolbox\.tech\/articles\/buck-inductor-selection\/"/);
   assert.match(html, /name="robots" content="noindex, nofollow"/);
 });
@@ -100,7 +192,6 @@ test('article page uses filename slug, hides self recommendations, and has corre
   assert.match(html, /Home/);
   assert.match(html, /href="\/articles\/">Articles<\/a>/);
   assert.equal(html.includes('class="related-articles"'), false);
-  assert.ok(existsSync(join(dist, 'articles', 'buck-inductor-selection', 'index.html')));
 });
 
 test('articles index lists non-draft articles', () => {
@@ -111,6 +202,32 @@ test('articles index lists non-draft articles', () => {
   assert.match(html, /name="robots" content="noindex, nofollow"/);
 });
 
+test('category and about pages have titles and private noindex', () => {
+  const expected = [
+    [categoryPaths[0], 'Topology Designers'],
+    [categoryPaths[1], 'Engineering Calculators'],
+    [categoryPaths[2], 'Magnetics Design'],
+    [categoryPaths[3], 'Control Design'],
+    [categoryPaths[4], 'Simulation'],
+    [aboutPath, 'About PE Toolbox']
+  ];
+
+  for (const [path, title] of expected) {
+    const html = read(path);
+    assert.match(html, new RegExp(`<h1[^>]*>${title}</h1>`));
+    assert.equal((html.match(/<h1/g) ?? []).length, 1);
+    assert.match(html, /name="robots" content="noindex, nofollow"/);
+  }
+});
+
+test('about appears in footer but not header', () => {
+  const html = read(homePath);
+  const header = html.match(/<header[\s\S]*?<\/header>/)?.[0] ?? '';
+  const footer = html.match(/<footer[\s\S]*?<\/footer>/)?.[0] ?? '';
+  assert.equal(header.includes('About'), false);
+  assert.match(footer, /href="\/about\/">About<\/a>/);
+});
+
 test('robots.txt disallows crawling in private mode', () => {
   const robots = read(join(dist, 'robots.txt'));
   assert.match(robots, /User-agent: \*/);
@@ -118,12 +235,7 @@ test('robots.txt disallows crawling in private mode', () => {
 });
 
 test('internal links in generated pages resolve to generated files', () => {
-  const htmlFiles = [
-    join(dist, 'index.html'),
-    articlesIndexPath,
-    articlePath,
-    toolPath
-  ];
+  const htmlFiles = findHtmlFiles(dist);
 
   for (const file of htmlFiles) {
     const html = read(file);
@@ -139,3 +251,23 @@ test('internal links in generated pages resolve to generated files', () => {
     }
   }
 });
+
+test('dark mode is not exposed', () => {
+  assert.equal(/dark mode|theme toggle/i.test(read(homePath)), false);
+});
+
+function findHtmlFiles(directory) {
+  const entries = readdirSync(directory, { withFileTypes: true });
+  const files = [];
+
+  for (const entry of entries) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...findHtmlFiles(path));
+    } else if (entry.isFile() && entry.name.endsWith('.html')) {
+      files.push(path);
+    }
+  }
+
+  return files;
+}

@@ -1,0 +1,27 @@
+---
+import { formatToolStatus, type ToolItem } from '@/data/tools';
+
+type Props = {
+  tool: ToolItem;
+};
+
+const { tool } = Astro.props;
+const statusLabel = formatToolStatus(tool.status);
+const isLinked = Boolean(tool.href && tool.status !== 'coming-soon');
+---
+
+{isLinked ? (
+  <a class:list={['directory-card', `directory-card--${tool.status}`]} href={tool.href} data-tool-card data-tool-category={tool.category} data-tool-status={tool.status}>
+    <span class="directory-card__symbol">{tool.symbol}</span>
+    <strong>{tool.title}</strong>
+    <span class="directory-card__description">{tool.description}</span>
+    <span class:list={['status-pill', `status-pill--${tool.status}`]}>{statusLabel}</span>
+  </a>
+) : (
+  <article class:list={['directory-card', `directory-card--${tool.status}`]} data-tool-card data-tool-category={tool.category} data-tool-status={tool.status}>
+    <span class="directory-card__symbol">{tool.symbol}</span>
+    <strong>{tool.title}</strong>
+    <span class="directory-card__description">{tool.description}</span>
+    <span class:list={['status-pill', `status-pill--${tool.status}`]}>{statusLabel}</span>
+  </article>
+)}
