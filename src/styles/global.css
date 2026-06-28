@@ -12,6 +12,8 @@
   --color-blue-dark: #084b85;
   --color-blue-soft: #e8f2fb;
   --color-focus-ring: #8bbce8;
+  --nav-bg: #fcfdfe;
+  --nav-border: #dce5ee;
   --color-grid-line: rgb(13 95 166 / 4.8%);
   --color-grid-line-strong: rgb(13 95 166 / 7%);
   --shadow-small: 0 6px 18px rgb(23 33 43 / 6%);
@@ -66,8 +68,9 @@ button:focus-visible {
 .site-header {
   position: relative;
   z-index: 50;
-  background: rgb(255 255 255 / 96%);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--nav-border);
+  box-shadow: 0 1px 2px rgb(35 55 75 / 4%);
 }
 
 .site-header__inner,
@@ -142,9 +145,8 @@ button:focus-visible {
 
 .site-nav__link:hover,
 .site-nav__link--active {
-  color: var(--color-blue);
-  border-bottom-color: rgb(13 95 166 / 45%);
-  background: rgb(232 242 251 / 42%);
+  color: #1769aa;
+  border-bottom-color: #1769aa;
 }
 
 .site-nav__toggle,
@@ -181,9 +183,9 @@ button:focus-visible {
   left: 50%;
   width: min(720px, calc(100vw - 32px));
   transform: translateX(-50%);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--nav-border);
   border-radius: var(--radius-large);
-  background: var(--color-surface-elevated);
+  background: #ffffff;
   box-shadow: var(--shadow-small);
   padding: 22px;
   z-index: 100;
@@ -315,9 +317,9 @@ a.mobile-nav__subitem:hover {
   width: 40px;
   height: 40px;
   place-items: center;
-  border-color: var(--color-border);
+  border-color: var(--nav-border);
   border-radius: var(--radius-small);
-  background: var(--color-surface-elevated);
+  background: #ffffff;
   font-size: 1.25rem;
 }
 
@@ -326,12 +328,12 @@ a.mobile-nav__subitem:hover {
 .mobile-nav__toggle:hover,
 .mobile-nav__toggle[aria-expanded="true"] {
   color: var(--color-blue);
-  background: var(--color-blue-soft);
+  background: rgb(232 242 251 / 55%);
 }
 
 .mobile-nav {
-  border-top: 1px solid var(--color-border);
-  background: var(--color-surface-elevated);
+  border-top: 1px solid var(--nav-border);
+  background: var(--nav-bg);
   box-shadow: var(--shadow-small);
 }
 
