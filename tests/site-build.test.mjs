@@ -190,12 +190,16 @@ test('voltage sensing tool renders default design and private noindex', () => {
   assert.match(html, /E24/);
   assert.match(html, /0805/);
   assert.match(html, /Number of Series Upper Resistors/);
+  assert.match(html, /value="6"/);
   assert.match(html, /1 Lower/);
   assert.match(html, /2 Lower in Parallel/);
+  assert.match(html, /Calculated Design/);
   assert.match(html, /Recommended Upper Resistor String/);
   assert.match(html, /Recommended Lower Resistor Branch/);
   assert.match(html, /ADC Range Used/);
-  assert.match(html, /Nominal Accuracy/);
+  assert.match(html, /Standard-Value Fit/);
+  assert.match(html, /Deviation from target/);
+  assert.match(html, /The resistor search favors a practical lower resistance/);
   assert.match(html, /Divider Current/);
   assert.match(html, /Divider Power/);
   assert.match(html, /Input Resolution/);
@@ -204,6 +208,8 @@ test('voltage sensing tool renders default design and private noindex', () => {
   assert.match(html, /Package ratings shown here are typical values for preliminary screening only/);
   assert.match(html, /name="robots" content="noindex, nofollow"/);
   assert.equal(/Calculate<\/button>|Calculate<\/a>/.test(html), false);
+  assert.equal(html.includes('Recommended Design'), false);
+  assert.equal(html.includes('Nominal Accuracy'), false);
 });
 
 test('article page includes automatic tool cards and private noindex', () => {

@@ -18,7 +18,7 @@ const defaultInputs: VoltageSensingInputs = {
   adcResolutionBits: 10,
   resistorSeries: 'E24',
   resistorSize: '0805',
-  upperResistorCount: 5,
+  upperResistorCount: 6,
   topology: 'single-lower'
 };
 
@@ -140,13 +140,16 @@ const description = 'Design a high-voltage resistor divider for ADC sensing. Cal
           The upper side is one high-voltage resistor string. In the parallel mode, the two lower resistors have the same
           value and create half the equivalent resistance.
         </p>
+        <p class="tool-note">
+          The resistor search favors a practical lower resistance to balance ADC source impedance and divider power.
+        </p>
       </section>
 
       <section class="tool-results" aria-live="polite">
         <article class="tool-result-card tool-result-card--primary">
           <div class="tool-result-card__heading">
             <div>
-              <p class="category-eyebrow">Recommended Design</p>
+              <p class="category-eyebrow">Calculated Design</p>
               <h2>Standard resistor combination</h2>
             </div>
             <span class:list={['tool-check-pill', `tool-check-pill--${defaultOverallStatus.toLowerCase()}`]} data-output="overallStatus">{defaultOverallStatus}</span>
@@ -183,9 +186,9 @@ const description = 'Design a high-voltage resistor divider for ADC sensing. Cal
               <strong data-output="scalingRatio">{defaultResult.scalingRatio.toFixed(1)} : 1</strong>
             </div>
             <div class="metric-tile">
-              <span>Nominal Accuracy</span>
+              <span>Standard-Value Fit</span>
               <strong data-output="nominalAccuracy">{defaultResult.nominalAccuracyPercent.toFixed(3)}%</strong>
-              <small data-output="valueFitError">Value-fit error: {defaultResult.valueFitErrorPercent >= 0 ? '+' : ''}{defaultResult.valueFitErrorPercent.toFixed(3)}%</small>
+              <small data-output="valueFitError">Deviation from target: {defaultResult.valueFitErrorPercent >= 0 ? '+' : ''}{defaultResult.valueFitErrorPercent.toFixed(3)}%</small>
             </div>
             <div class="metric-tile">
               <span>Input Resolution</span>
@@ -202,8 +205,9 @@ const description = 'Design a high-voltage resistor divider for ADC sensing. Cal
           </div>
 
           <p class="tool-note">
-            Nominal accuracy only represents standard-value fitting error. It does not include resistor tolerance,
-            temperature coefficient, ADC error, or reference-voltage error.
+            Standard-value fit only indicates how closely the selected E24 or E96 resistor combination matches the 90%
+            ADC utilization target. It does not include resistor tolerance, temperature coefficient, ADC error, or
+            reference-voltage error.
           </p>
         </article>
 
@@ -352,7 +356,7 @@ const description = 'Design a high-voltage resistor divider for ADC sensing. Cal
         text('adcUtilization', `${(result.adcUtilization * 100).toFixed(1)}%`);
         text('scalingRatio', `${result.scalingRatio.toFixed(1)} : 1`);
         text('nominalAccuracy', `${result.nominalAccuracyPercent.toFixed(3)}%`);
-        text('valueFitError', `Value-fit error: ${result.valueFitErrorPercent >= 0 ? '+' : ''}${result.valueFitErrorPercent.toFixed(3)}%`);
+        text('valueFitError', `Deviation from target: ${result.valueFitErrorPercent >= 0 ? '+' : ''}${result.valueFitErrorPercent.toFixed(3)}%`);
         text('inputResolution', formatResolution(result.inputResolutionVPerCount));
         text('dividerCurrent', formatCurrent(result.dividerCurrentA));
         text('dividerPower', formatPower(result.dividerPowerW));

@@ -23,7 +23,7 @@ const defaultInputs = {
   adcResolutionBits: 10,
   resistorSeries: 'E24',
   resistorSize: '0805',
-  upperResistorCount: 5,
+  upperResistorCount: 6,
   topology: 'single-lower'
 };
 
@@ -76,6 +76,9 @@ test('default parameters generate a valid single-lower design from actual select
   closeTo(result.lowerPowerEachW, expectedVadc * expectedVadc / result.lowerEachOhms);
   closeTo(result.valueFitErrorPercent, fitErrorPercent);
   closeTo(result.nominalAccuracyPercent, 100 - Math.abs(fitErrorPercent));
+  assert.notEqual(result.checks.find((check) => check.id === 'upper-voltage')?.status, 'fail');
+  assert.ok(result.upperVoltageEachV <= voltageSensing.resistorPackageRatings[defaultInputs.resistorSize].workingVoltageV);
+  assert.equal(result.checks.some((check) => check.status === 'fail'), false);
 });
 
 test('parallel-lower mode uses physical resistor value for each lower resistor power', () => {

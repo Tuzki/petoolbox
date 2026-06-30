@@ -181,7 +181,11 @@ try {
       upperString: document.querySelector('[data-output="upperString"]')?.textContent?.trim() ?? '',
       lowerBranch: document.querySelector('[data-output="lowerBranch"]')?.textContent?.trim() ?? '',
       flowCode: document.querySelector('[data-output="flowCode"]')?.textContent?.trim() ?? '',
-      nominalAccuracy: document.querySelector('[data-output="nominalAccuracy"]')?.textContent?.trim() ?? '',
+      standardValueFit: document.querySelector('[data-output="nominalAccuracy"]')?.textContent?.trim() ?? '',
+      overallStatus: document.querySelector('[data-output="overallStatus"]')?.textContent?.trim() ?? '',
+      bodyText: document.body.textContent ?? '',
+      firmwareCodePanelTop: document.querySelector('.code-panel code')?.getBoundingClientRect().top ?? 0,
+      copyButtonBottom: document.querySelector('[data-copy-code]')?.getBoundingClientRect().bottom ?? 0,
       dividerCurrent: document.querySelector('[data-output="dividerCurrent"]')?.textContent?.trim() ?? '',
       dividerPower: document.querySelector('[data-output="dividerPower"]')?.textContent?.trim() ?? '',
       inputResolution: document.querySelector('[data-output="inputResolution"]')?.textContent?.trim() ?? '',
@@ -196,16 +200,24 @@ try {
     assert.equal(defaultToolResult.adcResolutionBits, '10', `${viewport.name} default bits`);
     assert.equal(defaultToolResult.resistorSeries, 'E24', `${viewport.name} default series`);
     assert.equal(defaultToolResult.resistorSize, '0805', `${viewport.name} default size`);
-    assert.equal(defaultToolResult.upperResistorCount, '5', `${viewport.name} default upper count`);
-    assert.match(defaultToolResult.upperString, /5 × /, `${viewport.name} upper recommendation`);
+    assert.equal(defaultToolResult.upperResistorCount, '6', `${viewport.name} default upper count`);
+    assert.match(defaultToolResult.upperString, /6 × /, `${viewport.name} upper recommendation`);
     assert.match(defaultToolResult.lowerBranch, /1 × /, `${viewport.name} lower recommendation`);
     assert.match(defaultToolResult.flowCode, /\d+ \/ 1023/, `${viewport.name} adc code`);
-    assert.match(defaultToolResult.nominalAccuracy, /%/, `${viewport.name} nominal accuracy`);
+    assert.match(defaultToolResult.standardValueFit, /%/, `${viewport.name} standard-value fit`);
+    assert.notEqual(defaultToolResult.overallStatus, 'Fail', `${viewport.name} default status is not fail`);
+    assert.match(defaultToolResult.bodyText, /Calculated Design/, `${viewport.name} calculated design label`);
+    assert.match(defaultToolResult.bodyText, /Standard-Value Fit/, `${viewport.name} fit label`);
+    assert.match(defaultToolResult.bodyText, /Deviation from target/, `${viewport.name} deviation label`);
+    assert.match(defaultToolResult.bodyText, /resistor search favors a practical lower resistance/i, `${viewport.name} search strategy note`);
+    assert.equal(defaultToolResult.bodyText.includes('Recommended Design'), false, `${viewport.name} no recommended design label`);
+    assert.equal(defaultToolResult.bodyText.includes('Nominal Accuracy'), false, `${viewport.name} no nominal accuracy label`);
     assert.match(defaultToolResult.dividerCurrent, /µA|mA|A/, `${viewport.name} divider current`);
     assert.match(defaultToolResult.dividerPower, /µW|mW|W/, `${viewport.name} divider power`);
     assert.match(defaultToolResult.inputResolution, /µV\/LSB|mV\/LSB|V\/LSB/, `${viewport.name} input resolution`);
     assert.equal(defaultToolResult.checks, 4, `${viewport.name} engineering checks`);
     assert.match(defaultToolResult.firmwareCode, /VIN_PER_COUNT/, `${viewport.name} firmware code`);
+    assert.ok(defaultToolResult.copyButtonBottom <= defaultToolResult.firmwareCodePanelTop, `${viewport.name} copy button does not cover code`);
 
     await toolPage.locator('[data-input="maximumInputVoltage"]').fill('400');
     const updatedToolResult = await toolPage.evaluate(() => ({
