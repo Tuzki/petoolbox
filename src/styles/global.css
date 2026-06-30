@@ -1095,6 +1095,196 @@ a.directory-card:hover {
   font-size: 0.78rem;
 }
 
+.rc-filter-tool .tool-workbench__header p + p {
+  margin-top: 6px;
+}
+
+.rc-filter-tool .rc-source-fields {
+  display: grid;
+  gap: 12px;
+}
+
+.rc-filter-tool .rc-source-fields[hidden] {
+  display: none;
+}
+
+.rc-filter-tool .rc-input-section {
+  margin-top: 20px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 18px;
+}
+
+.rc-filter-tool .rc-input-section h3 {
+  margin: 0 0 12px;
+  color: var(--color-text);
+  font-size: 0.96rem;
+  line-height: 1.35;
+}
+
+.tool-field__hint {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.rc-filter-tool .tool-check-pill--good {
+  border-color: #a8d9c4;
+  background: #edf9f3;
+  color: #146345;
+}
+
+.rc-filter-tool .tool-check-pill--warn {
+  border-color: #e4d39b;
+  background: #fff8df;
+  color: #765a00;
+}
+
+.rc-filter-tool .tool-check-pill--bad {
+  border-color: #ebb0b0;
+  background: #fff0f0;
+  color: #943232;
+}
+
+.rc-overview {
+  display: grid;
+  gap: 16px;
+}
+
+.rc-overview > p {
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+.rc-diagram {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background:
+    linear-gradient(rgb(148 163 184 / 8%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(148 163 184 / 8%) 1px, transparent 1px),
+    var(--color-surface-elevated);
+  background-size: 24px 24px;
+}
+
+.rc-diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 210px;
+}
+
+.rc-diagram line,
+.rc-diagram polyline {
+  fill: none;
+  stroke: var(--color-text);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rc-diagram circle {
+  fill: var(--color-blue);
+}
+
+.rc-diagram rect {
+  fill: var(--color-surface);
+  stroke: var(--color-border-strong);
+  stroke-width: 2;
+}
+
+.rc-diagram__label {
+  fill: var(--color-text);
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.rc-diagram__muted {
+  fill: var(--color-muted);
+  font-size: 13px;
+}
+
+.rc-diagram__accent {
+  fill: var(--color-blue);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.rc-chart-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.rc-chart-panel .tool-result-card__heading p {
+  margin: 6px 0 0;
+  color: var(--color-muted);
+  line-height: 1.55;
+}
+
+.rc-chart-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.rc-chart-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+}
+
+.rc-chart-card__title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--color-border);
+  padding: 10px 12px;
+}
+
+.rc-chart-card__title strong {
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.rc-chart-card__title span {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
+.rc-chart-card canvas {
+  display: block;
+  width: 100%;
+  height: 260px;
+  background: var(--color-surface);
+}
+
+.rc-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 16px;
+  margin-top: 14px;
+}
+
+.rc-detail-grid span,
+.rc-detail-grid strong {
+  min-width: 0;
+  border-bottom: 1px solid var(--color-border);
+  padding: 10px 0;
+  font-size: 0.9rem;
+}
+
+.rc-detail-grid span {
+  color: var(--color-muted);
+}
+
+.rc-detail-grid strong {
+  color: var(--color-text);
+  text-align: right;
+}
+
 .content-panel p + p {
   margin-top: 12px;
 }
@@ -1308,6 +1498,10 @@ h1 {
   .tool-results__bottom {
     grid-template-columns: 1fr;
   }
+
+  .rc-filter-tool .tool-segmented {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1364,6 +1558,20 @@ h1 {
 
   .conversion-flow {
     justify-content: flex-start;
+  }
+
+  .rc-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rc-detail-grid strong {
+    padding-top: 0;
+    text-align: left;
+  }
+
+  .rc-chart-card__title {
+    align-items: start;
+    flex-direction: column;
   }
 
   .directory-card {

@@ -10,6 +10,7 @@ const articlePath = join(dist, 'articles', 'buck-inductor-selection', 'index.htm
 const articlesIndexPath = join(dist, 'articles', 'index.html');
 const toolPath = join(dist, 'tools', 'buck-inductor-ripple-calculator', 'index.html');
 const voltageSensingToolPath = join(dist, 'tools', 'voltage-sensing-adc-scaling', 'index.html');
+const sensingRcFilterToolPath = join(dist, 'tools', 'sensing-rc-filter-designer', 'index.html');
 const aboutPath = join(dist, 'about', 'index.html');
 const categoryPaths = [
   join(dist, 'topology-designers', 'index.html'),
@@ -62,7 +63,7 @@ function parseFrontmatter(file) {
 }
 
 test('production build emits all public routes in private mode', () => {
-  for (const path of [homePath, articlePath, articlesIndexPath, toolPath, voltageSensingToolPath, aboutPath, ...categoryPaths]) {
+  for (const path of [homePath, articlePath, articlesIndexPath, toolPath, voltageSensingToolPath, sensingRcFilterToolPath, aboutPath, ...categoryPaths]) {
     assert.ok(existsSync(path), `${path} was not generated`);
   }
 });
@@ -144,6 +145,7 @@ test('homepage renders complete tool directory and true statuses', () => {
     'RC Time Constant Calculator',
     'Voltage Divider Calculator',
     'Voltage Sensing & ADC Scaling',
+    'Sensing RC Filter Designer',
     'Buck Inductor Ripple Calculator',
     'RC Snubber Calculator',
     'RCD Snubber Calculator',
@@ -164,6 +166,7 @@ test('homepage renders complete tool directory and true statuses', () => {
   assert.match(html, /aria-pressed="true"[\s\S]*>\s*All\s*</);
   assert.match(html, /data-tool-status="coming-soon"[\s\S]*Buck Inductor Ripple Calculator/);
   assert.match(html, /data-tool-status="available"[\s\S]*Voltage Sensing &amp; ADC Scaling/);
+  assert.match(html, /data-tool-status="available"[\s\S]*Sensing RC Filter Designer/);
   assert.equal(html.includes('Buck Inductor Ripple Calculator</strong><span class="directory-card__description"'), true);
   assert.match(html, /status-pill status-pill--available/);
   assert.match(html, /data-tool-status="beta"[\s\S]*PULSE/);
@@ -177,6 +180,38 @@ test('coming soon tools do not create fake links', () => {
   assert.equal(html.includes('href="/topology-designers/buck-converter-designer'), false);
   assert.equal(html.includes('href="/tools/buck-inductor-ripple-calculator/" data-tool-card'), false);
   assert.match(html, /href="\/tools\/voltage-sensing-adc-scaling\/" data-tool-card/);
+  assert.match(html, /href="\/tools\/sensing-rc-filter-designer\/" data-tool-card/);
+});
+
+test('sensing rc filter tool renders default model and private noindex', () => {
+  const html = read(sensingRcFilterToolPath);
+  assert.match(html, /<h1[^>]*>Sensing RC Filter Designer<\/h1>/);
+  assert.match(html, /Design and evaluate a first-order RC filter/);
+  assert.match(html, /Resistor divider/);
+  assert.match(html, /Voltage-output source/);
+  assert.match(html, /Upper Resistance/);
+  assert.match(html, /value="100"/);
+  assert.match(html, /Lower Resistance/);
+  assert.match(html, /value="4.99"/);
+  assert.match(html, /Filter Resistor/);
+  assert.match(html, /Filter Capacitor/);
+  assert.match(html, /Signal Frequency/);
+  assert.match(html, /Noise Frequency/);
+  assert.match(html, /Max Allowed Signal Loss/);
+  assert.match(html, /Desired Noise Attenuation/);
+  assert.match(html, /GOOD BALANCE/);
+  assert.match(html, /Cutoff Frequency/);
+  assert.match(html, /Noise Attenuation/);
+  assert.match(html, /Signal Attenuation/);
+  assert.match(html, /Signal Phase Delay/);
+  assert.match(html, /10-90% Rise Time/);
+  assert.match(html, /1% Settling Time/);
+  assert.match(html, /Frequency Response/);
+  assert.match(html, /Magnitude Response/);
+  assert.match(html, /Phase Response/);
+  assert.match(html, /This tool uses an ideal first-order RC model/);
+  assert.match(html, /name="robots" content="noindex, nofollow"/);
+  assert.equal(/ADC resolution|sample capacitor|SAR ADC|LSB error/i.test(html), false);
 });
 
 test('voltage sensing tool renders default design and private noindex', () => {

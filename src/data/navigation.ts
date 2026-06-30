@@ -44,7 +44,7 @@ export const productNavigation: NavigationItem[] = [
     label: 'Engineering Calculators',
     href: '/tools/',
     sections: [
-      { label: 'Basic Circuits', children: [toolItem('rc-time-constant-calculator'), toolItem('voltage-divider-calculator'), toolItem('voltage-sensing-adc-scaling')] },
+      { label: 'Basic Circuits', children: [toolItem('rc-time-constant-calculator'), toolItem('voltage-divider-calculator'), toolItem('voltage-sensing-adc-scaling'), toolItem('sensing-rc-filter-designer')] },
       { label: 'Power Stage', children: [toolItem('buck-inductor-ripple-calculator')] },
       { label: 'Protection', children: [toolItem('rc-snubber-calculator'), toolItem('rcd-snubber-calculator')] }
     ]

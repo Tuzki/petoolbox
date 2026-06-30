@@ -88,6 +88,15 @@ export const tools: ToolItem[] = [
     href: '/tools/voltage-sensing-adc-scaling/'
   },
   {
+    id: 'sensing-rc-filter-designer',
+    title: 'Sensing RC Filter Designer',
+    category: 'calculators',
+    description: 'Design a first-order RC filter for voltage, current and temperature sensing signal chains.',
+    symbol: 'RC',
+    status: 'available',
+    href: '/tools/sensing-rc-filter-designer/'
+  },
+  {
     id: 'buck-inductor-ripple-calculator',
     title: 'Buck Inductor Ripple Calculator',
     category: 'calculators',

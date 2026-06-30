@@ -54,6 +54,7 @@ try {
         buckCardText: Array.from(document.querySelectorAll('[data-tool-card]')).find((card) => card.textContent?.includes('Buck Inductor Ripple Calculator'))?.textContent ?? '',
         linkedBuckCards: Array.from(document.querySelectorAll('a.directory-card')).filter((card) => card.textContent?.includes('Buck Inductor Ripple Calculator')).length,
         linkedVoltageSensingCards: Array.from(document.querySelectorAll('a.directory-card')).filter((card) => card.textContent?.includes('Voltage Sensing & ADC Scaling')).length,
+        linkedRcFilterCards: Array.from(document.querySelectorAll('a.directory-card')).filter((card) => card.textContent?.includes('Sensing RC Filter Designer')).length,
         latestArticle: document.body.textContent?.includes('How to Select an Inductor for a Buck Converter') ?? false
       };
     });
@@ -76,13 +77,14 @@ try {
     assert.equal(homeResult.headerHasAbout, false, `${viewport.name} no top-level About`);
     assert.deepEqual(homeResult.filterLabels, ['All', 'Topology', 'Calculators', 'Magnetics', 'Control', 'Simulation']);
     assert.equal(homeResult.pressedFilter, 'All', `${viewport.name} all active`);
-    assert.equal(homeResult.toolCards, 18, `${viewport.name} full MVP cards`);
+    assert.equal(homeResult.toolCards, 19, `${viewport.name} full MVP cards`);
     assert.equal(homeResult.comingSoonCards, 16, `${viewport.name} coming soon count`);
-    assert.equal(homeResult.availableCards, 1, `${viewport.name} available count`);
+    assert.equal(homeResult.availableCards, 2, `${viewport.name} available count`);
     assert.equal(homeResult.betaCards, 1, `${viewport.name} beta count`);
     assert.match(homeResult.buckCardText, /Coming Soon/, `${viewport.name} buck coming soon`);
     assert.equal(homeResult.linkedBuckCards, 0, `${viewport.name} buck card is not link`);
     assert.equal(homeResult.linkedVoltageSensingCards, 1, `${viewport.name} voltage sensing card is link`);
+    assert.equal(homeResult.linkedRcFilterCards, 1, `${viewport.name} rc filter card is link`);
     assert.equal(homeResult.latestArticle, true, `${viewport.name} latest article`);
     assert.equal(homeResult.activeLanguageTag, 'span', `${viewport.name} EN not link`);
     assert.equal(homeResult.activeLanguageHref, null, `${viewport.name} EN no href`);
@@ -97,7 +99,7 @@ try {
       visibleCards: Array.from(document.querySelectorAll('[data-tool-card]')).filter((card) => !(card instanceof HTMLElement) || !card.hidden).length
     }));
     assert.equal(filterResult.pressed, 'Calculators', `${viewport.name} calculators filter active`);
-    assert.equal(filterResult.visibleCards, 6, `${viewport.name} calculators filter count`);
+    assert.equal(filterResult.visibleCards, 7, `${viewport.name} calculators filter count`);
 
     if (viewport.width > 1180) {
       const topologyToggle = page.locator('[aria-controls="mega-topology-designers"]');
@@ -114,9 +116,11 @@ try {
       assert.equal(await page.locator('#mega-engineering-calculators').isVisible(), true, `${viewport.name} calculators menu visible`);
       assert.match(await page.locator('#mega-engineering-calculators').textContent(), /Buck Inductor Ripple Calculator/);
       assert.match(await page.locator('#mega-engineering-calculators').textContent(), /Voltage Sensing & ADC Scaling/);
+      assert.match(await page.locator('#mega-engineering-calculators').textContent(), /Sensing RC Filter Designer/);
       assert.match(await page.locator('#mega-engineering-calculators').textContent(), /Coming Soon/);
       assert.equal(await page.locator('#mega-engineering-calculators a[href="/tools/buck-inductor-ripple-calculator/"]').count(), 1, `${viewport.name} buck menu link`);
       assert.equal(await page.locator('#mega-engineering-calculators a[href="/tools/voltage-sensing-adc-scaling/"]').count(), 1, `${viewport.name} voltage sensing menu link`);
+      assert.equal(await page.locator('#mega-engineering-calculators a[href="/tools/sensing-rc-filter-designer/"]').count(), 1, `${viewport.name} rc filter menu link`);
       await page.mouse.click(20, 220);
       assert.equal(await page.locator('#mega-engineering-calculators').isVisible(), false, `${viewport.name} outside click closes calculators`);
     } else {
@@ -236,9 +240,76 @@ try {
       fullPage: true
     });
     await toolPage.close();
+
+    const rcPage = await browser.newPage({ viewport });
+    await rcPage.goto(`${baseUrl}/tools/sensing-rc-filter-designer/`, { waitUntil: 'domcontentloaded' });
+    const rcDefault = await rcPage.evaluate(() => {
+      const magnitude = document.querySelector('[data-chart="magnitude"]');
+      const phase = document.querySelector('[data-chart="phase"]');
+      const hasCanvasPixels = (canvas) => {
+        if (!(canvas instanceof HTMLCanvasElement)) return false;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return false;
+        const data = ctx.getImageData(0, 0, Math.min(canvas.width, 50), Math.min(canvas.height, 50)).data;
+        return Array.from(data).some((value) => value !== 0);
+      };
+
+      return {
+        noPageHorizontalScroll: document.documentElement.scrollWidth <= innerWidth,
+        h1: document.querySelector('h1')?.textContent?.trim() ?? '',
+        status: document.querySelector('[data-output="status"]')?.textContent?.trim() ?? '',
+        sourceMode: document.querySelector('input[name="sourceMode"]:checked')?.value,
+        sourceResistance: document.querySelector('[data-output="sourceResistance"]')?.textContent?.trim() ?? '',
+        cutoff: document.querySelector('[data-output="cutoffFrequency"]')?.textContent?.trim() ?? '',
+        noise: document.querySelector('[data-output="noiseAttenuation"]')?.textContent?.trim() ?? '',
+        signal: document.querySelector('[data-output="signalAttenuation"]')?.textContent?.trim() ?? '',
+        phase: document.querySelector('[data-output="signalPhase"]')?.textContent?.trim() ?? '',
+        bodyText: document.body.textContent ?? '',
+        magnitudePixels: hasCanvasPixels(magnitude),
+        phasePixels: hasCanvasPixels(phase)
+      };
+    });
+    assert.equal(rcDefault.noPageHorizontalScroll, true, `${viewport.name} rc filter horizontal overflow`);
+    assert.equal(rcDefault.h1, 'Sensing RC Filter Designer', `${viewport.name} rc h1`);
+    assert.equal(rcDefault.status, 'GOOD BALANCE', `${viewport.name} rc default status`);
+    assert.equal(rcDefault.sourceMode, 'resistor-divider', `${viewport.name} rc default source mode`);
+    assert.match(rcDefault.sourceResistance, /Ω|kΩ|MΩ/, `${viewport.name} rc source resistance`);
+    assert.match(rcDefault.cutoff, /Hz|kHz|MHz/, `${viewport.name} rc cutoff`);
+    assert.match(rcDefault.noise, /dB/, `${viewport.name} rc noise attenuation`);
+    assert.match(rcDefault.signal, /dB/, `${viewport.name} rc signal attenuation`);
+    assert.match(rcDefault.phase, /°/, `${viewport.name} rc signal phase`);
+    assert.match(rcDefault.bodyText, /Max Allowed Signal Loss/, `${viewport.name} rc max signal loss label`);
+    assert.match(rcDefault.bodyText, /Desired Noise Attenuation/, `${viewport.name} rc desired noise label`);
+    assert.equal(/ADC resolution|sample capacitor|SAR ADC|LSB error/i.test(rcDefault.bodyText), false, `${viewport.name} rc no adc internal model`);
+    assert.equal(rcDefault.magnitudePixels, true, `${viewport.name} magnitude chart draws`);
+    assert.equal(rcDefault.phasePixels, true, `${viewport.name} phase chart draws`);
+
+    await rcPage.locator('.rc-source-mode label', { hasText: 'Voltage-output source' }).click();
+    const outputMode = await rcPage.evaluate(() => ({
+      mode: document.querySelector('input[name="sourceMode"]:checked')?.value,
+      sourceLabel: document.querySelector('[data-output="sourceLabel"]')?.textContent?.trim() ?? '',
+      sourceResistance: document.querySelector('[data-output="sourceResistance"]')?.textContent?.trim() ?? ''
+    }));
+    assert.equal(outputMode.mode, 'voltage-output', `${viewport.name} rc source switches`);
+    assert.equal(outputMode.sourceLabel, 'Voltage-output source', `${viewport.name} rc source label updates`);
+    assert.match(outputMode.sourceResistance, /100 Ω/, `${viewport.name} rc output source resistance`);
+
+    await rcPage.locator('[data-input="filterCapacitancePf"]').fill('220');
+    const updatedRc = await rcPage.evaluate(() => ({
+      cutoff: document.querySelector('[data-output="cutoffFrequency"]')?.textContent?.trim() ?? '',
+      status: document.querySelector('[data-output="status"]')?.textContent?.trim() ?? ''
+    }));
+    assert.notEqual(updatedRc.cutoff, rcDefault.cutoff, `${viewport.name} rc live update changes cutoff`);
+    assert.match(updatedRc.status, /GOOD BALANCE|FILTER TOO WEAK|FILTER TOO SLOW|TARGET CONFLICT/, `${viewport.name} rc status remains valid`);
+
+    await rcPage.screenshot({
+      path: new URL(`rc-filter-tool-${viewport.name}.png`, outputDir).pathname,
+      fullPage: true
+    });
+    await rcPage.close();
   }
 
-  for (const path of ['/about/', '/topology-designers/', '/tools/', '/magnetics/', '/control/', '/simulation/', '/tools/buck-inductor-ripple-calculator/', '/tools/voltage-sensing-adc-scaling/', '/articles/']) {
+  for (const path of ['/about/', '/topology-designers/', '/tools/', '/magnetics/', '/control/', '/simulation/', '/tools/buck-inductor-ripple-calculator/', '/tools/voltage-sensing-adc-scaling/', '/tools/sensing-rc-filter-designer/', '/articles/']) {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const response = await page.goto(`${baseUrl}${path}`, { waitUntil: 'domcontentloaded' });
     assert.equal(response?.status(), 200, `${path} is not 200`);
