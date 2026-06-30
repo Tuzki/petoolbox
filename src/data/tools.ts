@@ -79,6 +79,15 @@ export const tools: ToolItem[] = [
     status: 'coming-soon'
   },
   {
+    id: 'voltage-sensing-adc-scaling',
+    title: 'Voltage Sensing & ADC Scaling',
+    category: 'calculators',
+    description: 'Select a practical high-voltage sensing divider and calculate ADC scaling, resolution, current and stress.',
+    symbol: 'ADC',
+    status: 'available',
+    href: '/tools/voltage-sensing-adc-scaling/'
+  },
+  {
     id: 'buck-inductor-ripple-calculator',
     title: 'Buck Inductor Ripple Calculator',
     category: 'calculators',

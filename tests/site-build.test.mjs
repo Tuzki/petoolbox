@@ -9,6 +9,7 @@ const homePath = join(dist, 'index.html');
 const articlePath = join(dist, 'articles', 'buck-inductor-selection', 'index.html');
 const articlesIndexPath = join(dist, 'articles', 'index.html');
 const toolPath = join(dist, 'tools', 'buck-inductor-ripple-calculator', 'index.html');
+const voltageSensingToolPath = join(dist, 'tools', 'voltage-sensing-adc-scaling', 'index.html');
 const aboutPath = join(dist, 'about', 'index.html');
 const categoryPaths = [
   join(dist, 'topology-designers', 'index.html'),
@@ -61,7 +62,7 @@ function parseFrontmatter(file) {
 }
 
 test('production build emits all public routes in private mode', () => {
-  for (const path of [homePath, articlePath, articlesIndexPath, toolPath, aboutPath, ...categoryPaths]) {
+  for (const path of [homePath, articlePath, articlesIndexPath, toolPath, voltageSensingToolPath, aboutPath, ...categoryPaths]) {
     assert.ok(existsSync(path), `${path} was not generated`);
   }
 });
@@ -142,6 +143,7 @@ test('homepage renders complete tool directory and true statuses', () => {
     'LLC Resonant Converter Designer',
     'RC Time Constant Calculator',
     'Voltage Divider Calculator',
+    'Voltage Sensing & ADC Scaling',
     'Buck Inductor Ripple Calculator',
     'RC Snubber Calculator',
     'RCD Snubber Calculator',
@@ -155,13 +157,15 @@ test('homepage renders complete tool directory and true statuses', () => {
   ];
 
   for (const title of expectedTools) {
-    assert.match(html, new RegExp(title.replace(/[()]/g, '\\$&')));
+    const escapedTitle = title.replace(/[()]/g, '\\$&').replace(/&/g, '(?:&|&amp;)');
+    assert.match(html, new RegExp(escapedTitle));
   }
 
   assert.match(html, /aria-pressed="true"[\s\S]*>\s*All\s*</);
   assert.match(html, /data-tool-status="coming-soon"[\s\S]*Buck Inductor Ripple Calculator/);
+  assert.match(html, /data-tool-status="available"[\s\S]*Voltage Sensing &amp; ADC Scaling/);
   assert.equal(html.includes('Buck Inductor Ripple Calculator</strong><span class="directory-card__description"'), true);
-  assert.equal(html.includes('status-pill status-pill--available'), false);
+  assert.match(html, /status-pill status-pill--available/);
   assert.match(html, /data-tool-status="beta"[\s\S]*PULSE/);
   assert.match(html, /How to Select an Inductor for a Buck Converter/);
   assert.match(html, /View all articles/);
@@ -172,6 +176,34 @@ test('coming soon tools do not create fake links', () => {
   assert.equal(html.includes('href="/tools/rc-time-constant'), false);
   assert.equal(html.includes('href="/topology-designers/buck-converter-designer'), false);
   assert.equal(html.includes('href="/tools/buck-inductor-ripple-calculator/" data-tool-card'), false);
+  assert.match(html, /href="\/tools\/voltage-sensing-adc-scaling\/" data-tool-card/);
+});
+
+test('voltage sensing tool renders default design and private noindex', () => {
+  const html = read(voltageSensingToolPath);
+  assert.match(html, /<h1[^>]*>Voltage Sensing (?:&|&amp;) ADC Scaling<\/h1>/);
+  assert.match(html, /Maximum Input Voltage/);
+  assert.match(html, /value="800"/);
+  assert.match(html, /ADC Reference Voltage/);
+  assert.match(html, /value="2.5"/);
+  assert.match(html, /10-bit/);
+  assert.match(html, /E24/);
+  assert.match(html, /0805/);
+  assert.match(html, /Number of Series Upper Resistors/);
+  assert.match(html, /1 Lower/);
+  assert.match(html, /2 Lower in Parallel/);
+  assert.match(html, /Recommended Upper Resistor String/);
+  assert.match(html, /Recommended Lower Resistor Branch/);
+  assert.match(html, /ADC Range Used/);
+  assert.match(html, /Nominal Accuracy/);
+  assert.match(html, /Divider Current/);
+  assert.match(html, /Divider Power/);
+  assert.match(html, /Input Resolution/);
+  assert.match(html, /Firmware Scaling/);
+  assert.match(html, /const float VIN_PER_COUNT/);
+  assert.match(html, /Package ratings shown here are typical values for preliminary screening only/);
+  assert.match(html, /name="robots" content="noindex, nofollow"/);
+  assert.equal(/Calculate<\/button>|Calculate<\/a>/.test(html), false);
 });
 
 test('article page includes automatic tool cards and private noindex', () => {

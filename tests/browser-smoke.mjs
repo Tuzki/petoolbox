@@ -49,9 +49,11 @@ try {
         pressedFilter: document.querySelector('[data-filter-button][aria-pressed="true"]')?.textContent?.trim(),
         toolCards: document.querySelectorAll('[data-tool-card]').length,
         comingSoonCards: document.querySelectorAll('[data-tool-status="coming-soon"]').length,
+        availableCards: document.querySelectorAll('[data-tool-status="available"]').length,
         betaCards: document.querySelectorAll('[data-tool-status="beta"]').length,
         buckCardText: Array.from(document.querySelectorAll('[data-tool-card]')).find((card) => card.textContent?.includes('Buck Inductor Ripple Calculator'))?.textContent ?? '',
         linkedBuckCards: Array.from(document.querySelectorAll('a.directory-card')).filter((card) => card.textContent?.includes('Buck Inductor Ripple Calculator')).length,
+        linkedVoltageSensingCards: Array.from(document.querySelectorAll('a.directory-card')).filter((card) => card.textContent?.includes('Voltage Sensing & ADC Scaling')).length,
         latestArticle: document.body.textContent?.includes('How to Select an Inductor for a Buck Converter') ?? false
       };
     });
@@ -74,11 +76,13 @@ try {
     assert.equal(homeResult.headerHasAbout, false, `${viewport.name} no top-level About`);
     assert.deepEqual(homeResult.filterLabels, ['All', 'Topology', 'Calculators', 'Magnetics', 'Control', 'Simulation']);
     assert.equal(homeResult.pressedFilter, 'All', `${viewport.name} all active`);
-    assert.equal(homeResult.toolCards, 17, `${viewport.name} full MVP cards`);
+    assert.equal(homeResult.toolCards, 18, `${viewport.name} full MVP cards`);
     assert.equal(homeResult.comingSoonCards, 16, `${viewport.name} coming soon count`);
+    assert.equal(homeResult.availableCards, 1, `${viewport.name} available count`);
     assert.equal(homeResult.betaCards, 1, `${viewport.name} beta count`);
     assert.match(homeResult.buckCardText, /Coming Soon/, `${viewport.name} buck coming soon`);
     assert.equal(homeResult.linkedBuckCards, 0, `${viewport.name} buck card is not link`);
+    assert.equal(homeResult.linkedVoltageSensingCards, 1, `${viewport.name} voltage sensing card is link`);
     assert.equal(homeResult.latestArticle, true, `${viewport.name} latest article`);
     assert.equal(homeResult.activeLanguageTag, 'span', `${viewport.name} EN not link`);
     assert.equal(homeResult.activeLanguageHref, null, `${viewport.name} EN no href`);
@@ -93,7 +97,7 @@ try {
       visibleCards: Array.from(document.querySelectorAll('[data-tool-card]')).filter((card) => !(card instanceof HTMLElement) || !card.hidden).length
     }));
     assert.equal(filterResult.pressed, 'Calculators', `${viewport.name} calculators filter active`);
-    assert.equal(filterResult.visibleCards, 5, `${viewport.name} calculators filter count`);
+    assert.equal(filterResult.visibleCards, 6, `${viewport.name} calculators filter count`);
 
     if (viewport.width > 1180) {
       const topologyToggle = page.locator('[aria-controls="mega-topology-designers"]');
@@ -109,8 +113,10 @@ try {
       await calculatorsToggle.click();
       assert.equal(await page.locator('#mega-engineering-calculators').isVisible(), true, `${viewport.name} calculators menu visible`);
       assert.match(await page.locator('#mega-engineering-calculators').textContent(), /Buck Inductor Ripple Calculator/);
+      assert.match(await page.locator('#mega-engineering-calculators').textContent(), /Voltage Sensing & ADC Scaling/);
       assert.match(await page.locator('#mega-engineering-calculators').textContent(), /Coming Soon/);
       assert.equal(await page.locator('#mega-engineering-calculators a[href="/tools/buck-inductor-ripple-calculator/"]').count(), 1, `${viewport.name} buck menu link`);
+      assert.equal(await page.locator('#mega-engineering-calculators a[href="/tools/voltage-sensing-adc-scaling/"]').count(), 1, `${viewport.name} voltage sensing menu link`);
       await page.mouse.click(20, 220);
       assert.equal(await page.locator('#mega-engineering-calculators').isVisible(), false, `${viewport.name} outside click closes calculators`);
     } else {
@@ -159,9 +165,68 @@ try {
       assert.equal(articleResult.mobileTocDisplay, 'block', `${viewport.name} mobile toc visible`);
     }
     await page.close();
+
+    const toolPage = await browser.newPage({ viewport });
+    await toolPage.goto(`${baseUrl}/tools/voltage-sensing-adc-scaling/`, { waitUntil: 'domcontentloaded' });
+    const defaultToolResult = await toolPage.evaluate(() => ({
+      noPageHorizontalScroll: document.documentElement.scrollWidth <= innerWidth,
+      h1: document.querySelector('h1')?.textContent?.trim() ?? '',
+      hasCalculateButton: Array.from(document.querySelectorAll('button, a')).some((element) => element.textContent?.trim() === 'Calculate'),
+      maximumInputVoltage: document.querySelector('[data-input="maximumInputVoltage"]')?.value,
+      adcReferenceVoltage: document.querySelector('[data-input="adcReferenceVoltage"]')?.value,
+      adcResolutionBits: document.querySelector('[data-input="adcResolutionBits"]')?.value,
+      resistorSeries: document.querySelector('[data-input="resistorSeries"]')?.value,
+      resistorSize: document.querySelector('[data-input="resistorSize"]')?.value,
+      upperResistorCount: document.querySelector('[data-input="upperResistorCount"]')?.value,
+      upperString: document.querySelector('[data-output="upperString"]')?.textContent?.trim() ?? '',
+      lowerBranch: document.querySelector('[data-output="lowerBranch"]')?.textContent?.trim() ?? '',
+      flowCode: document.querySelector('[data-output="flowCode"]')?.textContent?.trim() ?? '',
+      nominalAccuracy: document.querySelector('[data-output="nominalAccuracy"]')?.textContent?.trim() ?? '',
+      dividerCurrent: document.querySelector('[data-output="dividerCurrent"]')?.textContent?.trim() ?? '',
+      dividerPower: document.querySelector('[data-output="dividerPower"]')?.textContent?.trim() ?? '',
+      inputResolution: document.querySelector('[data-output="inputResolution"]')?.textContent?.trim() ?? '',
+      checks: document.querySelectorAll('.engineering-check').length,
+      firmwareCode: document.querySelector('[data-output="firmwareCode"]')?.textContent ?? ''
+    }));
+    assert.equal(defaultToolResult.noPageHorizontalScroll, true, `${viewport.name} voltage tool horizontal overflow`);
+    assert.equal(defaultToolResult.h1, 'Voltage Sensing & ADC Scaling', `${viewport.name} voltage tool h1`);
+    assert.equal(defaultToolResult.hasCalculateButton, false, `${viewport.name} no calculate button`);
+    assert.equal(defaultToolResult.maximumInputVoltage, '800', `${viewport.name} default vin`);
+    assert.equal(defaultToolResult.adcReferenceVoltage, '2.5', `${viewport.name} default vref`);
+    assert.equal(defaultToolResult.adcResolutionBits, '10', `${viewport.name} default bits`);
+    assert.equal(defaultToolResult.resistorSeries, 'E24', `${viewport.name} default series`);
+    assert.equal(defaultToolResult.resistorSize, '0805', `${viewport.name} default size`);
+    assert.equal(defaultToolResult.upperResistorCount, '5', `${viewport.name} default upper count`);
+    assert.match(defaultToolResult.upperString, /5 × /, `${viewport.name} upper recommendation`);
+    assert.match(defaultToolResult.lowerBranch, /1 × /, `${viewport.name} lower recommendation`);
+    assert.match(defaultToolResult.flowCode, /\d+ \/ 1023/, `${viewport.name} adc code`);
+    assert.match(defaultToolResult.nominalAccuracy, /%/, `${viewport.name} nominal accuracy`);
+    assert.match(defaultToolResult.dividerCurrent, /µA|mA|A/, `${viewport.name} divider current`);
+    assert.match(defaultToolResult.dividerPower, /µW|mW|W/, `${viewport.name} divider power`);
+    assert.match(defaultToolResult.inputResolution, /µV\/LSB|mV\/LSB|V\/LSB/, `${viewport.name} input resolution`);
+    assert.equal(defaultToolResult.checks, 4, `${viewport.name} engineering checks`);
+    assert.match(defaultToolResult.firmwareCode, /VIN_PER_COUNT/, `${viewport.name} firmware code`);
+
+    await toolPage.locator('[data-input="maximumInputVoltage"]').fill('400');
+    const updatedToolResult = await toolPage.evaluate(() => ({
+      flowInput: document.querySelector('[data-output="flowInput"]')?.textContent?.trim() ?? '',
+      flowCode: document.querySelector('[data-output="flowCode"]')?.textContent?.trim() ?? ''
+    }));
+    assert.match(updatedToolResult.flowInput, /400/, `${viewport.name} live vin update`);
+    assert.match(updatedToolResult.flowCode, /\d+ \/ 1023/, `${viewport.name} live adc code update`);
+
+    await toolPage.locator('.tool-segmented label', { hasText: '2 Lower in Parallel' }).click();
+    const parallelResult = await toolPage.locator('[data-output="lowerDetail"]').textContent();
+    assert.match(parallelResult ?? '', /Parallel equivalent/, `${viewport.name} parallel lower topology`);
+
+    await toolPage.screenshot({
+      path: new URL(`voltage-tool-${viewport.name}.png`, outputDir).pathname,
+      fullPage: true
+    });
+    await toolPage.close();
   }
 
-  for (const path of ['/about/', '/topology-designers/', '/tools/', '/magnetics/', '/control/', '/simulation/', '/tools/buck-inductor-ripple-calculator/', '/articles/']) {
+  for (const path of ['/about/', '/topology-designers/', '/tools/', '/magnetics/', '/control/', '/simulation/', '/tools/buck-inductor-ripple-calculator/', '/tools/voltage-sensing-adc-scaling/', '/articles/']) {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const response = await page.goto(`${baseUrl}${path}`, { waitUntil: 'domcontentloaded' });
     assert.equal(response?.status(), 200, `${path} is not 200`);
