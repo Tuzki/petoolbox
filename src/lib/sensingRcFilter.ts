@@ -145,6 +145,36 @@ export function formatEngineering(value: number, unit: string, significantDigits
   return `${scaled.toFixed(decimals)} ${selected.prefix}${unit}`.trim();
 }
 
+export function formatDb(value: number, decimals = 2): string {
+  if (!Number.isFinite(value)) return '-';
+  const normalizedValue = Math.abs(value) < 0.5 * 10 ** -decimals ? 0 : value;
+  return `${normalizedValue.toFixed(decimals)} dB`;
+}
+
+export function parseRequiredNumber(value: string): number | null {
+  if (value.trim() === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function isValidFilterInput(inputs: SensingRcFilterInputs): boolean {
+  const isFiniteAtLeast = (value: number, minimum: number) => Number.isFinite(value) && value >= minimum;
+  const isFiniteGreaterThan = (value: number, minimum: number) => Number.isFinite(value) && value > minimum;
+  const activeSourceResistanceValid = inputs.sourceMode === 'voltage-output'
+    ? isFiniteAtLeast(inputs.outputResistanceOhms, 0)
+    : isFiniteAtLeast(inputs.upperResistanceKohms, 0) && isFiniteAtLeast(inputs.lowerResistanceKohms, 0);
+
+  if (!activeSourceResistanceValid) return false;
+  if (!isFiniteAtLeast(inputs.filterResistanceKohms, 0)) return false;
+  if (!isFiniteGreaterThan(inputs.filterCapacitancePf, 0)) return false;
+  if (!isFiniteGreaterThan(inputs.signalFrequencyKhz, 0)) return false;
+  if (!isFiniteGreaterThan(inputs.noiseFrequencyMhz, 0)) return false;
+  if (!isFiniteAtLeast(inputs.maxAllowedSignalLossDb, 0)) return false;
+  if (!isFiniteAtLeast(inputs.desiredNoiseAttenuationDb, 0)) return false;
+
+  return calculateSourceResistance(inputs) + inputs.filterResistanceKohms * 1_000 > 0;
+}
+
 export function calculateSourceResistance(inputs: SensingRcFilterInputs): number {
   if (inputs.sourceMode === 'voltage-output') return safePositive(inputs.outputResistanceOhms);
   return parallelResistance(safePositive(inputs.upperResistanceKohms) * 1_000, safePositive(inputs.lowerResistanceKohms) * 1_000);

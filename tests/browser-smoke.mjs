@@ -242,16 +242,35 @@ try {
     await toolPage.close();
 
     const rcPage = await browser.newPage({ viewport });
+    const consoleErrors = [];
+    rcPage.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
     await rcPage.goto(`${baseUrl}/tools/sensing-rc-filter-designer/`, { waitUntil: 'domcontentloaded' });
     const rcDefault = await rcPage.evaluate(() => {
       const magnitude = document.querySelector('[data-chart="magnitude"]');
       const phase = document.querySelector('[data-chart="phase"]');
-      const hasCanvasPixels = (canvas) => {
+      const countCurvePixels = (canvas, curve) => {
         if (!(canvas instanceof HTMLCanvasElement)) return false;
         const ctx = canvas.getContext('2d');
         if (!ctx) return false;
-        const data = ctx.getImageData(0, 0, Math.min(canvas.width, 50), Math.min(canvas.height, 50)).data;
-        return Array.from(data).some((value) => value !== 0);
+        const ratio = window.devicePixelRatio || 1;
+        const left = Math.floor(canvas.width * 0.16);
+        const top = Math.floor(canvas.height * 0.12);
+        const width = Math.floor(canvas.width * 0.72);
+        const height = Math.floor(canvas.height * 0.66);
+        const data = ctx.getImageData(left, top, width, height).data;
+        let count = 0;
+        for (let index = 0; index < data.length; index += 4) {
+          const r = data[index];
+          const g = data[index + 1];
+          const b = data[index + 2];
+          const a = data[index + 3];
+          const isBlueCurve = curve === 'magnitude' && r < 70 && g > 70 && g < 150 && b > 130 && b < 210;
+          const isTealCurve = curve === 'phase' && r < 70 && g > 90 && g < 150 && b > 90 && b < 150;
+          if (a > 200 && (isBlueCurve || isTealCurve)) count += 1;
+        }
+        return count / ratio > 30;
       };
 
       return {
@@ -265,8 +284,9 @@ try {
         signal: document.querySelector('[data-output="signalAttenuation"]')?.textContent?.trim() ?? '',
         phase: document.querySelector('[data-output="signalPhase"]')?.textContent?.trim() ?? '',
         bodyText: document.body.textContent ?? '',
-        magnitudePixels: hasCanvasPixels(magnitude),
-        phasePixels: hasCanvasPixels(phase)
+        signalHasNegativeZero: (document.querySelector('[data-output="signalAttenuation"]')?.textContent ?? '').includes('-0.00'),
+        magnitudeCurve: countCurvePixels(magnitude, 'magnitude'),
+        phaseCurve: countCurvePixels(phase, 'phase')
       };
     });
     assert.equal(rcDefault.noPageHorizontalScroll, true, `${viewport.name} rc filter horizontal overflow`);
@@ -281,8 +301,9 @@ try {
     assert.match(rcDefault.bodyText, /Max Allowed Signal Loss/, `${viewport.name} rc max signal loss label`);
     assert.match(rcDefault.bodyText, /Desired Noise Attenuation/, `${viewport.name} rc desired noise label`);
     assert.equal(/ADC resolution|sample capacitor|SAR ADC|LSB error/i.test(rcDefault.bodyText), false, `${viewport.name} rc no adc internal model`);
-    assert.equal(rcDefault.magnitudePixels, true, `${viewport.name} magnitude chart draws`);
-    assert.equal(rcDefault.phasePixels, true, `${viewport.name} phase chart draws`);
+    assert.equal(rcDefault.signalHasNegativeZero, false, `${viewport.name} rc no negative zero dB`);
+    assert.equal(rcDefault.magnitudeCurve, true, `${viewport.name} magnitude chart draws curve`);
+    assert.equal(rcDefault.phaseCurve, true, `${viewport.name} phase chart draws curve`);
 
     await rcPage.locator('.rc-source-mode label', { hasText: 'Voltage-output source' }).click();
     const outputMode = await rcPage.evaluate(() => ({
@@ -301,6 +322,130 @@ try {
     }));
     assert.notEqual(updatedRc.cutoff, rcDefault.cutoff, `${viewport.name} rc live update changes cutoff`);
     assert.match(updatedRc.status, /GOOD BALANCE|FILTER TOO WEAK|FILTER TOO SLOW|TARGET CONFLICT/, `${viewport.name} rc status remains valid`);
+
+    const updatedCurves = await rcPage.evaluate(() => {
+      const countCurvePixels = (selector, curve) => {
+        const canvas = document.querySelector(selector);
+        if (!(canvas instanceof HTMLCanvasElement)) return false;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return false;
+        const ratio = window.devicePixelRatio || 1;
+        const data = ctx.getImageData(
+          Math.floor(canvas.width * 0.16),
+          Math.floor(canvas.height * 0.12),
+          Math.floor(canvas.width * 0.72),
+          Math.floor(canvas.height * 0.66)
+        ).data;
+        let count = 0;
+        for (let index = 0; index < data.length; index += 4) {
+          const r = data[index];
+          const g = data[index + 1];
+          const b = data[index + 2];
+          const a = data[index + 3];
+          const isBlueCurve = curve === 'magnitude' && r < 70 && g > 70 && g < 150 && b > 130 && b < 210;
+          const isTealCurve = curve === 'phase' && r < 70 && g > 90 && g < 150 && b > 90 && b < 150;
+          if (a > 200 && (isBlueCurve || isTealCurve)) count += 1;
+        }
+        return count / ratio > 30;
+      };
+
+      return {
+        magnitudeCurve: countCurvePixels('[data-chart="magnitude"]', 'magnitude'),
+        phaseCurve: countCurvePixels('[data-chart="phase"]', 'phase')
+      };
+    });
+    assert.equal(updatedCurves.magnitudeCurve, true, `${viewport.name} magnitude chart redraws curve`);
+    assert.equal(updatedCurves.phaseCurve, true, `${viewport.name} phase chart redraws curve`);
+
+    await rcPage.locator('[data-input="filterCapacitancePf"]').fill('');
+    const invalidCapacitance = await rcPage.evaluate(() => {
+      const countCurvePixels = (selector, curve) => {
+        const canvas = document.querySelector(selector);
+        if (!(canvas instanceof HTMLCanvasElement)) return false;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return false;
+        const data = ctx.getImageData(
+          Math.floor(canvas.width * 0.16),
+          Math.floor(canvas.height * 0.12),
+          Math.floor(canvas.width * 0.72),
+          Math.floor(canvas.height * 0.66)
+        ).data;
+        let count = 0;
+        for (let index = 0; index < data.length; index += 4) {
+          const r = data[index];
+          const g = data[index + 1];
+          const b = data[index + 2];
+          const a = data[index + 3];
+          const isBlueCurve = curve === 'magnitude' && r < 70 && g > 70 && g < 150 && b > 130 && b < 210;
+          const isTealCurve = curve === 'phase' && r < 70 && g > 90 && g < 150 && b > 90 && b < 150;
+          if (a > 200 && (isBlueCurve || isTealCurve)) count += 1;
+        }
+        return count;
+      };
+
+      return {
+        status: document.querySelector('[data-output="status"]')?.textContent?.trim() ?? '',
+        cutoff: document.querySelector('[data-output="cutoffFrequency"]')?.textContent?.trim() ?? '',
+        signal: document.querySelector('[data-output="signalAttenuation"]')?.textContent?.trim() ?? '',
+        placeholder: document.querySelector('[data-output="actionText"]')?.textContent?.trim() ?? '',
+        magnitudeCurvePixels: countCurvePixels('[data-chart="magnitude"]', 'magnitude'),
+        phaseCurvePixels: countCurvePixels('[data-chart="phase"]', 'phase')
+      };
+    });
+    assert.equal(invalidCapacitance.status, 'CHECK INPUTS', `${viewport.name} rc invalid empty capacitor status`);
+    assert.equal(invalidCapacitance.cutoff, '—', `${viewport.name} rc invalid cutoff placeholder`);
+    assert.equal(invalidCapacitance.signal, '—', `${viewport.name} rc invalid signal placeholder`);
+    assert.match(invalidCapacitance.placeholder, /frequency-response charts will update/, `${viewport.name} rc invalid guidance`);
+    assert.equal(invalidCapacitance.magnitudeCurvePixels, 0, `${viewport.name} rc invalid magnitude clears old curve`);
+    assert.equal(invalidCapacitance.phaseCurvePixels, 0, `${viewport.name} rc invalid phase clears old curve`);
+
+    await rcPage.locator('[data-input="filterCapacitancePf"]').fill('22');
+    await rcPage.locator('[data-input="signalFrequencyKhz"]').fill('0');
+    const invalidSignalFrequency = await rcPage.evaluate(() => ({
+      status: document.querySelector('[data-output="status"]')?.textContent?.trim() ?? '',
+      signal: document.querySelector('[data-output="signalAttenuation"]')?.textContent?.trim() ?? ''
+    }));
+    assert.equal(invalidSignalFrequency.status, 'CHECK INPUTS', `${viewport.name} rc zero signal frequency invalid`);
+    assert.equal(invalidSignalFrequency.signal, '—', `${viewport.name} rc zero signal placeholder`);
+    assert.deepEqual(consoleErrors, [], `${viewport.name} rc no console errors after invalid signal frequency`);
+
+    await rcPage.locator('[data-input="signalFrequencyKhz"]').fill('10');
+    await rcPage.locator('[data-input="filterResistanceKohms"]').fill('-1');
+    const invalidNegativeResistance = await rcPage.evaluate(() => ({
+      status: document.querySelector('[data-output="status"]')?.textContent?.trim() ?? '',
+      cutoff: document.querySelector('[data-output="cutoffFrequency"]')?.textContent?.trim() ?? ''
+    }));
+    assert.equal(invalidNegativeResistance.status, 'CHECK INPUTS', `${viewport.name} rc negative filter resistance invalid`);
+    assert.equal(invalidNegativeResistance.cutoff, '—', `${viewport.name} rc negative resistance placeholder`);
+
+    await rcPage.locator('[data-input="filterResistanceKohms"]').fill('1');
+    const restoredRc = await rcPage.evaluate(() => {
+      const canvas = document.querySelector('[data-chart="magnitude"]');
+      const ctx = canvas instanceof HTMLCanvasElement ? canvas.getContext('2d') : null;
+      let curvePixels = 0;
+      if (canvas instanceof HTMLCanvasElement && ctx) {
+        const ratio = window.devicePixelRatio || 1;
+        const data = ctx.getImageData(
+          Math.floor(canvas.width * 0.16),
+          Math.floor(canvas.height * 0.12),
+          Math.floor(canvas.width * 0.72),
+          Math.floor(canvas.height * 0.66)
+        ).data;
+        for (let index = 0; index < data.length; index += 4) {
+          const r = data[index];
+          const g = data[index + 1];
+          const b = data[index + 2];
+          const a = data[index + 3];
+          if (a > 200 && r < 70 && g > 70 && g < 150 && b > 130 && b < 210) curvePixels += 1 / ratio;
+        }
+      }
+      return {
+        status: document.querySelector('[data-output="status"]')?.textContent?.trim() ?? '',
+        curve: curvePixels > 30
+      };
+    });
+    assert.match(restoredRc.status, /GOOD BALANCE|FILTER TOO WEAK|FILTER TOO SLOW|TARGET CONFLICT/, `${viewport.name} rc restored status recalculates`);
+    assert.equal(restoredRc.curve, true, `${viewport.name} rc restored curve appears`);
 
     await rcPage.screenshot({
       path: new URL(`rc-filter-tool-${viewport.name}.png`, outputDir).pathname,

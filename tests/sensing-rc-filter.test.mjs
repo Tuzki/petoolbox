@@ -53,6 +53,26 @@ test('default design evaluates to GOOD BALANCE', () => {
   assert.ok(Number.isFinite(result.cutoffFrequencyHz));
 });
 
+test('dB formatter removes negative zero without hiding real attenuation', () => {
+  assert.equal(rc.formatDb(-0.0049), '0.00 dB');
+  assert.equal(rc.formatDb(-38.014), '-38.01 dB');
+});
+
+test('required number parser rejects empty and non-finite input', () => {
+  assert.equal(rc.parseRequiredNumber(''), null);
+  assert.equal(rc.parseRequiredNumber('   '), null);
+  assert.equal(rc.parseRequiredNumber('not a number'), null);
+  assert.equal(rc.parseRequiredNumber('Infinity'), null);
+  assert.equal(rc.parseRequiredNumber('10.5'), 10.5);
+});
+
+test('filter input validation rejects zero frequency and accepts default values', () => {
+  assert.equal(rc.isValidFilterInput(rc.defaultSensingRcFilterInputs), true);
+  assert.equal(rc.isValidFilterInput({ ...rc.defaultSensingRcFilterInputs, signalFrequencyKhz: 0 }), false);
+  assert.equal(rc.isValidFilterInput({ ...rc.defaultSensingRcFilterInputs, noiseFrequencyMhz: 0 }), false);
+  assert.equal(rc.isValidFilterInput({ ...rc.defaultSensingRcFilterInputs, filterCapacitancePf: 0 }), false);
+});
+
 test('status evaluation detects weak, slow, and conflicting filters', () => {
   const weak = rc.evaluateRcFilterDesign({ ...rc.defaultSensingRcFilterInputs, filterCapacitancePf: 0.1 });
   const slow = rc.evaluateRcFilterDesign({ ...rc.defaultSensingRcFilterInputs, filterCapacitancePf: 100_000 });

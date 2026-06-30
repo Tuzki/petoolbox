@@ -3,6 +3,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import {
   defaultSensingRcFilterInputs,
   evaluateRcFilterDesign,
+  formatDb,
   formatEngineering
 } from '@/lib/sensingRcFilter';
 
@@ -107,7 +108,7 @@ const description = 'Design a first-order RC filter for voltage, current, and te
           <div class="tool-field">
             <label for="signal-frequency">Signal Frequency</label>
             <div class="tool-control">
-              <input id="signal-frequency" data-input="signalFrequencyKhz" type="number" min="0" step="0.1" value={inputs.signalFrequencyKhz} />
+              <input id="signal-frequency" data-input="signalFrequencyKhz" type="number" min="0.001" step="0.1" value={inputs.signalFrequencyKhz} />
               <span>kHz</span>
             </div>
             <p class="tool-field__hint">The highest useful measurement or control frequency that should be preserved.</p>
@@ -115,7 +116,7 @@ const description = 'Design a first-order RC filter for voltage, current, and te
           <div class="tool-field">
             <label for="noise-frequency">Noise Frequency</label>
             <div class="tool-control">
-              <input id="noise-frequency" data-input="noiseFrequencyMhz" type="number" min="0" step="1" value={inputs.noiseFrequencyMhz} />
+              <input id="noise-frequency" data-input="noiseFrequencyMhz" type="number" min="0.001" step="1" value={inputs.noiseFrequencyMhz} />
               <span>MHz</span>
             </div>
             <p class="tool-field__hint">A switching-noise, ringing, or other dominant high-frequency interference component.</p>
@@ -188,12 +189,12 @@ const description = 'Design a first-order RC filter for voltage, current, and te
           </div>
           <div class="metric-tile">
             <span>Noise Attenuation</span>
-            <strong data-output="noiseAttenuation">{result.noiseResponse.gainDb.toFixed(2)} dB</strong>
+            <strong data-output="noiseAttenuation">{formatDb(result.noiseResponse.gainDb)}</strong>
             <small data-output="noiseSummary">At {formatEngineering(result.noiseFrequencyHz, 'Hz')}</small>
           </div>
           <div class="metric-tile">
             <span>Signal Attenuation</span>
-            <strong data-output="signalAttenuation">{result.signalResponse.gainDb.toFixed(2)} dB</strong>
+            <strong data-output="signalAttenuation">{formatDb(result.signalResponse.gainDb)}</strong>
             <small data-output="signalSummary">At {formatEngineering(result.signalFrequencyHz, 'Hz')}</small>
           </div>
           <div class="metric-tile">
@@ -269,9 +270,11 @@ const description = 'Design a first-order RC filter for voltage, current, and te
 <script>
   import {
     calculateRcResponse,
-    defaultSensingRcFilterInputs,
     evaluateRcFilterDesign,
+    formatDb,
     formatEngineering,
+    isValidFilterInput,
+    parseRequiredNumber,
     type SensingRcFilterInputs
   } from '@/lib/sensingRcFilter';
 
@@ -285,26 +288,80 @@ const description = 'Design a first-order RC filter for voltage, current, and te
       const target = outputs.get(key);
       if (target) target.textContent = value;
     };
-    const readNumber = (name: string, fallback: number) => {
+    const readNumber = (name: string) => {
       const element = root.querySelector<HTMLInputElement>(`[data-input="${name}"]`);
-      const value = Number(element?.value);
-      return Number.isFinite(value) ? value : fallback;
+      return parseRequiredNumber(element?.value ?? '');
     };
-    const readInputs = (): SensingRcFilterInputs => ({
-      sourceMode: root.querySelector<HTMLInputElement>('input[name="sourceMode"]:checked')?.value === 'voltage-output' ? 'voltage-output' : 'resistor-divider',
-      upperResistanceKohms: readNumber('upperResistanceKohms', defaultSensingRcFilterInputs.upperResistanceKohms),
-      lowerResistanceKohms: readNumber('lowerResistanceKohms', defaultSensingRcFilterInputs.lowerResistanceKohms),
-      outputResistanceOhms: readNumber('outputResistanceOhms', defaultSensingRcFilterInputs.outputResistanceOhms),
-      filterResistanceKohms: readNumber('filterResistanceKohms', defaultSensingRcFilterInputs.filterResistanceKohms),
-      filterCapacitancePf: readNumber('filterCapacitancePf', defaultSensingRcFilterInputs.filterCapacitancePf),
-      signalFrequencyKhz: readNumber('signalFrequencyKhz', defaultSensingRcFilterInputs.signalFrequencyKhz),
-      noiseFrequencyMhz: readNumber('noiseFrequencyMhz', defaultSensingRcFilterInputs.noiseFrequencyMhz),
-      maxAllowedSignalLossDb: readNumber('maxAllowedSignalLossDb', defaultSensingRcFilterInputs.maxAllowedSignalLossDb),
-      desiredNoiseAttenuationDb: readNumber('desiredNoiseAttenuationDb', defaultSensingRcFilterInputs.desiredNoiseAttenuationDb)
-    });
+    const readInputs = (): SensingRcFilterInputs | null => {
+      const sourceMode = root.querySelector<HTMLInputElement>('input[name="sourceMode"]:checked')?.value === 'voltage-output' ? 'voltage-output' : 'resistor-divider';
+      const inputValues = {
+        upperResistanceKohms: readNumber('upperResistanceKohms'),
+        lowerResistanceKohms: readNumber('lowerResistanceKohms'),
+        outputResistanceOhms: readNumber('outputResistanceOhms'),
+        filterResistanceKohms: readNumber('filterResistanceKohms'),
+        filterCapacitancePf: readNumber('filterCapacitancePf'),
+        signalFrequencyKhz: readNumber('signalFrequencyKhz'),
+        noiseFrequencyMhz: readNumber('noiseFrequencyMhz'),
+        maxAllowedSignalLossDb: readNumber('maxAllowedSignalLossDb'),
+        desiredNoiseAttenuationDb: readNumber('desiredNoiseAttenuationDb')
+      };
+
+      const requiredValues = sourceMode === 'voltage-output'
+        ? [
+            inputValues.outputResistanceOhms,
+            inputValues.filterResistanceKohms,
+            inputValues.filterCapacitancePf,
+            inputValues.signalFrequencyKhz,
+            inputValues.noiseFrequencyMhz,
+            inputValues.maxAllowedSignalLossDb,
+            inputValues.desiredNoiseAttenuationDb
+          ]
+        : [
+            inputValues.upperResistanceKohms,
+            inputValues.lowerResistanceKohms,
+            inputValues.filterResistanceKohms,
+            inputValues.filterCapacitancePf,
+            inputValues.signalFrequencyKhz,
+            inputValues.noiseFrequencyMhz,
+            inputValues.maxAllowedSignalLossDb,
+            inputValues.desiredNoiseAttenuationDb
+          ];
+
+      if (requiredValues.some((value) => value === null)) return null;
+
+      const inputs: SensingRcFilterInputs = {
+        sourceMode,
+        upperResistanceKohms: inputValues.upperResistanceKohms ?? 0,
+        lowerResistanceKohms: inputValues.lowerResistanceKohms ?? 0,
+        outputResistanceOhms: inputValues.outputResistanceOhms ?? 0,
+        filterResistanceKohms: inputValues.filterResistanceKohms ?? 0,
+        filterCapacitancePf: inputValues.filterCapacitancePf ?? 0,
+        signalFrequencyKhz: inputValues.signalFrequencyKhz ?? 0,
+        noiseFrequencyMhz: inputValues.noiseFrequencyMhz ?? 0,
+        maxAllowedSignalLossDb: inputValues.maxAllowedSignalLossDb ?? 0,
+        desiredNoiseAttenuationDb: inputValues.desiredNoiseAttenuationDb ?? 0
+      };
+
+      return isValidFilterInput(inputs) ? inputs : null;
+    };
 
     const render = () => {
       const inputs = readInputs();
+      const sourceMode = root.querySelector<HTMLInputElement>('input[name="sourceMode"]:checked')?.value === 'voltage-output' ? 'voltage-output' : 'resistor-divider';
+      root.querySelector<HTMLElement>('[data-source-fields="resistor-divider"]')!.hidden = sourceMode !== 'resistor-divider';
+      root.querySelector<HTMLElement>('[data-source-fields="voltage-output"]')!.hidden = sourceMode !== 'voltage-output';
+      text(
+        'sourceNote',
+        sourceMode === 'voltage-output'
+          ? 'Used for Hall sensors, current-sense amplifiers, op-amp buffers, and isolation amplifiers. Enter the output resistance seen by the filter.'
+          : 'Used for bus, input/output, battery-voltage, and NTC-divider sensing. Source resistance is calculated as Rupper || Rlower.'
+      );
+
+      if (!inputs) {
+        renderInvalidState(sourceMode);
+        return;
+      }
+
       const result = evaluateRcFilterDesign(inputs);
       const status = outputs.get('status');
       status?.classList.remove('tool-check-pill--good', 'tool-check-pill--warn', 'tool-check-pill--bad');
@@ -317,9 +374,9 @@ const description = 'Design a first-order RC filter for voltage, current, and te
       text('sourceResistance', formatEngineering(result.sourceResistanceOhms, 'Ω'));
       text('cutoffFrequency', formatEngineering(result.cutoffFrequencyHz, 'Hz'));
       text('tauSummary', `τ = ${formatEngineering(result.timeResponse.tauSeconds, 's')}`);
-      text('noiseAttenuation', `${result.noiseResponse.gainDb.toFixed(2)} dB`);
+      text('noiseAttenuation', formatDb(result.noiseResponse.gainDb));
       text('noiseSummary', `At ${formatEngineering(result.noiseFrequencyHz, 'Hz')}`);
-      text('signalAttenuation', `${result.signalResponse.gainDb.toFixed(2)} dB`);
+      text('signalAttenuation', formatDb(result.signalResponse.gainDb));
       text('signalSummary', `At ${formatEngineering(result.signalFrequencyHz, 'Hz')}`);
       text('signalPhase', `${result.signalResponse.phaseDeg.toFixed(1)}°`);
       text('riseTime', formatEngineering(result.timeResponse.riseTime1090Seconds, 's'));
@@ -331,15 +388,41 @@ const description = 'Design a first-order RC filter for voltage, current, and te
       text('noiseRatio', `${(result.noiseResponse.ratio * 100).toFixed(3)}%`);
       text('signalToCutoff', result.cutoffFrequencyHz > 0 ? `${(result.signalFrequencyHz / result.cutoffFrequencyHz).toPrecision(3)}×` : '-');
       text('noiseToCutoff', result.cutoffFrequencyHz > 0 ? `${(result.noiseFrequencyHz / result.cutoffFrequencyHz).toPrecision(3)}×` : '-');
-      text(
-        'sourceNote',
-        inputs.sourceMode === 'voltage-output'
-          ? 'Used for Hall sensors, current-sense amplifiers, op-amp buffers, and isolation amplifiers. Enter the output resistance seen by the filter.'
-          : 'Used for bus, input/output, battery-voltage, and NTC-divider sensing. Source resistance is calculated as Rupper || Rlower.'
-      );
-      root.querySelector<HTMLElement>('[data-source-fields="resistor-divider"]')!.hidden = inputs.sourceMode !== 'resistor-divider';
-      root.querySelector<HTMLElement>('[data-source-fields="voltage-output"]')!.hidden = inputs.sourceMode !== 'voltage-output';
       drawCharts(result.cutoffFrequencyHz, result.signalFrequencyHz, result.noiseFrequencyHz);
+    };
+
+    const renderInvalidState = (sourceMode: 'resistor-divider' | 'voltage-output') => {
+      const status = outputs.get('status');
+      status?.classList.remove('tool-check-pill--good', 'tool-check-pill--warn', 'tool-check-pill--bad');
+      status?.classList.add('tool-check-pill--warn');
+      text('status', 'CHECK INPUTS');
+      text('statusCopy', 'Enter positive values for resistance, capacitance, signal frequency, and noise frequency.');
+      text('actionText', 'The calculation and frequency-response charts will update when all required inputs are valid.');
+      text('sourceLabel', sourceMode === 'voltage-output' ? 'Voltage-output source' : 'Resistor divider');
+      text('sourceResistanceLabel', 'Rsource = —');
+      for (const key of [
+        'sourceResistance',
+        'cutoffFrequency',
+        'tauSummary',
+        'noiseAttenuation',
+        'noiseSummary',
+        'signalAttenuation',
+        'signalSummary',
+        'signalPhase',
+        'riseTime',
+        'settlingTime',
+        'totalResistance',
+        'timeConstant',
+        'settlingTimePoint1',
+        'signalRatio',
+        'noiseRatio',
+        'signalToCutoff',
+        'noiseToCutoff'
+      ]) {
+        text(key, '—');
+      }
+      drawChartPlaceholder('[data-chart="magnitude"]');
+      drawChartPlaceholder('[data-chart="phase"]');
     };
 
     const chartRange = (cutoff: number, signal: number, noise: number) => {
@@ -409,10 +492,30 @@ const description = 'Design a first-order RC filter for voltage, current, and te
       context.restore();
     };
     const drawCharts = (cutoff: number, signal: number, noise: number) => {
-      if (!(cutoff > 0)) return;
+      if (!(cutoff > 0) || !(signal > 0) || !(noise > 0)) {
+        drawChartPlaceholder('[data-chart="magnitude"]');
+        drawChartPlaceholder('[data-chart="phase"]');
+        return;
+      }
       const { min, max } = chartRange(cutoff, signal, noise);
       drawMagnitude(cutoff, signal, noise, min, max);
       drawPhase(cutoff, signal, noise, min, max);
+    };
+    const drawChartPlaceholder = (selector: string) => {
+      const canvas = setupCanvas(selector);
+      if (!canvas) return;
+      const { context, width, height } = canvas;
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, width, height);
+      context.strokeStyle = '#e2e8f0';
+      context.lineWidth = 1;
+      context.strokeRect(0.5, 0.5, width - 1, height - 1);
+      context.fillStyle = '#64748b';
+      context.font = '600 13px system-ui';
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText('Enter valid values to display the frequency response.', width / 2, height / 2);
     };
     const drawMagnitude = (cutoff: number, signal: number, noise: number, min: number, max: number) => {
       const canvas = setupCanvas('[data-chart="magnitude"]');
