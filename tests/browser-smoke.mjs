@@ -468,10 +468,27 @@ try {
   await llcPage.locator('#runBtn').click();
   await llcPage.waitForFunction(() => document.querySelector('#mFeasible')?.textContent?.trim() === '539', null, { timeout: 120000 });
   await llcPage.waitForFunction(() => document.querySelectorAll('#statePlot path').length > 0 && document.querySelectorAll('#wavePlot path').length > 0, null, { timeout: 120000 });
+  const llcInteractionResult = await llcPage.evaluate(() => {
+    const defaultSelected = document.querySelector('#selectedPanel h3')?.textContent?.trim() ?? '';
+    const alternate = Array.from(document.querySelectorAll('#matrix [data-id]')).find((cell) => !cell.classList.contains('selected'));
+    alternate?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const alternateSelected = document.querySelector('#selectedPanel h3')?.textContent?.trim() ?? '';
+    document.querySelector('#recommendBody tr[data-id]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    return {
+      defaultSelected,
+      alternateSelected,
+      restoredSelected: document.querySelector('#selectedPanel h3')?.textContent?.trim() ?? ''
+    };
+  });
+  assert.notEqual(llcInteractionResult.alternateSelected, llcInteractionResult.defaultSelected, 'llc candidate switching changes selected design');
+  assert.equal(llcInteractionResult.restoredSelected, llcInteractionResult.defaultSelected, 'llc candidate switching restores default design');
+  await llcPage.waitForFunction(() => document.querySelectorAll('#statePlot path').length > 0 && document.querySelectorAll('#wavePlot path').length > 0, null, { timeout: 120000 });
   const llcResult = await llcPage.evaluate(() => ({
     noPageHorizontalScroll: document.documentElement.scrollWidth <= innerWidth,
     h1: document.querySelector('h1')?.textContent?.trim() ?? '',
     h1Count: document.querySelectorAll('h1').length,
+    visibleTextHasChinese: /[\u3400-\u9FFF]/.test(document.querySelector('[data-llc-designer-root]')?.innerText ?? ''),
+    transformerRatioCards: document.querySelectorAll('#ratioOverview .ratio-overview').length,
     total: Number(document.querySelector('#mTotal')?.textContent?.trim()),
     feasible: Number(document.querySelector('#mFeasible')?.textContent?.trim()),
     marginal: Number(document.querySelector('#mMarginal')?.textContent?.trim()),
@@ -485,8 +502,10 @@ try {
     waveformPathCount: document.querySelectorAll('#wavePlot path').length
   }));
   assert.equal(llcResult.noPageHorizontalScroll, true, 'llc desktop horizontal overflow');
-  assert.equal(llcResult.h1, 'LLC Designer v5', 'llc h1');
+  assert.equal(llcResult.h1, 'LLC Resonant Converter Designer', 'llc h1');
   assert.equal(llcResult.h1Count, 1, 'llc one h1');
+  assert.equal(llcResult.visibleTextHasChinese, false, 'llc visible text is English only');
+  assert.equal(llcResult.transformerRatioCards, 5, 'llc five transformer-ratio cards');
   assert.equal(llcResult.total, llcBaseline.total, 'llc total candidate count');
   assert.equal(llcResult.feasible, llcBaseline.feasible, 'llc feasible count');
   assert.equal(llcResult.marginal, llcBaseline.marginal, 'llc marginal count');
@@ -498,8 +517,44 @@ try {
   assert.deepEqual(llcResult.corners, llcBaseline.corners, 'llc corner baseline');
   assert.equal(llcResult.statePathCount, llcBaseline.statePathCount, 'llc state-plane path count');
   assert.equal(llcResult.waveformPathCount, llcBaseline.waveformPathCount, 'llc waveform path count');
+  await llcPage.locator('#curveBtn').click();
+  await llcPage.waitForFunction(() => document.querySelector('#curveBtn')?.textContent?.trim() === 'Calculate Gain Envelope', null, { timeout: 120000 });
+  const llcGainResult = await llcPage.evaluate(() => ({
+    pathCount: document.querySelectorAll('#gainPlot path').length,
+    summaryText: document.querySelector('#curveSummary')?.textContent?.replace(/\s+/g, ' ').trim() ?? ''
+  }));
+  assert.ok(llcGainResult.pathCount > 0, 'llc gain envelope draws paths');
+  assert.match(llcGainResult.summaryText, /Target gain range.+Required fs range.+Tightest corner/, 'llc gain envelope summary updates');
+  const llcOperatingSwitch = await llcPage.evaluate(() => {
+    const before = document.querySelector('#cornerBody tr.active td:first-child')?.textContent?.trim() ?? '';
+    const alternate = Array.from(document.querySelectorAll('#cornerBody tr[data-i]')).find((row) => !row.classList.contains('active'));
+    alternate?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    return {
+      before,
+      after: document.querySelector('#cornerBody tr.active td:first-child')?.textContent?.trim() ?? ''
+    };
+  });
+  assert.notEqual(llcOperatingSwitch.after, llcOperatingSwitch.before, 'llc operating-point switching changes active row');
+  await llcPage.waitForFunction(() => document.querySelectorAll('#statePlot path').length > 0 && document.querySelectorAll('#wavePlot path').length > 0, null, { timeout: 120000 });
+  const llcOperatingPaths = await llcPage.evaluate(() => ({
+    statePathCount: document.querySelectorAll('#statePlot path').length,
+    waveformPathCount: document.querySelectorAll('#wavePlot path').length
+  }));
+  assert.ok(llcOperatingPaths.statePathCount > 0, 'llc state-plane remains rendered after operating-point switch');
+  assert.ok(llcOperatingPaths.waveformPathCount > 0, 'llc waveform remains rendered after operating-point switch');
   assert.deepEqual(llcPageErrors, llcBaseline.pageErrors, 'llc browser page errors');
   await llcPage.close();
+
+  const llcMobilePage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await llcMobilePage.goto(`${baseUrl}/tools/llc-resonant-converter-designer/`, { waitUntil: 'domcontentloaded' });
+  await llcMobilePage.locator('#runBtn').click();
+  await llcMobilePage.waitForFunction(() => document.querySelector('#mFeasible')?.textContent?.trim() === '539', null, { timeout: 120000 });
+  await llcMobilePage.waitForFunction(() => document.querySelectorAll('#statePlot path').length > 0 && document.querySelectorAll('#wavePlot path').length > 0, null, { timeout: 120000 });
+  const llcMobileOverflow = await llcMobilePage.evaluate(() => ({
+    noPageHorizontalScroll: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1
+  }));
+  assert.equal(llcMobileOverflow.noPageHorizontalScroll, true, 'llc mobile horizontal overflow after calculation');
+  await llcMobilePage.close();
 
   for (const path of ['/about/', '/topology-designers/', '/tools/', '/magnetics/', '/control/', '/simulation/', '/tools/buck-inductor-ripple-calculator/', '/tools/voltage-sensing-adc-scaling/', '/tools/sensing-rc-filter-designer/', '/tools/llc-resonant-converter-designer/', '/articles/']) {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
