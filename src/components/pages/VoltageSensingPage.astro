@@ -28,12 +28,94 @@ const defaultInputs: VoltageSensingInputs = {
 };
 
 const defaultResult = calculateVoltageSensingDesign(defaultInputs);
-const defaultOverallStatus = defaultResult.checks.some((check) => check.status === 'fail')
-  ? 'Fail'
+const defaultOverallStatusCode = defaultResult.checks.some((check) => check.status === 'fail')
+  ? 'fail'
   : defaultResult.checks.some((check) => check.status === 'review')
-    ? 'Review'
-    : 'Pass';
+    ? 'review'
+    : 'pass';
+const defaultOverallStatus = locale === 'zh'
+  ? ({ pass: '通过', review: '复核', fail: '失败' } as const)[defaultOverallStatusCode]
+  : ({ pass: 'Pass', review: 'Review', fail: 'Fail' } as const)[defaultOverallStatusCode];
 const description = tool.description;
+const vt = locale === 'zh' ? {
+  category: '工程计算工具',
+  intro: '选择适合高压采样的实用分压器，并计算对应的 ADC 换算、分辨率、电流、功耗和元件应力。',
+  target: '目标 ADC 利用率',
+  inputs: '输入',
+  vin: '最大输入电压',
+  vref: 'ADC 参考电压',
+  resolution: 'ADC 分辨率',
+  series: '电阻系列',
+  size: '电阻封装',
+  upperCount: '上臂串联电阻数量',
+  topology: '分压拓扑',
+  oneLower: '1 个下臂',
+  oneLowerHint: '一个下臂电阻',
+  twoLower: '2 个下臂并联',
+  twoLowerHint: '两个相同下臂电阻并联',
+  upperNote: '上臂为一串高压电阻。在并联模式下，两个下臂电阻取值相同，等效电阻减半。',
+  searchNote: '电阻搜索偏向实用的下臂阻值，以平衡 ADC 源阻抗和分压功耗。',
+  calculated: '计算结果',
+  combination: '标准电阻组合',
+  upperString: '推荐上臂电阻串',
+  lowerBranch: '推荐下臂电阻支路',
+  seriesTotal: '串联总值',
+  equivalent: '等效电阻',
+  parallelEquivalent: '并联等效',
+  adcUsed: 'ADC 量程使用',
+  scaling: '换算比例',
+  fit: '标准值匹配',
+  deviation: '相对目标偏差',
+  inputResolution: '输入分辨率',
+  dividerCurrent: '分压电流',
+  dividerPower: '分压功耗',
+  fitNote: '标准值匹配只表示所选 E24 或 E96 电阻组合接近 90% ADC 利用率目标的程度，不包含电阻容差、温度系数、ADC 误差或参考电压误差。',
+  engineering: '工程校核',
+  firmware: '固件换算',
+  conversion: '输入电压换算',
+  copy: '复制',
+  ratingNote: '这里的封装额定值只用于初步筛选。请始终根据制造商数据手册核对所选电阻料号、工作电压、脉冲额定值、功率降额、温升和爬电距离要求。当前典型',
+  values: '值'
+} : {
+  category: 'Engineering Calculators',
+  intro: 'Select a practical resistor divider for high-voltage sensing and calculate the corresponding ADC scaling, resolution, current, power, and component stress.',
+  target: 'Target ADC utilization',
+  inputs: 'Inputs',
+  vin: 'Maximum Input Voltage',
+  vref: 'ADC Reference Voltage',
+  resolution: 'ADC Resolution',
+  series: 'Resistor Series',
+  size: 'Resistor Size',
+  upperCount: 'Number of Series Upper Resistors',
+  topology: 'Divider Topology',
+  oneLower: '1 Lower',
+  oneLowerHint: 'One lower resistor',
+  twoLower: '2 Lower in Parallel',
+  twoLowerHint: 'Two identical lower resistors in parallel',
+  upperNote: 'The upper side is one high-voltage resistor string. In the parallel mode, the two lower resistors have the same value and create half the equivalent resistance.',
+  searchNote: 'The resistor search favors a practical lower resistance to balance ADC source impedance and divider power.',
+  calculated: 'Calculated Design',
+  combination: 'Standard resistor combination',
+  upperString: 'Recommended Upper Resistor String',
+  lowerBranch: 'Recommended Lower Resistor Branch',
+  seriesTotal: 'Series total',
+  equivalent: 'Equivalent resistance',
+  parallelEquivalent: 'Parallel equivalent',
+  adcUsed: 'ADC Range Used',
+  scaling: 'Scaling Ratio',
+  fit: 'Standard-Value Fit',
+  deviation: 'Deviation from target',
+  inputResolution: 'Input Resolution',
+  dividerCurrent: 'Divider Current',
+  dividerPower: 'Divider Power',
+  fitNote: 'Standard-value fit only indicates how closely the selected E24 or E96 resistor combination matches the 90% ADC utilization target. It does not include resistor tolerance, temperature coefficient, ADC error, or reference-voltage error.',
+  engineering: 'Engineering Check',
+  firmware: 'Firmware Scaling',
+  conversion: 'Input voltage conversion',
+  copy: 'Copy',
+  ratingNote: 'Package ratings shown here are typical values for preliminary screening only. Always verify the selected resistor part number, working voltage, pulse rating, power derating, temperature rise, and creepage requirements from the manufacturer datasheet. Current typical',
+  values: 'values'
+};
 const checkLabels = {
   en: {
     'adc-headroom': 'ADC headroom',
@@ -82,21 +164,18 @@ function renderCheckDetail(check: (typeof defaultResult.checks)[number]) {
 
     <header class="tool-workbench__header">
       <div>
-        <p class="section-eyebrow">Engineering Calculators</p>
+        <p class="section-eyebrow">{vt.category}</p>
         <h1>{tool.title}</h1>
-        <p>
-          Select a practical resistor divider for high-voltage sensing and calculate the corresponding ADC scaling,
-          resolution, current, power, and component stress.
-        </p>
+        <p>{vt.intro}</p>
       </div>
-      <div class="tool-workbench__target">Target ADC utilization: {TARGET_ADC_UTILIZATION * 100}%</div>
+      <div class="tool-workbench__target">{vt.target}: {TARGET_ADC_UTILIZATION * 100}%</div>
     </header>
 
     <div class="tool-workbench__layout" data-voltage-sensing-tool data-locale={locale}>
       <section class="tool-input-panel" aria-labelledby="voltage-sensing-inputs">
-        <h2 id="voltage-sensing-inputs">Inputs</h2>
+        <h2 id="voltage-sensing-inputs">{vt.inputs}</h2>
         <div class="tool-field">
-          <label for="maximum-input-voltage">Maximum Input Voltage</label>
+          <label for="maximum-input-voltage">{vt.vin}</label>
           <div class="tool-control">
             <input id="maximum-input-voltage" data-input="maximumInputVoltage" type="number" min="0.1" step="1" value={defaultInputs.maximumInputVoltage} />
             <span>V</span>
@@ -105,7 +184,7 @@ function renderCheckDetail(check: (typeof defaultResult.checks)[number]) {
         </div>
 
         <div class="tool-field">
-          <label for="adc-reference-voltage">ADC Reference Voltage</label>
+          <label for="adc-reference-voltage">{vt.vref}</label>
           <div class="tool-control">
             <input id="adc-reference-voltage" data-input="adcReferenceVoltage" type="number" min="0.1" step="0.1" value={defaultInputs.adcReferenceVoltage} />
             <span>V</span>
@@ -114,7 +193,7 @@ function renderCheckDetail(check: (typeof defaultResult.checks)[number]) {
         </div>
 
         <div class="tool-field">
-          <label for="adc-resolution">ADC Resolution</label>
+          <label for="adc-resolution">{vt.resolution}</label>
           <div class="tool-control tool-control--select">
             <select id="adc-resolution" data-input="adcResolutionBits">
               <option value="8">8-bit</option>
@@ -126,7 +205,7 @@ function renderCheckDetail(check: (typeof defaultResult.checks)[number]) {
         </div>
 
         <div class="tool-field">
-          <label for="resistor-series">Resistor Series</label>
+          <label for="resistor-series">{vt.series}</label>
           <div class="tool-control tool-control--select">
             <select id="resistor-series" data-input="resistorSeries">
               <option value="E24" selected>E24</option>
@@ -136,7 +215,7 @@ function renderCheckDetail(check: (typeof defaultResult.checks)[number]) {
         </div>
 
         <div class="tool-field">
-          <label for="resistor-size">Resistor Size</label>
+          <label for="resistor-size">{vt.size}</label>
           <div class="tool-control tool-control--select">
             <select id="resistor-size" data-input="resistorSize">
               <option value="0402">0402</option>
@@ -149,7 +228,7 @@ function renderCheckDetail(check: (typeof defaultResult.checks)[number]) {
         </div>
 
         <div class="tool-field">
-          <label for="upper-resistor-count">Number of Series Upper Resistors</label>
+          <label for="upper-resistor-count">{vt.upperCount}</label>
           <div class="tool-control">
             <input id="upper-resistor-count" data-input="upperResistorCount" type="number" min="1" max="30" step="1" value={defaultInputs.upperResistorCount} />
             <span>pcs</span>
@@ -158,25 +237,24 @@ function renderCheckDetail(check: (typeof defaultResult.checks)[number]) {
         </div>
 
         <fieldset class="tool-field tool-segmented" data-input="topology">
-          <legend>Divider Topology</legend>
+          <legend>{vt.topology}</legend>
           <label>
             <input type="radio" name="topology" value="single-lower" checked />
-            <span>1 Lower</span>
-            <small>One lower resistor</small>
+            <span>{vt.oneLower}</span>
+            <small>{vt.oneLowerHint}</small>
           </label>
           <label>
             <input type="radio" name="topology" value="parallel-lower" />
-            <span>2 Lower in Parallel</span>
-            <small>Two identical lower resistors in parallel</small>
+            <span>{vt.twoLower}</span>
+            <small>{vt.twoLowerHint}</small>
           </label>
         </fieldset>
 
         <p class="tool-note">
-          The upper side is one high-voltage resistor string. In the parallel mode, the two lower resistors have the same
-          value and create half the equivalent resistance.
+          {vt.upperNote}
         </p>
         <p class="tool-note">
-          The resistor search favors a practical lower resistance to balance ADC source impedance and divider power.
+          {vt.searchNote}
         </p>
       </section>
 
@@ -184,22 +262,22 @@ function renderCheckDetail(check: (typeof defaultResult.checks)[number]) {
         <article class="tool-result-card tool-result-card--primary">
           <div class="tool-result-card__heading">
             <div>
-              <p class="category-eyebrow">Calculated Design</p>
-              <h2>Standard resistor combination</h2>
+              <p class="category-eyebrow">{vt.calculated}</p>
+              <h2>{vt.combination}</h2>
             </div>
-            <span class:list={['tool-check-pill', `tool-check-pill--${defaultOverallStatus.toLowerCase()}`]} data-output="overallStatus">{defaultOverallStatus}</span>
+            <span class:list={['tool-check-pill', `tool-check-pill--${defaultOverallStatusCode}`]} data-output="overallStatus">{defaultOverallStatus}</span>
           </div>
 
           <div class="resistor-recommendation">
             <div>
-              <span>Recommended Upper Resistor String</span>
+              <span>{vt.upperString}</span>
               <strong data-output="upperString">{defaultInputs.upperResistorCount} × {formatResistance(defaultResult.upperEachOhms)}</strong>
-              <small data-output="upperDetail">Series total: {formatResistance(defaultResult.upperTotalOhms)}</small>
+              <small data-output="upperDetail">{vt.seriesTotal}: {formatResistance(defaultResult.upperTotalOhms)}</small>
             </div>
             <div>
-              <span>Recommended Lower Resistor Branch</span>
+              <span>{vt.lowerBranch}</span>
               <strong data-output="lowerBranch">1 × {formatResistance(defaultResult.lowerEachOhms)}</strong>
-              <small data-output="lowerDetail">Equivalent resistance: {formatResistance(defaultResult.lowerEquivalentOhms)}</small>
+              <small data-output="lowerDetail">{vt.equivalent}: {formatResistance(defaultResult.lowerEquivalentOhms)}</small>
             </div>
           </div>
 
@@ -213,42 +291,40 @@ function renderCheckDetail(check: (typeof defaultResult.checks)[number]) {
 
           <div class="metric-grid">
             <div class="metric-tile">
-              <span>ADC Range Used</span>
+              <span>{vt.adcUsed}</span>
               <strong data-output="adcUtilization">{(defaultResult.adcUtilization * 100).toFixed(1)}%</strong>
             </div>
             <div class="metric-tile">
-              <span>Scaling Ratio</span>
+              <span>{vt.scaling}</span>
               <strong data-output="scalingRatio">{defaultResult.scalingRatio.toFixed(1)} : 1</strong>
             </div>
             <div class="metric-tile">
-              <span>Standard-Value Fit</span>
+              <span>{vt.fit}</span>
               <strong data-output="nominalAccuracy">{defaultResult.nominalAccuracyPercent.toFixed(3)}%</strong>
-              <small data-output="valueFitError">Deviation from target: {defaultResult.valueFitErrorPercent >= 0 ? '+' : ''}{defaultResult.valueFitErrorPercent.toFixed(3)}%</small>
+              <small data-output="valueFitError">{vt.deviation}: {defaultResult.valueFitErrorPercent >= 0 ? '+' : ''}{defaultResult.valueFitErrorPercent.toFixed(3)}%</small>
             </div>
             <div class="metric-tile">
-              <span>Input Resolution</span>
+              <span>{vt.inputResolution}</span>
               <strong data-output="inputResolution">{formatResolution(defaultResult.inputResolutionVPerCount)}</strong>
             </div>
             <div class="metric-tile">
-              <span>Divider Current</span>
+              <span>{vt.dividerCurrent}</span>
               <strong data-output="dividerCurrent">{formatCurrent(defaultResult.dividerCurrentA)}</strong>
             </div>
             <div class="metric-tile">
-              <span>Divider Power</span>
+              <span>{vt.dividerPower}</span>
               <strong data-output="dividerPower">{formatPower(defaultResult.dividerPowerW)}</strong>
             </div>
           </div>
 
           <p class="tool-note">
-            Standard-value fit only indicates how closely the selected E24 or E96 resistor combination matches the 90%
-            ADC utilization target. It does not include resistor tolerance, temperature coefficient, ADC error, or
-            reference-voltage error.
+            {vt.fitNote}
           </p>
         </article>
 
         <div class="tool-results__bottom">
           <article class="tool-result-card">
-            <h2>Engineering Check</h2>
+            <h2>{vt.engineering}</h2>
             <div class="engineering-checks" data-output="checks">
               {defaultResult.checks.map((check) => (
                 <div class:list={['engineering-check', `engineering-check--${check.status}`]}>
@@ -261,20 +337,18 @@ function renderCheckDetail(check: (typeof defaultResult.checks)[number]) {
               ))}
             </div>
             <p class="tool-warning" data-output="ratingNote">
-              Package ratings shown here are typical values for preliminary screening only. Always verify the selected
-              resistor part number, working voltage, pulse rating, power derating, temperature rise, and creepage
-              requirements from the manufacturer datasheet. Current typical {defaultInputs.resistorSize} values:
+              {vt.ratingNote} {defaultInputs.resistorSize} {vt.values}:
               {formatPower(resistorPackageRatings[defaultInputs.resistorSize].powerW)} and {resistorPackageRatings[defaultInputs.resistorSize].workingVoltageV} V.
             </p>
           </article>
 
           <article class="tool-result-card">
-            <h2>Firmware Scaling</h2>
+            <h2>{vt.firmware}</h2>
             <p data-output="formulaText">
-              Input voltage conversion: Vin = ADC code × {defaultResult.inputResolutionVPerCount.toFixed(8)} V.
+              {vt.conversion}: Vin = ADC code × {defaultResult.inputResolutionVPerCount.toFixed(8)} V.
             </p>
             <div class="code-panel">
-              <button class="button-link button-link--secondary code-panel__copy" type="button" data-copy-code>Copy</button>
+              <button class="button-link button-link--secondary code-panel__copy" type="button" data-copy-code>{vt.copy}</button>
               <code data-output="firmwareCode">{defaultResult.firmwareCode}</code>
             </div>
           </article>
@@ -299,6 +373,46 @@ function renderCheckDetail(check: (typeof defaultResult.checks)[number]) {
 
     if (root) {
     const locale = root.dataset.locale === 'zh' ? 'zh' : 'en';
+    const textLabels = {
+      en: {
+        pass: 'Pass',
+        review: 'Review',
+        fail: 'Fail',
+        upperTotal: 'Series total',
+        equivalent: 'Equivalent resistance',
+        parallelEquivalent: 'Parallel equivalent',
+        deviation: 'Deviation from target',
+        conversion: 'Input voltage conversion',
+        ratingNote: 'Package ratings shown here are typical values for preliminary screening only. Always verify the selected resistor part number, working voltage, pulse rating, power derating, temperature rise, and creepage requirements from the manufacturer datasheet. Current typical',
+        values: 'values',
+        vinError: 'Enter a voltage greater than 0 V.',
+        vrefError: 'Enter a reference voltage greater than 0 V.',
+        countError: 'Enter an integer from 1 to 30.',
+        noCombination: 'No practical standard-value combination was found for these inputs.',
+        copied: 'Copied',
+        copyFailed: 'Copy failed',
+        copy: 'Copy'
+      },
+      zh: {
+        pass: '通过',
+        review: '复核',
+        fail: '失败',
+        upperTotal: '串联总值',
+        equivalent: '等效电阻',
+        parallelEquivalent: '并联等效',
+        deviation: '相对目标偏差',
+        conversion: '输入电压换算',
+        ratingNote: '这里的封装额定值只用于初步筛选。请始终根据制造商数据手册核对所选电阻料号、工作电压、脉冲额定值、功率降额、温升和爬电距离要求。当前典型',
+        values: '值',
+        vinError: '请输入大于 0 V 的电压。',
+        vrefError: '请输入大于 0 V 的参考电压。',
+        countError: '请输入 1 到 30 之间的整数。',
+        noCombination: '这些输入下未找到实用的标准阻值组合。',
+        copied: '已复制',
+        copyFailed: '复制失败',
+        copy: '复制'
+      }
+    } as const;
     const checkLabels = {
       en: {
         'adc-headroom': 'ADC headroom',
@@ -384,36 +498,37 @@ function renderCheckDetail(check: (typeof defaultResult.checks)[number]) {
     const update = () => {
       const inputs = readInputs();
       const fieldErrors: Partial<Record<string, string>> = {};
-      if (!(inputs.maximumInputVoltage > 0)) fieldErrors.maximumInputVoltage = 'Enter a voltage greater than 0 V.';
-      if (!(inputs.adcReferenceVoltage > 0)) fieldErrors.adcReferenceVoltage = 'Enter a reference voltage greater than 0 V.';
+      if (!(inputs.maximumInputVoltage > 0)) fieldErrors.maximumInputVoltage = textLabels[locale].vinError;
+      if (!(inputs.adcReferenceVoltage > 0)) fieldErrors.adcReferenceVoltage = textLabels[locale].vrefError;
       if (!Number.isInteger(inputs.upperResistorCount) || inputs.upperResistorCount < 1 || inputs.upperResistorCount > 30) {
-        fieldErrors.upperResistorCount = 'Enter an integer from 1 to 30.';
+        fieldErrors.upperResistorCount = textLabels[locale].countError;
       }
       setErrors(fieldErrors);
       if (Object.keys(fieldErrors).length > 0) return;
 
       try {
         const result = calculateVoltageSensingDesign(inputs);
-        const overallStatus = result.checks.some((check) => check.status === 'fail')
-          ? 'Fail'
+        const overallStatusCode = result.checks.some((check) => check.status === 'fail')
+          ? 'fail'
           : result.checks.some((check) => check.status === 'review')
-            ? 'Review'
-            : 'Pass';
+            ? 'review'
+            : 'pass';
+        const overallStatus = textLabels[locale][overallStatusCode];
         const lowerCount = inputs.topology === 'parallel-lower' ? 2 : 1;
         const rating = resistorPackageRatings[inputs.resistorSize];
         const statusPill = outputs.get('overallStatus');
 
         text('overallStatus', overallStatus);
         statusPill?.classList.remove('tool-check-pill--pass', 'tool-check-pill--review', 'tool-check-pill--fail');
-        statusPill?.classList.add(`tool-check-pill--${overallStatus.toLowerCase()}`);
+        statusPill?.classList.add(`tool-check-pill--${overallStatusCode}`);
         text('upperString', `${inputs.upperResistorCount} × ${formatResistance(result.upperEachOhms)}`);
-        text('upperDetail', `Series total: ${formatResistance(result.upperTotalOhms)}`);
+        text('upperDetail', `${textLabels[locale].upperTotal}: ${formatResistance(result.upperTotalOhms)}`);
         text('lowerBranch', `${lowerCount} × ${formatResistance(result.lowerEachOhms)}`);
         text(
           'lowerDetail',
           inputs.topology === 'parallel-lower'
-            ? `Parallel equivalent: ${formatResistance(result.lowerEquivalentOhms)}`
-            : `Equivalent resistance: ${formatResistance(result.lowerEquivalentOhms)}`
+            ? `${textLabels[locale].parallelEquivalent}: ${formatResistance(result.lowerEquivalentOhms)}`
+            : `${textLabels[locale].equivalent}: ${formatResistance(result.lowerEquivalentOhms)}`
         );
         text('flowInput', formatVoltage(inputs.maximumInputVoltage));
         text('flowAdc', `${result.adcVoltage.toFixed(3)} V ADC`);
@@ -421,20 +536,20 @@ function renderCheckDetail(check: (typeof defaultResult.checks)[number]) {
         text('adcUtilization', `${(result.adcUtilization * 100).toFixed(1)}%`);
         text('scalingRatio', `${result.scalingRatio.toFixed(1)} : 1`);
         text('nominalAccuracy', `${result.nominalAccuracyPercent.toFixed(3)}%`);
-        text('valueFitError', `Deviation from target: ${result.valueFitErrorPercent >= 0 ? '+' : ''}${result.valueFitErrorPercent.toFixed(3)}%`);
+        text('valueFitError', `${textLabels[locale].deviation}: ${result.valueFitErrorPercent >= 0 ? '+' : ''}${result.valueFitErrorPercent.toFixed(3)}%`);
         text('inputResolution', formatResolution(result.inputResolutionVPerCount));
         text('dividerCurrent', formatCurrent(result.dividerCurrentA));
         text('dividerPower', formatPower(result.dividerPowerW));
-        text('formulaText', `Input voltage conversion: Vin = ADC code × ${result.inputResolutionVPerCount.toFixed(8)} V.`);
+        text('formulaText', `${textLabels[locale].conversion}: Vin = ADC code × ${result.inputResolutionVPerCount.toFixed(8)} V.`);
         text('firmwareCode', result.firmwareCode);
         text(
           'ratingNote',
-          `Package ratings shown here are typical values for preliminary screening only. Always verify the selected resistor part number, working voltage, pulse rating, power derating, temperature rise, and creepage requirements from the manufacturer datasheet. Current typical ${inputs.resistorSize} values: ${formatPower(rating.powerW)} and ${rating.workingVoltageV} V.`
+          `${textLabels[locale].ratingNote} ${inputs.resistorSize} ${textLabels[locale].values}: ${formatPower(rating.powerW)} and ${rating.workingVoltageV} V.`
         );
         latestFirmwareCode = result.firmwareCode;
         renderChecks(result.checks);
       } catch {
-        setErrors({ upperResistorCount: 'No practical standard-value combination was found for these inputs.' });
+        setErrors({ upperResistorCount: textLabels[locale].noCombination });
       }
     };
 
@@ -446,12 +561,12 @@ function renderCheckDetail(check: (typeof defaultResult.checks)[number]) {
     copyButton?.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(latestFirmwareCode);
-        copyButton.textContent = 'Copied';
+        copyButton.textContent = textLabels[locale].copied;
       } catch {
-        copyButton.textContent = 'Copy failed';
+        copyButton.textContent = textLabels[locale].copyFailed;
       }
       window.setTimeout(() => {
-        copyButton.textContent = 'Copy';
+        copyButton.textContent = textLabels[locale].copy;
       }, 1200);
     });
 

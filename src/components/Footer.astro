@@ -29,10 +29,10 @@ const otherHref = `${swapLocaleInPath(Astro.url.pathname, otherLocale)}${Astro.u
       <a href={getLocalizedPath('/about/', locale)}>{t.site.footer.about}</a>
       <a href="https://github.com/Tuzki/petoolbox">GitHub</a>
     </nav>
-    <div class="site-footer__nav" aria-label="Footer language">
+    <div class="site-footer__nav site-footer__language" aria-label="Footer language">
       <h2>{t.site.language}</h2>
       <span aria-current="true">{t.site.languages[locale]}</span>
-      <a href={otherHref} hreflang={otherLocale === 'zh' ? 'zh-CN' : 'en'}>{t.site.languages[otherLocale]}</a>
+      <a href={otherHref} hreflang={otherLocale === 'zh' ? 'zh-CN' : 'en'} data-language-switch>{t.site.languages[otherLocale]}</a>
     </div>
   </div>
 </footer>

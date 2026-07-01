@@ -91,8 +91,8 @@ const zh = locale === 'zh';
           </fieldset>
 
           <fieldset class="llc-group">
-            <legend>Search Constraints</legend>
-            <div id="ratioFormula" class="llc-note">The center transformer ratio is calculated from the typical input voltage and topology.</div>
+            <legend>{zh ? '搜索约束' : 'Search Constraints'}</legend>
+            <div id="ratioFormula" class="llc-note">{zh ? '中心变压器匝比由典型输入电压和拓扑计算得到。' : 'The center transformer ratio is calculated from the typical input voltage and topology.'}</div>
             <div class="llc-ratio-pills">
               <span id="n1Display" class="llc-ratio-pill">n-2</span>
               <span id="n2Display" class="llc-ratio-pill">n-1</span>
@@ -100,21 +100,21 @@ const zh = locale === 'zh';
               <span id="n4Display" class="llc-ratio-pill">n+1</span>
               <span id="n5Display" class="llc-ratio-pill">n+2</span>
             </div>
-            <p class="llc-note">Five transformer-ratio candidates are generated automatically.</p>
+            <p class="llc-note">{zh ? '自动生成五个变压器匝比候选。' : 'Five transformer-ratio candidates are generated automatically.'}</p>
             <div class="llc-fields">
               <label class="llc-wide">9 k = Lm / Lr candidates<input id="kList" value="3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7" /></label>
               <label class="llc-wide">13 Qnom candidates<input id="qList" value="0.200, 0.225, 0.250, 0.275, 0.300, 0.325, 0.350, 0.375, 0.400, 0.425, 0.450, 0.475, 0.500" /></label>
             </div>
-            <p class="llc-note">The default search evaluates 5 x 9 x 13 = 585 candidates.</p>
+            <p class="llc-note">{zh ? '默认搜索评估 5 x 9 x 13 = 585 个候选。' : 'The default search evaluates 5 x 9 x 13 = 585 candidates.'}</p>
           </fieldset>
         </div>
 
         <div class="llc-actions" aria-label="Design search controls">
-          <button id="runBtn" class="llc-button llc-button--primary" type="button">Run Design Search</button>
-          <button id="cancelBtn" class="llc-button llc-button--danger" type="button" disabled>Cancel Search</button>
+          <button id="runBtn" class="llc-button llc-button--primary" type="button">{zh ? '运行设计搜索' : 'Run Design Search'}</button>
+          <button id="cancelBtn" class="llc-button llc-button--danger" type="button" disabled>{zh ? '取消搜索' : 'Cancel Search'}</button>
           <div class="llc-progress-wrap">
             <div class="llc-progress-line"><div id="progressBar" class="llc-progress-bar"></div></div>
-            <div id="progressText" class="llc-progress-text">Ready to evaluate 585 candidates across 9 operating points.</div>
+            <div id="progressText" class="llc-progress-text">{zh ? '准备评估 9 个运行点上的 585 个候选。' : 'Ready to evaluate 585 candidates across 9 operating points.'}</div>
           </div>
         </div>
       </div>
@@ -126,45 +126,45 @@ const zh = locale === 'zh';
           <p class="llc-section-kicker">{zh ? '步骤 2' : 'Step 2'}</p>
           <h2 id="llc-search-summary">{zh ? '搜索摘要' : 'Search Summary'}</h2>
         </div>
-        <p>Candidate counts update after the search completes.</p>
+        <p>{zh ? '搜索完成后更新候选数量。' : 'Candidate counts update after the search completes.'}</p>
       </div>
       <div class="llc-summary-grid">
-        <div class="llc-metric"><b>Total</b><strong id="mTotal">585</strong></div>
-        <div class="llc-metric llc-metric--feasible"><b>Feasible</b><strong id="mFeasible">—</strong></div>
-        <div class="llc-metric llc-metric--marginal"><b>Marginal</b><strong id="mMarginal">—</strong></div>
-        <div class="llc-metric llc-metric--failed"><b>Failed / Numerical</b><strong id="mFailed">—</strong></div>
-        <div class="llc-metric"><b>Run time</b><strong id="mTime">—</strong></div>
+        <div class="llc-metric"><b>{zh ? '总数' : 'Total'}</b><strong id="mTotal">585</strong></div>
+        <div class="llc-metric llc-metric--feasible"><b>{zh ? '可行' : 'Feasible'}</b><strong id="mFeasible">—</strong></div>
+        <div class="llc-metric llc-metric--marginal"><b>{zh ? '临界' : 'Marginal'}</b><strong id="mMarginal">—</strong></div>
+        <div class="llc-metric llc-metric--failed"><b>{zh ? '失败 / 数值异常' : 'Failed / Numerical'}</b><strong id="mFailed">—</strong></div>
+        <div class="llc-metric"><b>{zh ? '运行时间' : 'Run time'}</b><strong id="mTime">—</strong></div>
       </div>
     </section>
 
     <section class="llc-card llc-table-card" aria-labelledby="llc-recommended-designs">
       <div class="llc-section-head">
         <div>
-          <p class="llc-section-kicker">Step 3</p>
+          <p class="llc-section-kicker">{zh ? '步骤 3' : 'Step 3'}</p>
           <h2 id="llc-recommended-designs">{zh ? '推荐设计' : 'Recommended Designs'}</h2>
         </div>
-        <p>Top-ranked candidates by worst-case margin and constraint headroom.</p>
+        <p>{zh ? '按最坏工况裕量和约束余量排序的候选。' : 'Top-ranked candidates by worst-case margin and constraint headroom.'}</p>
       </div>
       <div class="llc-table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Rank / Status</th>
+              <th>{zh ? '排名 / 状态' : 'Rank / Status'}</th>
               <th>n</th>
               <th>k</th>
               <th>Qnom</th>
               <th>Lr [µH]</th>
               <th>Lm [µH]</th>
               <th>Cr [nF]</th>
-              <th>fs range [kHz]</th>
+              <th>{zh ? 'fs 范围 [kHz]' : 'fs range [kHz]'}</th>
               <th>Ir,pk [A]</th>
               <th>Ir,rms [A]</th>
               <th>VCr,pk [V]</th>
-              <th>Worst margin</th>
-              <th>Limit</th>
+              <th>{zh ? '最差裕量' : 'Worst margin'}</th>
+              <th>{zh ? '限制' : 'Limit'}</th>
             </tr>
           </thead>
-          <tbody id="recommendBody"><tr><td colspan="13">Run the design search to view recommended designs.</td></tr></tbody>
+          <tbody id="recommendBody"><tr><td colspan="13">{zh ? '运行设计搜索以查看推荐设计。' : 'Run the design search to view recommended designs.'}</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -173,24 +173,24 @@ const zh = locale === 'zh';
       <section class="llc-card" aria-labelledby="llc-selected-design">
         <div class="llc-section-head">
           <div>
-            <p class="llc-section-kicker">Step 4</p>
+            <p class="llc-section-kicker">{zh ? '步骤 4' : 'Step 4'}</p>
             <h2 id="llc-selected-design">{zh ? '当前设计' : 'Selected Design'}</h2>
           </div>
-          <p>Review the active candidate and its limiting margin.</p>
+          <p>{zh ? '查看当前候选及其限制裕量。' : 'Review the active candidate and its limiting margin.'}</p>
         </div>
-        <div id="selectedPanel" class="llc-side-body"><div class="llc-empty">Run the design search to select a candidate.</div></div>
+        <div id="selectedPanel" class="llc-side-body"><div class="llc-empty">{zh ? '运行设计搜索以选择候选。' : 'Run the design search to select a candidate.'}</div></div>
       </section>
 
       <section class="llc-card" aria-labelledby="llc-ratio-overview">
         <div class="llc-section-head">
           <div>
-            <p class="llc-section-kicker">Step 5</p>
-            <h2 id="llc-ratio-overview">Transformer-ratio Overview</h2>
+            <p class="llc-section-kicker">{zh ? '步骤 5' : 'Step 5'}</p>
+            <h2 id="llc-ratio-overview">{zh ? '变压器匝比概览' : 'Transformer-ratio Overview'}</h2>
           </div>
-          <p>Compare feasible regions across the five generated ratio candidates.</p>
+          <p>{zh ? '比较五个自动生成匝比候选的可行区域。' : 'Compare feasible regions across the five generated ratio candidates.'}</p>
         </div>
         <div id="ratioOverview" class="llc-overview-grid">
-          <div class="llc-empty">Run the design search to compare the feasible regions of five transformer-ratio candidates.</div>
+          <div class="llc-empty">{zh ? '运行设计搜索以比较五个变压器匝比候选的可行区域。' : 'Run the design search to compare the feasible regions of five transformer-ratio candidates.'}</div>
         </div>
       </section>
     </div>
@@ -198,60 +198,60 @@ const zh = locale === 'zh';
     <section class="llc-card" aria-labelledby="llc-candidate-space">
       <div class="llc-section-head">
         <div>
-          <p class="llc-section-kicker">Step 6</p>
+          <p class="llc-section-kicker">{zh ? '步骤 6' : 'Step 6'}</p>
           <h2 id="llc-candidate-space">{zh ? '候选空间' : 'Candidate Space'}</h2>
-          <p class="llc-head-note">Each cell represents one k and Q combination for the active transformer ratio.</p>
+          <p class="llc-head-note">{zh ? '每个单元格表示当前变压器匝比下的一组 k 和 Q 组合。' : 'Each cell represents one k and Q combination for the active transformer ratio.'}</p>
         </div>
         <div class="llc-matrix-toolbar">
           <span id="activeRatioLabel" class="llc-ratio-label">n = —</span>
           <select id="matrixMetric">
-            <option value="margin">Worst-case margin</option>
-            <option value="fsmax">Maximum required frequency</option>
-            <option value="ipk">Worst Ir,pk</option>
-            <option value="irms">Worst Ir,rms</option>
-            <option value="vcrpk">Worst VCr,pk</option>
-            <option value="comm">Minimum commutation current</option>
+            <option value="margin">{zh ? '最坏工况裕量' : 'Worst-case margin'}</option>
+            <option value="fsmax">{zh ? '最高所需频率' : 'Maximum required frequency'}</option>
+            <option value="ipk">{zh ? '最差 Ir,pk' : 'Worst Ir,pk'}</option>
+            <option value="irms">{zh ? '最差 Ir,rms' : 'Worst Ir,rms'}</option>
+            <option value="vcrpk">{zh ? '最差 VCr,pk' : 'Worst VCr,pk'}</option>
+            <option value="comm">{zh ? '最小换流电流' : 'Minimum commutation current'}</option>
           </select>
         </div>
       </div>
       <div class="llc-matrix-wrap"><div id="matrix" class="llc-matrix"></div></div>
       <div class="llc-legend">
-        <span><i class="llc-dot feasible"></i>Feasible</span>
-        <span><i class="llc-dot marginal"></i>Marginal</span>
-        <span><i class="llc-dot failed"></i>Failed</span>
-        <span><i class="llc-dot numerical"></i>Numerical issue</span>
-        <span>Limits: F↑ high frequency, F↓ low frequency, I current, V voltage, Z commutation, N numerical.</span>
+        <span><i class="llc-dot feasible"></i>{zh ? '可行' : 'Feasible'}</span>
+        <span><i class="llc-dot marginal"></i>{zh ? '临界' : 'Marginal'}</span>
+        <span><i class="llc-dot failed"></i>{zh ? '失败' : 'Failed'}</span>
+        <span><i class="llc-dot numerical"></i>{zh ? '数值异常' : 'Numerical issue'}</span>
+        <span>{zh ? '限制：F↑ 高频，F↓ 低频，I 电流，V 电压，Z 换流，N 数值。' : 'Limits: F↑ high frequency, F↓ low frequency, I current, V voltage, Z commutation, N numerical.'}</span>
       </div>
     </section>
 
     <section class="llc-card llc-table-card" aria-labelledby="llc-operating-points">
       <div class="llc-section-head">
         <div>
-          <p class="llc-section-kicker">Step 7</p>
+          <p class="llc-section-kicker">{zh ? '步骤 7' : 'Step 7'}</p>
           <h2 id="llc-operating-points">{zh ? '运行点' : 'Operating Points'}</h2>
         </div>
-        <p>Select any operating point to update the state-plane and time-domain views.</p>
+        <p>{zh ? '选择任一运行点以更新状态平面和时域视图。' : 'Select any operating point to update the state-plane and time-domain views.'}</p>
       </div>
       <div class="llc-table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Operating point</th>
+              <th>{zh ? '运行点' : 'Operating point'}</th>
               <th>Vin [V]</th>
-              <th>Load</th>
+              <th>{zh ? '负载' : 'Load'}</th>
               <th>fs [kHz]</th>
               <th>fs/f0</th>
-              <th>Control branch</th>
+              <th>{zh ? '控制分支' : 'Control branch'}</th>
               <th>Ir,pk [A]</th>
               <th>Ir,rms [A]</th>
               <th>VCr,pk [V]</th>
-              <th>Commutation current [A]</th>
-              <th>Free interval</th>
+              <th>{zh ? '换流电流 [A]' : 'Commutation current [A]'}</th>
+              <th>{zh ? '自由谐振区间' : 'Free interval'}</th>
               <th>ODE residual</th>
-              <th>Result</th>
+              <th>{zh ? '结果' : 'Result'}</th>
             </tr>
           </thead>
-          <tbody id="cornerBody"><tr><td colspan="13">Select a candidate design to inspect operating points.</td></tr></tbody>
+          <tbody id="cornerBody"><tr><td colspan="13">{zh ? '选择候选设计以查看运行点。' : 'Select a candidate design to inspect operating points.'}</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -259,72 +259,72 @@ const zh = locale === 'zh';
     <section class="llc-advanced" aria-labelledby="llc-advanced-analysis">
       <div class="llc-advanced-head">
         <div>
-          <p class="llc-section-kicker">Step 8</p>
+          <p class="llc-section-kicker">{zh ? '步骤 8' : 'Step 8'}</p>
           <h2 id="llc-advanced-analysis">{zh ? '深度分析' : 'Advanced Analysis'}</h2>
         </div>
-        <p>Use the plots to inspect gain envelope, operating mode, state trajectory, and waveforms for the selected design.</p>
+        <p>{zh ? '使用图表检查所选设计的增益包络、运行模式、状态轨迹和波形。' : 'Use the plots to inspect gain envelope, operating mode, state trajectory, and waveforms for the selected design.'}</p>
       </div>
 
       <section class="llc-card llc-table-card" aria-labelledby="llc-gain-envelope">
         <div class="llc-section-head">
           <div>
-            <h3 id="llc-gain-envelope">Gain Envelope and Required Switching-Frequency Range</h3>
-            <p class="llc-head-note">The envelope shows the switching-frequency range required to regulate each operating condition.</p>
+            <h3 id="llc-gain-envelope">{zh ? '增益包络和所需开关频率范围' : 'Gain Envelope and Required Switching-Frequency Range'}</h3>
+            <p class="llc-head-note">{zh ? '包络显示调节每个运行条件所需的开关频率范围。' : 'The envelope shows the switching-frequency range required to regulate each operating condition.'}</p>
           </div>
-          <div class="llc-plot-tools"><button id="curveBtn" class="llc-button llc-button--secondary" type="button" disabled>Calculate Gain Envelope</button></div>
+          <div class="llc-plot-tools"><button id="curveBtn" class="llc-button llc-button--secondary" type="button" disabled>{zh ? '计算增益包络' : 'Calculate Gain Envelope'}</button></div>
         </div>
         <div id="curveSummary" class="llc-envelope-summary">
-          <div class="llc-envelope-chip"><b>Target gain range</b><span>—</span></div>
-          <div class="llc-envelope-chip"><b>Required fs range</b><span>—</span></div>
-          <div class="llc-envelope-chip"><b>Low-frequency margin</b><span>—</span></div>
-          <div class="llc-envelope-chip"><b>High-frequency margin</b><span>—</span></div>
-          <div class="llc-envelope-chip"><b>Tightest corner</b><span>—</span></div>
+          <div class="llc-envelope-chip"><b>{zh ? '目标增益范围' : 'Target gain range'}</b><span>—</span></div>
+          <div class="llc-envelope-chip"><b>{zh ? '所需 fs 范围' : 'Required fs range'}</b><span>—</span></div>
+          <div class="llc-envelope-chip"><b>{zh ? '低频裕量' : 'Low-frequency margin'}</b><span>—</span></div>
+          <div class="llc-envelope-chip"><b>{zh ? '高频裕量' : 'High-frequency margin'}</b><span>—</span></div>
+          <div class="llc-envelope-chip"><b>{zh ? '最紧角点' : 'Tightest corner'}</b><span>—</span></div>
         </div>
         <div class="llc-plot-body"><svg id="gainPlot" viewBox="0 0 1220 520"></svg></div>
-        <p class="llc-plot-note">The shaded band spans light load through overload. Target gain lines map the input-voltage range, and markers show the nine solved ODE operating points.</p>
+        <p class="llc-plot-note">{zh ? '阴影带覆盖轻载到过载。目标增益线映射输入电压范围，标记显示 9 个已求解的 ODE 运行点。' : 'The shaded band spans light load through overload. Target gain lines map the input-voltage range, and markers show the nine solved ODE operating points.'}</p>
       </section>
 
       <div class="llc-state-grid">
         <section class="llc-card" aria-labelledby="llc-state-plane">
           <div class="llc-section-head">
             <div>
-              <h3 id="llc-state-plane">State-plane Trajectory</h3>
-              <p id="stateHint" class="llc-head-note">Select an operating point to show the vCr-iLr state trajectory.</p>
+              <h3 id="llc-state-plane">{zh ? '状态平面轨迹' : 'State-plane Trajectory'}</h3>
+              <p id="stateHint" class="llc-head-note">{zh ? '选择运行点以显示 vCr-iLr 状态轨迹。' : 'Select an operating point to show the vCr-iLr state trajectory.'}</p>
             </div>
-            <button id="waveBtn" class="llc-button llc-button--secondary" type="button" disabled>Recalculate Details</button>
+            <button id="waveBtn" class="llc-button llc-button--secondary" type="button" disabled>{zh ? '重新计算细节' : 'Recalculate Details'}</button>
           </div>
           <div class="llc-plot-body"><svg id="statePlot" viewBox="0 0 900 520"></svg></div>
           <div class="llc-mode-legend">
-            <span><i class="llc-swatch" style="background:#2563eb"></i>Forward rectifier clamp</span>
-            <span><i class="llc-swatch" style="background:#f59e0b"></i>Free resonance</span>
-            <span><i class="llc-swatch" style="background:#7c3aed"></i>Reverse rectifier clamp</span>
-            <span><i class="llc-swatch" style="background:#111827"></i>Switching transition</span>
+            <span><i class="llc-swatch" style="background:#2563eb"></i>{zh ? '正向整流钳位' : 'Forward rectifier clamp'}</span>
+            <span><i class="llc-swatch" style="background:#f59e0b"></i>{zh ? '自由谐振' : 'Free resonance'}</span>
+            <span><i class="llc-swatch" style="background:#7c3aed"></i>{zh ? '反向整流钳位' : 'Reverse rectifier clamp'}</span>
+            <span><i class="llc-swatch" style="background:#111827"></i>{zh ? '开关切换' : 'Switching transition'}</span>
           </div>
         </section>
         <section class="llc-card" aria-labelledby="llc-mode-summary">
           <div class="llc-section-head">
             <div>
-              <h3 id="llc-mode-summary">Operating-mode Summary</h3>
+              <h3 id="llc-mode-summary">{zh ? '运行模式摘要' : 'Operating-mode Summary'}</h3>
             </div>
-            <p>Brief interpretation of the selected corner.</p>
+            <p>{zh ? '对所选角点的简要解释。' : 'Brief interpretation of the selected corner.'}</p>
           </div>
-          <div id="stateSummary" class="llc-state-summary"><div class="llc-empty">Select a valid operating point to view the mode summary.</div></div>
+          <div id="stateSummary" class="llc-state-summary"><div class="llc-empty">{zh ? '选择有效运行点以查看模式摘要。' : 'Select a valid operating point to view the mode summary.'}</div></div>
         </section>
       </div>
 
       <section class="llc-card llc-table-card" aria-labelledby="llc-waveforms">
         <div class="llc-section-head">
           <div>
-            <h3 id="llc-waveforms">Time-domain Waveforms</h3>
-            <p id="waveHint" class="llc-head-note">Select an operating point to show three switching periods of ODE waveforms.</p>
+            <h3 id="llc-waveforms">{zh ? '时域波形' : 'Time-domain Waveforms'}</h3>
+            <p id="waveHint" class="llc-head-note">{zh ? '选择运行点以显示三个开关周期的 ODE 波形。' : 'Select an operating point to show three switching periods of ODE waveforms.'}</p>
           </div>
         </div>
         <div class="llc-plot-body"><svg id="wavePlot" viewBox="0 0 1220 520"></svg></div>
-        <p class="llc-plot-note">The waveforms use the same solved operating point as the state-plane view. Commutation current is an idealized proxy and does not include Coss, dead time, or parasitics.</p>
+        <p class="llc-plot-note">{zh ? '波形与状态平面视图使用同一个已求解运行点。换流电流是理想化指标，不包含 Coss、死区时间或寄生参数。' : 'The waveforms use the same solved operating point as the state-plane view. Commutation current is an idealized proxy and does not include Coss, dead time, or parasitics.'}</p>
       </section>
     </section>
 
-    <p class="llc-model-note">Model boundary: ideal switches, ideal rectifier, constant output voltage, continuous frequency modulation, no burst or skip operation, and no parasitic elements.</p>
+    <p class="llc-model-note">{zh ? '模型边界：理想开关、理想整流器、恒定输出电压、连续频率调制，不包含 burst/skip 运行和寄生参数。' : 'Model boundary: ideal switches, ideal rectifier, constant output voltage, continuous frequency modulation, no burst or skip operation, and no parasitic elements.'}</p>
   </div>
 </div>
 

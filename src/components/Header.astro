@@ -88,7 +88,7 @@ const otherHref = `${swapLocaleInPath(currentPath, otherLocale)}${Astro.url.sear
     <div class="site-header__language" aria-label={t.site.language}>
       <span class="language-link language-link--active" aria-current="true">{currentLabel}</span>
       <span aria-hidden="true">|</span>
-      <a class="language-link" href={otherHref} hreflang={otherLocale === 'zh' ? 'zh-CN' : 'en'} aria-label={`${t.site.language}: ${otherLabel}`}>{otherLabel}</a>
+      <a class="language-link" href={otherHref} hreflang={otherLocale === 'zh' ? 'zh-CN' : 'en'} aria-label={`${t.site.language}: ${otherLabel}`} data-language-switch>{otherLabel}</a>
     </div>
 
     <button
@@ -144,7 +144,7 @@ const otherHref = `${swapLocaleInPath(currentPath, otherLocale)}${Astro.url.sear
       <div class="mobile-nav__language" aria-label={t.site.language}>
         <span class="language-link language-link--active" aria-current="true">{currentLabel}</span>
         <span aria-hidden="true">|</span>
-        <a class="language-link" href={otherHref} hreflang={otherLocale === 'zh' ? 'zh-CN' : 'en'} aria-label={`${t.site.language}: ${otherLabel}`}>{otherLabel}</a>
+        <a class="language-link" href={otherHref} hreflang={otherLocale === 'zh' ? 'zh-CN' : 'en'} aria-label={`${t.site.language}: ${otherLabel}`} data-language-switch>{otherLabel}</a>
       </div>
     </div>
   </nav>
@@ -152,6 +152,19 @@ const otherHref = `${swapLocaleInPath(currentPath, otherLocale)}${Astro.url.sear
 
 <script>
   const header = document.querySelector('[data-site-header]');
+  const syncLanguageSwitchLinks = () => {
+    const suffix = `${window.location.search}${window.location.hash}`;
+    document.querySelectorAll<HTMLAnchorElement>('[data-language-switch]').forEach((link) => {
+      const url = new URL(link.href, window.location.href);
+      link.href = `${url.pathname}${suffix}`;
+    });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', syncLanguageSwitchLinks, { once: true });
+  } else {
+    syncLanguageSwitchLinks();
+  }
 
   if (header) {
     const desktopItems = Array.from(header.querySelectorAll('[data-nav-item]'));
