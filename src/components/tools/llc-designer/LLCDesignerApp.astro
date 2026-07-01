@@ -1,0 +1,136 @@
+---
+// Phase-1 compatibility component. The numerical engine remains byte-equivalent
+// to the validated v5 single-file implementation. Do not rename element IDs
+// until the engine has typed integration tests.
+---
+
+<div data-llc-designer-root>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <h1>LLC Designer v5</h1>
+        <p>从规格出发，以轨迹分支引导的 ODE 求解筛选参数，并用状态轨迹解释工作模式、代价与余量。</p>
+      </div>
+      <div class="badge">Single-file · trajectory-guided ODE + state-plane</div>
+    </div>
+
+    <section class="card">
+      <div class="section-head"><h2>1. Specifications</h2><span class="hint">所有规格集中显示；v5 先锁定正常轨迹分支，再由 ODE 收敛验证</span></div>
+      <div class="spec-body">
+        <div class="spec-grid-v4">
+          <div class="group">
+            <h3>输入与拓扑</h3>
+            <label>原边拓扑
+              <select id="bridge"><option value="half" selected>半桥（Vin / 0）</option><option value="full">全桥（+Vin / −Vin）</option></select>
+            </label>
+            <label style="margin-top:10px">副边整流拓扑
+              <select id="secondary"><option value="fullwave" selected>全波整流（当前支持）</option><option disabled>全桥整流（后续支持）</option><option disabled>半波整流（后续支持）</option></select>
+            </label>
+            <div class="fields" style="margin-top:10px">
+              <label>Vin,min [V]<input id="vinMin" type="number" value="360" step="1"></label>
+              <label>Vin,typ [V]<input id="vinTyp" type="number" value="380" step="1"></label>
+              <label>Vin,max [V]<input id="vinMax" type="number" value="410" step="1"></label>
+              <label>模型<input value="理想开关 / 理想全波整流" readonly></label>
+            </div>
+          </div>
+
+          <div class="group">
+            <h3>输出与运行点</h3>
+            <div class="fields">
+              <label>输出电压 Vo [V]<input id="vo" type="number" value="12" min="0.1" step="0.1"></label>
+              <label>额定输出电流 Io [A]<input id="io" type="number" value="55" min="0.1" step="0.1"></label>
+              <label>最低连续负载 [%]<input id="lightLoad" type="number" value="20" min="1" max="100" step="1"></label>
+              <label>过载增量 [%]<input id="overload" type="number" value="30" min="0" max="100" step="1"></label>
+              <label>额定功率 [W]<input id="power" readonly></label>
+              <label>额定负载 [Ω]<input id="roNom" readonly></label>
+              <label class="wide">运行点<input value="3 个输入电压 × 轻载 / 满载 / 过载 = 9 个角点" readonly></label>
+            </div>
+          </div>
+
+          <div class="group">
+            <h3>频率范围</h3>
+            <label>谐振频率 f0 [kHz]<input id="f0" type="number" value="100" min="10" step="1"></label>
+            <div class="range-row" style="grid-template-columns:90px 1fr;gap:8px"><span>最低 fs</span><input id="fsMinRatio" type="range" min="20" max="100" step="1" value="30"></div>
+            <div id="fsMinDisplay" class="range-value" style="margin-bottom:10px">30% · 30 kHz</div>
+            <div class="range-row" style="grid-template-columns:90px 1fr;gap:8px"><span>最高 fs</span><input id="fsMaxRatio" type="range" min="100" max="300" step="1" value="250"></div>
+            <div id="fsMaxDisplay" class="range-value">250% · 250 kHz</div>
+            <div class="auto-note" style="margin-top:10px">频率上下限以 f0 比例设置，显示值取整到 1 kHz。</div>
+          </div>
+
+          <div class="group">
+            <h3>候选空间</h3>
+            <div id="ratioFormula" class="auto-note">根据典型输入和拓扑计算中心变比。</div>
+            <div class="ratio-pills">
+              <span id="n1Display" class="ratio-pill">n−2</span><span id="n2Display" class="ratio-pill">n−1</span><span id="n3Display" class="ratio-pill">n</span><span id="n4Display" class="ratio-pill">n+1</span><span id="n5Display" class="ratio-pill">n+2</span>
+            </div>
+            <div class="auto-note">5 个变比由程序自动生成，用户无需选择。</div>
+            <div class="fields" style="margin-top:10px">
+              <label class="wide">9 个 k = Lm / Lr<input id="kList" value="3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7"></label>
+              <label class="wide">13 个 Qnom<input id="qList" value="0.200, 0.225, 0.250, 0.275, 0.300, 0.325, 0.350, 0.375, 0.400, 0.425, 0.450, 0.475, 0.500"></label>
+            </div>
+            <div class="auto-note" style="margin-top:8px">共 5 × 9 × 13 = 585 个候选；范围不变，k 与 Q 网格密度加倍。</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="runBtn" class="primary">Run Design Search</button><button id="cancelBtn" class="danger" disabled>取消</button>
+          <div class="progress-wrap"><div class="progress-line"><div id="progressBar" class="progress-bar"></div></div><div id="progressText" class="progress-text">等待计算。585 个候选 × 9 个运行点。</div></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="summary-grid">
+      <div class="card metric"><b>候选总数</b><strong id="mTotal">585</strong></div><div class="card metric"><b>可行</b><strong id="mFeasible">—</strong></div><div class="card metric"><b>边缘</b><strong id="mMarginal">—</strong></div><div class="card metric"><b>不可行 / 数值失败</b><strong id="mFailed">—</strong></div><div class="card metric"><b>计算时间</b><strong id="mTime">—</strong></div>
+    </div>
+
+    <section class="card">
+      <div class="section-head"><div><h2>2. Transformer-ratio Overview</h2><div class="hint">五张缩略热图同时比较五个变比；点击切换详细设计空间。</div></div><span class="hint">颜色表示最差余量，灰色表示 ODE 未可靠收敛</span></div>
+      <div id="ratioOverview" class="overview-grid"><div class="empty" style="grid-column:1/-1">运行设计搜索后显示三个变比的可行域概览。</div></div>
+    </section>
+
+    <div class="space-grid" style="margin-top:14px">
+      <section class="card">
+        <div class="section-head">
+          <div><h2>3. Candidate Space</h2><div class="hint">格子主数值为当前指标；综合余量模式显示最差余量与限制因素。</div></div>
+          <div class="matrix-toolbar"><span id="activeRatioLabel" class="ratio-label">n = —</span><select id="matrixMetric"><option value="margin">综合最差余量</option><option value="fsmax">最大所需频率</option><option value="ipk">最坏 Ir,pk</option><option value="irms">最坏 Ir,rms</option><option value="vcrpk">最坏 VCr,pk</option><option value="comm">最小 Commutation current</option></select></div>
+        </div>
+        <div class="matrix-wrap"><div id="matrix" class="matrix"></div></div>
+        <div class="legend"><span><i class="dot feasible"></i>可行</span><span><i class="dot marginal"></i>边缘</span><span><i class="dot failed"></i>违反规格或约束</span><span><i class="dot numerical"></i>ODE 数值失败</span><span>限制因素：F↑ 高频、F↓ 低频、I 电流、V 电压、Z 换向、N 数值</span></div>
+      </section>
+      <section class="card"><div class="section-head"><h2>4. Selected Design</h2><span class="hint">不是抽象评分，而是最差余量和限制因素</span></div><div id="selectedPanel" class="side-body"><div class="empty">运行设计搜索后选择一个候选。</div></div></section>
+    </div>
+
+    <section class="card table-card"><div class="section-head"><h2>5. Recommended Designs · Top 5</h2><span class="hint">只保留综合排序最好的 5 个候选</span></div><div class="table-wrap"><table><thead><tr><th>排名 / 状态</th><th>n</th><th>k</th><th>Qnom</th><th>Lr [µH]</th><th>Lm [µH]</th><th>Cr [nF]</th><th>fs 范围 [kHz]</th><th>Ir,pk [A]</th><th>Ir,rms [A]</th><th>VCr,pk [V]</th><th>最差余量</th><th>限制因素</th></tr></thead><tbody id="recommendBody"><tr><td colspan="13" style="text-align:center;color:#64748b;padding:28px">尚未计算</td></tr></tbody></table></div></section>
+
+    <section class="card table-card"><div class="section-head"><h2>6. Operating Points</h2><span class="hint">点击任意角点，更新状态轨迹和时域波形</span></div><div class="table-wrap"><table><thead><tr><th>运行点</th><th>Vin [V]</th><th>负载</th><th>fs [kHz]</th><th>fs/f0</th><th>控制分支</th><th>Ir,pk [A]</th><th>Ir,rms [A]</th><th>VCr,pk [V]</th><th>Commutation current [A]</th><th>自由段</th><th>ODE 残差</th><th>结果</th></tr></thead><tbody id="cornerBody"><tr><td colspan="13" style="text-align:center;color:#64748b;padding:28px">请选择候选设计</td></tr></tbody></table></div></section>
+
+    <section class="card table-card">
+      <div class="section-head">
+        <div><h2>7. ODE Gain Envelope & Operating Range</h2><div class="hint">负载形成增益包络；Vin,min 与 Vin,max 映射为两条目标增益线；圆点为 9 个实际 ODE 角点</div></div>
+        <div class="plot-tools"><button id="curveBtn" class="secondary" disabled>计算负载包络</button></div>
+      </div>
+      <div id="curveSummary" class="envelope-summary">
+        <div class="envelope-chip"><b>目标增益范围</b><span>—</span></div>
+        <div class="envelope-chip"><b>所需 fs 范围</b><span>—</span></div>
+        <div class="envelope-chip"><b>低频余量</b><span>—</span></div>
+        <div class="envelope-chip"><b>高频余量</b><span>—</span></div>
+        <div class="envelope-chip"><b>最紧张角点</b><span>—</span></div>
+      </div>
+      <div class="plot-body"><svg id="gainPlot" viewBox="0 0 1220 520"></svg></div>
+      <div class="note">蓝色阴影表示轻载到过载的 ODE 增益包络；两条红色横虚线分别对应 Vin,min 所需的最高增益与 Vin,max 所需的最低增益。9 个圆点来自前述角点反求频率，因此本图同时替代原 Required Frequency Map 与独立 Gain Curves。</div>
+    </section>
+
+    <div class="state-grid">
+      <section class="card"><div class="section-head"><div><h2>8. ODE State-Plane Trajectory</h2><div id="stateHint" class="hint">选择运行点后显示 vCr–iLr 状态轨迹。</div></div><button id="waveBtn" class="secondary" disabled>重新计算详情</button></div><div class="plot-body"><svg id="statePlot" viewBox="0 0 900 520"></svg></div><div class="mode-legend"><span><i class="swatch" style="background:#2563eb"></i>正向整流钳位</span><span><i class="swatch" style="background:#f59e0b"></i>自由谐振</span><span><i class="swatch" style="background:#7c3aed"></i>反向整流钳位</span><span><i class="swatch" style="background:#111827"></i>开关换向点</span></div></section>
+      <section class="card"><div class="section-head"><h2>9. Operating-mode Review</h2><span class="hint">状态轨迹解释代价与余量</span></div><div id="stateSummary" class="state-summary"><div class="empty">选择有效运行点后显示模式摘要。</div></div></section>
+    </div>
+
+    <section class="card table-card"><div class="section-head"><div><h2>10. Time-domain Waveforms</h2><div id="waveHint" class="hint">选择运行点后显示连续 3 个周期的 ODE 波形。</div></div></div><div class="plot-body"><svg id="wavePlot" viewBox="0 0 1220 520"></svg></div><div class="note">公开版以事件感知 ODE 生成稳态曲线和状态轨迹，不包含轨迹圆的解析构造、圆心公式或分段代数反求。换向电流仍只是未计 Coss、死区和寄生电容时的代理指标。</div></section>
+
+    <div class="footer">模型边界：理想开关、理想整流、恒定输出电压、无死区、无寄生、连续变频控制，不包含 burst / skip。v5 使用轨迹超越方程锁定符合工程常识的正常调频分支，再由 ODE shooting 在该分支附近收敛；最终应力与波形来自 ODE。</div>
+  </div>
+</div>
+
+<script>
+  import "../../../scripts/llc-designer/bootstrap";
+</script>

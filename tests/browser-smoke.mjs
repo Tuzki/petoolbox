@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { chromium } from 'playwright-core';
 
 const baseUrl = process.env.PREVIEW_URL || 'http://127.0.0.1:4321';
 const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const outputDir = new URL('../test-artifacts/', import.meta.url);
+const llcBaseline = JSON.parse(readFileSync(new URL('./fixtures/default-v5-baseline.json', import.meta.url), 'utf8'));
 
 mkdirSync(outputDir, { recursive: true });
 
@@ -53,6 +54,7 @@ try {
         betaCards: document.querySelectorAll('[data-tool-status="beta"]').length,
         buckCardText: Array.from(document.querySelectorAll('[data-tool-card]')).find((card) => card.textContent?.includes('Buck Inductor Ripple Calculator'))?.textContent ?? '',
         linkedBuckCards: Array.from(document.querySelectorAll('a.directory-card')).filter((card) => card.textContent?.includes('Buck Inductor Ripple Calculator')).length,
+        linkedLlcCards: Array.from(document.querySelectorAll('a.directory-card')).filter((card) => card.textContent?.includes('LLC Resonant Converter Designer')).length,
         linkedVoltageSensingCards: Array.from(document.querySelectorAll('a.directory-card')).filter((card) => card.textContent?.includes('Voltage Sensing & ADC Scaling')).length,
         linkedRcFilterCards: Array.from(document.querySelectorAll('a.directory-card')).filter((card) => card.textContent?.includes('Sensing RC Filter Designer')).length,
         latestArticle: document.body.textContent?.includes('How to Select an Inductor for a Buck Converter') ?? false
@@ -78,11 +80,12 @@ try {
     assert.deepEqual(homeResult.filterLabels, ['All', 'Topology', 'Calculators', 'Magnetics', 'Control', 'Simulation']);
     assert.equal(homeResult.pressedFilter, 'All', `${viewport.name} all active`);
     assert.equal(homeResult.toolCards, 19, `${viewport.name} full MVP cards`);
-    assert.equal(homeResult.comingSoonCards, 16, `${viewport.name} coming soon count`);
-    assert.equal(homeResult.availableCards, 2, `${viewport.name} available count`);
+    assert.equal(homeResult.comingSoonCards, 15, `${viewport.name} coming soon count`);
+    assert.equal(homeResult.availableCards, 3, `${viewport.name} available count`);
     assert.equal(homeResult.betaCards, 1, `${viewport.name} beta count`);
     assert.match(homeResult.buckCardText, /Coming Soon/, `${viewport.name} buck coming soon`);
     assert.equal(homeResult.linkedBuckCards, 0, `${viewport.name} buck card is not link`);
+    assert.equal(homeResult.linkedLlcCards, 1, `${viewport.name} llc card is link`);
     assert.equal(homeResult.linkedVoltageSensingCards, 1, `${viewport.name} voltage sensing card is link`);
     assert.equal(homeResult.linkedRcFilterCards, 1, `${viewport.name} rc filter card is link`);
     assert.equal(homeResult.latestArticle, true, `${viewport.name} latest article`);
@@ -108,6 +111,7 @@ try {
       assert.equal(await page.locator('#mega-topology-designers').isVisible(), true, `${viewport.name} topology menu visible`);
       assert.match(await page.locator('#mega-topology-designers').textContent(), /Buck Converter Designer/);
       assert.equal(await page.locator('#mega-topology-designers a', { hasText: 'Buck Converter Designer' }).count(), 0, `${viewport.name} planned topology not link`);
+      assert.equal(await page.locator('#mega-topology-designers a[href="/tools/llc-resonant-converter-designer/"]').count(), 1, `${viewport.name} llc topology menu link`);
       await page.keyboard.press('Escape');
       assert.equal(await page.locator('#mega-topology-designers').isVisible(), false, `${viewport.name} escape closes topology`);
 
@@ -454,7 +458,50 @@ try {
     await rcPage.close();
   }
 
-  for (const path of ['/about/', '/topology-designers/', '/tools/', '/magnetics/', '/control/', '/simulation/', '/tools/buck-inductor-ripple-calculator/', '/tools/voltage-sensing-adc-scaling/', '/tools/sensing-rc-filter-designer/', '/articles/']) {
+  const llcPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const llcPageErrors = [];
+  llcPage.on('pageerror', (error) => llcPageErrors.push(error.message));
+  llcPage.on('console', (message) => {
+    if (message.type() === 'error') llcPageErrors.push(message.text());
+  });
+  await llcPage.goto(`${baseUrl}/tools/llc-resonant-converter-designer/`, { waitUntil: 'domcontentloaded' });
+  await llcPage.locator('#runBtn').click();
+  await llcPage.waitForFunction(() => document.querySelector('#mFeasible')?.textContent?.trim() === '539', null, { timeout: 120000 });
+  await llcPage.waitForFunction(() => document.querySelectorAll('#statePlot path').length > 0 && document.querySelectorAll('#wavePlot path').length > 0, null, { timeout: 120000 });
+  const llcResult = await llcPage.evaluate(() => ({
+    noPageHorizontalScroll: document.documentElement.scrollWidth <= innerWidth,
+    h1: document.querySelector('h1')?.textContent?.trim() ?? '',
+    h1Count: document.querySelectorAll('h1').length,
+    total: Number(document.querySelector('#mTotal')?.textContent?.trim()),
+    feasible: Number(document.querySelector('#mFeasible')?.textContent?.trim()),
+    marginal: Number(document.querySelector('#mMarginal')?.textContent?.trim()),
+    failed: Number(document.querySelector('#mFailed')?.textContent?.trim()),
+    selectedTitle: document.querySelector('#selectedPanel h3')?.textContent?.trim() ?? '',
+    selectedMargin: document.querySelector('#selectedPanel .margin-badge')?.textContent?.trim() ?? '',
+    selectedCorner: document.querySelector('#cornerBody tr.active td:first-child')?.textContent?.trim() ?? '',
+    top5: Array.from(document.querySelectorAll('#recommendBody tr')).slice(0, 5).map((row) => Array.from(row.children).map((cell) => cell.textContent.trim().replace(/\s+/g, ' '))),
+    corners: Array.from(document.querySelectorAll('#cornerBody tr')).map((row) => Array.from(row.children).map((cell) => cell.textContent.trim().replace(/\s+/g, ' '))),
+    statePathCount: document.querySelectorAll('#statePlot path').length,
+    waveformPathCount: document.querySelectorAll('#wavePlot path').length
+  }));
+  assert.equal(llcResult.noPageHorizontalScroll, true, 'llc desktop horizontal overflow');
+  assert.equal(llcResult.h1, 'LLC Designer v5', 'llc h1');
+  assert.equal(llcResult.h1Count, 1, 'llc one h1');
+  assert.equal(llcResult.total, llcBaseline.total, 'llc total candidate count');
+  assert.equal(llcResult.feasible, llcBaseline.feasible, 'llc feasible count');
+  assert.equal(llcResult.marginal, llcBaseline.marginal, 'llc marginal count');
+  assert.equal(llcResult.failed, llcBaseline.failed, 'llc failed count');
+  assert.equal(llcResult.selectedTitle, llcBaseline.selectedTitle, 'llc selected candidate');
+  assert.equal(llcResult.selectedMargin, llcBaseline.selectedMargin, 'llc selected margin');
+  assert.equal(llcResult.selectedCorner, llcBaseline.selectedCorner, 'llc selected corner');
+  assert.deepEqual(llcResult.top5, llcBaseline.top5, 'llc top 5 baseline');
+  assert.deepEqual(llcResult.corners, llcBaseline.corners, 'llc corner baseline');
+  assert.equal(llcResult.statePathCount, llcBaseline.statePathCount, 'llc state-plane path count');
+  assert.equal(llcResult.waveformPathCount, llcBaseline.waveformPathCount, 'llc waveform path count');
+  assert.deepEqual(llcPageErrors, llcBaseline.pageErrors, 'llc browser page errors');
+  await llcPage.close();
+
+  for (const path of ['/about/', '/topology-designers/', '/tools/', '/magnetics/', '/control/', '/simulation/', '/tools/buck-inductor-ripple-calculator/', '/tools/voltage-sensing-adc-scaling/', '/tools/sensing-rc-filter-designer/', '/tools/llc-resonant-converter-designer/', '/articles/']) {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const response = await page.goto(`${baseUrl}${path}`, { waitUntil: 'domcontentloaded' });
     assert.equal(response?.status(), 200, `${path} is not 200`);

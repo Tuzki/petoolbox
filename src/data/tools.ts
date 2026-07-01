@@ -58,9 +58,10 @@ export const tools: ToolItem[] = [
     id: 'llc-resonant-converter-designer',
     title: 'LLC Resonant Converter Designer',
     category: 'topology',
-    description: 'Prepare resonant tank assumptions and operating points for LLC converter design.',
+    description: 'Search LLC resonant tank candidates across input voltage and load corners using trajectory-guided ODE analysis.',
     symbol: 'Lr · Cr',
-    status: 'coming-soon'
+    status: 'available',
+    href: '/tools/llc-resonant-converter-designer/'
   },
   {
     id: 'rc-time-constant-calculator',
