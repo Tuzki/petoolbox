@@ -1,0 +1,65 @@
+---
+import { getArticles, articleHref, formatArticleDate } from '@/lib/articles';
+import ToolCard from '@/components/ToolCard.astro';
+import ToolFilter from '@/components/ToolFilter.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getDirectoryTools } from '@/data/tools';
+import { getMessages } from '@/lib/i18n/messages';
+import { getLocalizedPath } from '@/lib/i18n/routes';
+import type { Locale } from '@/lib/i18n/config';
+
+type Props = { locale: Locale };
+const { locale } = Astro.props;
+const t = getMessages(locale).pages.home;
+const directoryTools = getDirectoryTools(locale);
+const articles = (await getArticles(locale)).filter((article) => !article.data.draft).slice(0, 3);
+---
+
+<BaseLayout title={t.title} description={t.description} pathname="/" locale={locale}>
+  <main class="home-shell">
+    <section class="home-hero" aria-labelledby="home-title">
+      <p class="home-eyebrow">{t.eyebrow}</p>
+      <h1 id="home-title">{t.h1}</h1>
+      <p>{t.intro}</p>
+      <a class="home-hero__link" href="#tool-directory">{t.explore}</a>
+    </section>
+    <section class="tool-directory" id="tool-directory" aria-labelledby="tool-directory-title">
+      <div class="section-heading">
+        <p class="section-eyebrow">{t.directoryEyebrow}</p>
+        <h2 id="tool-directory-title">{t.directoryTitle}</h2>
+      </div>
+      <ToolFilter locale={locale} />
+      <div class="tool-card-grid">
+        {directoryTools.map((tool) => <ToolCard tool={tool} locale={locale} />)}
+      </div>
+    </section>
+    <section class="home-section" aria-labelledby="why-title">
+      <div class="section-heading">
+        <p class="section-eyebrow">{t.whyEyebrow}</p>
+        <h2 id="why-title">{t.whyTitle}</h2>
+      </div>
+      <div class="value-grid">
+        {t.values.map((value) => <article class="value-card"><h3>{value.title}</h3><p>{value.text}</p></article>)}
+      </div>
+    </section>
+    <section class="home-section" aria-labelledby="latest-articles-title">
+      <div class="section-heading section-heading--row">
+        <div>
+          <p class="section-eyebrow">{t.latestEyebrow}</p>
+          <h2 id="latest-articles-title">{t.latestTitle}</h2>
+        </div>
+        <a href={getLocalizedPath('/articles/', locale)}>{t.viewAllArticles}</a>
+      </div>
+      <div class="latest-article-grid">
+        {articles.map((article) => (
+          <a class="article-list__item" href={articleHref(article, locale)}>
+            <span>{article.data.category}</span>
+            <strong>{article.data.title}</strong>
+            <p>{article.data.description}</p>
+            <time datetime={article.data.publishedAt.toISOString()}>{formatArticleDate(article.data.publishedAt, locale)}</time>
+          </a>
+        ))}
+      </div>
+    </section>
+  </main>
+</BaseLayout>

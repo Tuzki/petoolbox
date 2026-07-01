@@ -1,25 +1,4 @@
 ---
-import LLCDesignerApp from '@/components/tools/llc-designer/LLCDesignerApp.astro';
-import BaseLayout from '@/layouts/BaseLayout.astro';
-import '@/styles/llc-designer.css';
-
-const title = 'LLC Resonant Converter Designer';
-const description = 'Search LLC resonant tank candidates across input voltage and load corners using trajectory-guided ODE steady-state analysis.';
+import LegacyRedirect from '@/components/LegacyRedirect.astro';
 ---
-
-<BaseLayout
-  title={title}
-  description={description}
-  pathname="/tools/llc-resonant-converter-designer/"
->
-  <main class="llc-designer-page">
-    <nav class="breadcrumb page-shell" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span aria-hidden="true">/</span>
-      <a href="/topology-designers/">Topology Designers</a>
-      <span aria-hidden="true">/</span>
-      <span>LLC Resonant Converter Designer</span>
-    </nav>
-    <LLCDesignerApp />
-  </main>
-</BaseLayout>
+<LegacyRedirect to="/en/tools/llc-resonant-converter-designer/" />

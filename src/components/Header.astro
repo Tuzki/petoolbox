@@ -1,13 +1,24 @@
 ---
 import { site } from '@/lib/site';
-import { languageNavigation, productNavigation, isActivePath } from '@/data/navigation';
+import { getProductNavigation, isActivePath } from '@/data/navigation';
+import { getMessages } from '@/lib/i18n/messages';
+import { getLocalizedPath, swapLocaleInPath } from '@/lib/i18n/routes';
+import type { Locale } from '@/lib/i18n/config';
 
+type Props = { locale: Locale };
+const { locale } = Astro.props;
 const currentPath = Astro.url.pathname;
+const t = getMessages(locale);
+const productNavigation = getProductNavigation(locale);
+const otherLocale = locale === 'en' ? 'zh' : 'en';
+const currentLabel = t.site.languages[locale];
+const otherLabel = t.site.languages[otherLocale];
+const otherHref = `${swapLocaleInPath(currentPath, otherLocale)}${Astro.url.search}${Astro.url.hash}`;
 ---
 
 <header class="site-header" data-site-header>
   <div class="site-header__inner">
-    <a class="site-header__brand" href="/" aria-label="PE Toolbox home">
+    <a class="site-header__brand" href={getLocalizedPath('/', locale)} aria-label="PE Toolbox home">
       <svg class="site-header__mark" viewBox="0 0 44 32" aria-hidden="true" focusable="false">
         <path d="M3 18h7l3-8 6 16 5-20 5 12h12" />
         <circle cx="10" cy="18" r="2" />
@@ -31,7 +42,7 @@ const currentPath = Astro.url.pathname;
               <button
                 class="site-nav__toggle"
                 type="button"
-                aria-label={`Toggle ${item.label} menu`}
+                aria-label={`${t.navigation.toggleSection} ${item.label}`}
                 aria-expanded="false"
                 aria-haspopup="true"
                 aria-controls={`mega-${item.id}`}
@@ -65,7 +76,7 @@ const currentPath = Astro.url.pathname;
                   ))}
                 </div>
                 <a class="mega-menu__all-link" href={item.href}>
-                  View All {item.label} <span aria-hidden="true">→</span>
+                  {t.navigation.viewAll} {item.label} <span aria-hidden="true">→</span>
                 </a>
               </div>
             </>
@@ -74,16 +85,16 @@ const currentPath = Astro.url.pathname;
       ))}
     </nav>
 
-    <div class="site-header__language" aria-label="Language">
-      <span class="language-link language-link--active" aria-current="true">{languageNavigation[0].label}</span>
+    <div class="site-header__language" aria-label={t.site.language}>
+      <span class="language-link language-link--active" aria-current="true">{currentLabel}</span>
       <span aria-hidden="true">|</span>
-      <span class="language-link language-link--disabled" aria-disabled="true" title={languageNavigation[1].title}>{languageNavigation[1].label}</span>
+      <a class="language-link" href={otherHref} hreflang={otherLocale === 'zh' ? 'zh-CN' : 'en'} aria-label={`${t.site.language}: ${otherLabel}`}>{otherLabel}</a>
     </div>
 
     <button
       class="mobile-menu-button"
       type="button"
-      aria-label="Toggle navigation menu"
+      aria-label={t.navigation.toggleMenu}
       aria-expanded="false"
       aria-controls="mobile-navigation"
       data-mobile-menu-button
@@ -102,7 +113,7 @@ const currentPath = Astro.url.pathname;
               <button
                 class="mobile-nav__toggle"
                 type="button"
-                aria-label={`Toggle ${item.label}`}
+                aria-label={`${t.navigation.toggleSection} ${item.label}`}
                 aria-expanded="false"
                 aria-controls={`mobile-${item.id}`}
                 data-mobile-submenu-toggle
@@ -130,10 +141,10 @@ const currentPath = Astro.url.pathname;
           <a class="mobile-nav__standalone" href={item.href} data-mobile-link>{item.label}</a>
         )
       ))}
-      <div class="mobile-nav__language" aria-label="Language">
-        <span class="language-link language-link--active" aria-current="true">{languageNavigation[0].label}</span>
+      <div class="mobile-nav__language" aria-label={t.site.language}>
+        <span class="language-link language-link--active" aria-current="true">{currentLabel}</span>
         <span aria-hidden="true">|</span>
-        <span class="language-link language-link--disabled" aria-disabled="true" title={languageNavigation[1].title}>{languageNavigation[1].label}</span>
+        <a class="language-link" href={otherHref} hreflang={otherLocale === 'zh' ? 'zh-CN' : 'en'} aria-label={`${t.site.language}: ${otherLabel}`}>{otherLabel}</a>
       </div>
     </div>
   </nav>

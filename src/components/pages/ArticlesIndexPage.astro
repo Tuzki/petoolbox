@@ -1,0 +1,35 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { articleHref, formatArticleDate, getArticles } from '@/lib/articles';
+import { getMessages } from '@/lib/i18n/messages';
+import type { Locale } from '@/lib/i18n/config';
+
+type Props = { locale: Locale };
+const { locale } = Astro.props;
+const t = getMessages(locale).pages.articles;
+const articles = await getArticles(locale);
+---
+
+<BaseLayout title={t.title} description={t.description} pathname="/articles/" locale={locale}>
+  <main class="page-shell articles-index">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href={`/${locale}/`}>{getMessages(locale).site.breadcrumbs.home}</a>
+      <span aria-hidden="true">/</span>
+      <span>{t.title}</span>
+    </nav>
+    <section aria-labelledby="articles-title">
+      <h1 id="articles-title">{t.title}</h1>
+      <div class="article-list">
+        {articles.length === 0 && <p>{t.empty}</p>}
+        {articles.map((article) => (
+          <a class="article-list__item" href={articleHref(article, locale)}>
+            <span>{article.data.category.replace('-', ' ')}</span>
+            <strong>{article.data.title}</strong>
+            <p>{article.data.description}</p>
+            <time datetime={article.data.publishedAt.toISOString()}>{formatArticleDate(article.data.publishedAt, locale)}</time>
+          </a>
+        ))}
+      </div>
+    </section>
+  </main>
+</BaseLayout>

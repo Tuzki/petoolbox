@@ -1,5 +1,10 @@
 ---
-import { toolCategories } from '@/data/tools';
+import { getToolCategories } from '@/data/tools';
+import type { Locale } from '@/lib/i18n/config';
+
+type Props = { locale: Locale };
+const { locale } = Astro.props;
+const toolCategories = getToolCategories(locale);
 ---
 
 <div class="tool-filter" aria-label="Tool categories" data-tool-filter>

@@ -1,46 +1,52 @@
 ---
 // Compatibility component for the validated LLC runtime engine. Keep element
 // IDs stable until the engine has broader typed integration tests.
+import type { Locale } from '@/lib/i18n/config';
+
+type Props = { locale: Locale };
+const { locale } = Astro.props;
+const zh = locale === 'zh';
 ---
 
-<div data-llc-designer-root>
+<div data-llc-designer-root data-locale={locale}>
   <div class="llc-shell">
     <header class="llc-hero">
       <div>
-        <p class="llc-eyebrow">Topology Designers</p>
-        <h1>LLC Resonant Converter Designer</h1>
+        <p class="llc-eyebrow">{zh ? '拓扑设计工具' : 'Topology Designers'}</p>
+        <h1>{zh ? 'LLC 谐振变换器设计工具' : 'LLC Resonant Converter Designer'}</h1>
         <p>
-          Search resonant-tank candidates across input-voltage and load corners, then review frequency range,
-          operating modes, design margin, state-plane trajectories, and time-domain waveforms.
+          {zh
+            ? '在输入电压和负载角点上搜索谐振腔候选设计，并检查频率范围、运行模式、设计裕量、状态平面轨迹和时域波形。'
+            : 'Search resonant-tank candidates across input-voltage and load corners, then review frequency range, operating modes, design margin, state-plane trajectories, and time-domain waveforms.'}
         </p>
       </div>
       <div class="llc-badges" aria-label="Analysis methods">
         <span>Trajectory-guided ODE</span>
-        <span>State-plane analysis</span>
-        <span>Browser-based</span>
+        <span>{zh ? '状态平面分析' : 'State-plane analysis'}</span>
+        <span>{zh ? '浏览器端计算' : 'Browser-based'}</span>
       </div>
     </header>
 
     <section class="llc-card llc-spec-card" aria-labelledby="llc-specifications">
       <div class="llc-section-head">
         <div>
-          <p class="llc-section-kicker">Step 1</p>
-          <h2 id="llc-specifications">Specifications</h2>
+          <p class="llc-section-kicker">{zh ? '步骤 1' : 'Step 1'}</p>
+          <h2 id="llc-specifications">{zh ? '设计规格' : 'Specifications'}</h2>
         </div>
-        <p>Set electrical requirements and the candidate search space without changing the default design grid.</p>
+        <p>{zh ? '设置电气需求和候选搜索空间，默认设计网格保持不变。' : 'Set electrical requirements and the candidate search space without changing the default design grid.'}</p>
       </div>
 
       <div class="llc-spec-body">
         <div class="llc-spec-grid">
           <fieldset class="llc-group">
-            <legend>Electrical Specifications</legend>
-            <label>Input topology
+            <legend>{zh ? '电气规格' : 'Electrical Specifications'}</legend>
+            <label>{zh ? '输入拓扑' : 'Input topology'}
               <select id="bridge">
                 <option value="half" selected>Half bridge (Vin / 0)</option>
                 <option value="full">Full bridge (+Vin / -Vin)</option>
               </select>
             </label>
-            <label>Rectifier topology
+            <label>{zh ? '整流拓扑' : 'Rectifier topology'}
               <select id="secondary">
                 <option value="fullwave" selected>Full-wave rectifier</option>
                 <option disabled>Full-bridge rectifier</option>
@@ -51,20 +57,20 @@
               <label>Vin,min [V]<input id="vinMin" type="number" value="360" step="1" /></label>
               <label>Vin,typ [V]<input id="vinTyp" type="number" value="380" step="1" /></label>
               <label>Vin,max [V]<input id="vinMax" type="number" value="410" step="1" /></label>
-              <label>Model<input value="Ideal switches / ideal full-wave rectifier" readonly /></label>
+              <label>{zh ? '模型' : 'Model'}<input value={zh ? '理想开关 / 理想全波整流' : 'Ideal switches / ideal full-wave rectifier'} readonly /></label>
             </div>
           </fieldset>
 
           <fieldset class="llc-group">
-            <legend>Output and Load</legend>
+            <legend>{zh ? '输出与负载' : 'Output and Load'}</legend>
             <div class="llc-fields">
-              <label>Output voltage Vo [V]<input id="vo" type="number" value="12" min="0.1" step="0.1" /></label>
-              <label>Rated output current Io [A]<input id="io" type="number" value="55" min="0.1" step="0.1" /></label>
-              <label>Minimum continuous load [%]<input id="lightLoad" type="number" value="20" min="1" max="100" step="1" /></label>
-              <label>Overload allowance [%]<input id="overload" type="number" value="30" min="0" max="100" step="1" /></label>
-              <label>Rated power [W]<input id="power" readonly /></label>
-              <label>Rated load [ohm]<input id="roNom" readonly /></label>
-              <label class="llc-wide">Operating points<input value="3 input voltages x light, full, and overload = 9 corners" readonly /></label>
+              <label>{zh ? '输出电压 Vo [V]' : 'Output voltage Vo [V]'}<input id="vo" type="number" value="12" min="0.1" step="0.1" /></label>
+              <label>{zh ? '额定输出电流 Io [A]' : 'Rated output current Io [A]'}<input id="io" type="number" value="55" min="0.1" step="0.1" /></label>
+              <label>{zh ? '最小连续负载 [%]' : 'Minimum continuous load [%]'}<input id="lightLoad" type="number" value="20" min="1" max="100" step="1" /></label>
+              <label>{zh ? '过载裕量 [%]' : 'Overload allowance [%]'}<input id="overload" type="number" value="30" min="0" max="100" step="1" /></label>
+              <label>{zh ? '额定功率 [W]' : 'Rated power [W]'}<input id="power" readonly /></label>
+              <label>{zh ? '额定负载 [ohm]' : 'Rated load [ohm]'}<input id="roNom" readonly /></label>
+              <label class="llc-wide">{zh ? '运行点' : 'Operating points'}<input value={zh ? '3 个输入电压 x 轻载、满载、过载 = 9 个角点' : '3 input voltages x light, full, and overload = 9 corners'} readonly /></label>
             </div>
           </fieldset>
 
@@ -117,8 +123,8 @@
     <section class="llc-card llc-summary-card" aria-labelledby="llc-search-summary">
       <div class="llc-section-head">
         <div>
-          <p class="llc-section-kicker">Step 2</p>
-          <h2 id="llc-search-summary">Search Summary</h2>
+          <p class="llc-section-kicker">{zh ? '步骤 2' : 'Step 2'}</p>
+          <h2 id="llc-search-summary">{zh ? '搜索摘要' : 'Search Summary'}</h2>
         </div>
         <p>Candidate counts update after the search completes.</p>
       </div>
@@ -135,7 +141,7 @@
       <div class="llc-section-head">
         <div>
           <p class="llc-section-kicker">Step 3</p>
-          <h2 id="llc-recommended-designs">Recommended Designs</h2>
+          <h2 id="llc-recommended-designs">{zh ? '推荐设计' : 'Recommended Designs'}</h2>
         </div>
         <p>Top-ranked candidates by worst-case margin and constraint headroom.</p>
       </div>
@@ -168,7 +174,7 @@
         <div class="llc-section-head">
           <div>
             <p class="llc-section-kicker">Step 4</p>
-            <h2 id="llc-selected-design">Selected Design</h2>
+            <h2 id="llc-selected-design">{zh ? '当前设计' : 'Selected Design'}</h2>
           </div>
           <p>Review the active candidate and its limiting margin.</p>
         </div>
@@ -193,7 +199,7 @@
       <div class="llc-section-head">
         <div>
           <p class="llc-section-kicker">Step 6</p>
-          <h2 id="llc-candidate-space">Candidate Space</h2>
+          <h2 id="llc-candidate-space">{zh ? '候选空间' : 'Candidate Space'}</h2>
           <p class="llc-head-note">Each cell represents one k and Q combination for the active transformer ratio.</p>
         </div>
         <div class="llc-matrix-toolbar">
@@ -222,7 +228,7 @@
       <div class="llc-section-head">
         <div>
           <p class="llc-section-kicker">Step 7</p>
-          <h2 id="llc-operating-points">Operating Points</h2>
+          <h2 id="llc-operating-points">{zh ? '运行点' : 'Operating Points'}</h2>
         </div>
         <p>Select any operating point to update the state-plane and time-domain views.</p>
       </div>
@@ -254,7 +260,7 @@
       <div class="llc-advanced-head">
         <div>
           <p class="llc-section-kicker">Step 8</p>
-          <h2 id="llc-advanced-analysis">Advanced Analysis</h2>
+          <h2 id="llc-advanced-analysis">{zh ? '深度分析' : 'Advanced Analysis'}</h2>
         </div>
         <p>Use the plots to inspect gain envelope, operating mode, state trajectory, and waveforms for the selected design.</p>
       </div>

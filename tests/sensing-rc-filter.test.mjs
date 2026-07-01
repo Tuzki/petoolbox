@@ -45,9 +45,10 @@ test('time response uses tau multipliers', () => {
   closeTo(response.settlingTimePoint1PercentSeconds, 6.9 * 22e-9);
 });
 
-test('default design evaluates to GOOD BALANCE', () => {
+test('default design evaluates to good-balance', () => {
   const result = rc.evaluateRcFilterDesign(rc.defaultSensingRcFilterInputs);
-  assert.equal(result.status, 'GOOD BALANCE');
+  assert.equal(result.status, 'good-balance');
+  assert.equal(result.actionCode, 'values-meet-targets');
   assert.equal(result.signalPass, true);
   assert.equal(result.noisePass, true);
   assert.ok(Number.isFinite(result.cutoffFrequencyHz));
@@ -85,7 +86,10 @@ test('status evaluation detects weak, slow, and conflicting filters', () => {
     desiredNoiseAttenuationDb: 80
   });
 
-  assert.equal(weak.status, 'FILTER TOO WEAK');
-  assert.equal(slow.status, 'FILTER TOO SLOW');
-  assert.equal(conflict.status, 'TARGET CONFLICT');
+  assert.equal(weak.status, 'filter-too-weak');
+  assert.equal(weak.actionCode, 'increase-rc');
+  assert.equal(slow.status, 'filter-too-slow');
+  assert.equal(slow.actionCode, 'reduce-rc');
+  assert.equal(conflict.status, 'target-conflict');
+  assert.equal(conflict.actionCode, 'targets-conflict');
 });

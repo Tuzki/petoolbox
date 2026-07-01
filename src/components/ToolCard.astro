@@ -1,12 +1,14 @@
 ---
 import { formatToolStatus, type ToolItem } from '@/data/tools';
+import type { Locale } from '@/lib/i18n/config';
 
 type Props = {
   tool: ToolItem;
+  locale: Locale;
 };
 
-const { tool } = Astro.props;
-const statusLabel = formatToolStatus(tool.status);
+const { tool, locale } = Astro.props;
+const statusLabel = formatToolStatus(tool.status, locale);
 const isLinked = Boolean(tool.href && tool.status !== 'coming-soon');
 ---
 

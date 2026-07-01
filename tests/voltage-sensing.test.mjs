@@ -108,8 +108,8 @@ test('invalid inputs return field-level validation errors before calculation', (
     upperResistorCount: 31
   });
 
-  assert.match(errors.join(' '), /Maximum input voltage/);
-  assert.match(errors.join(' '), /ADC reference voltage/);
-  assert.match(errors.join(' '), /1 to 30/);
-  assert.throws(() => voltageSensing.calculateVoltageSensingDesign({ ...defaultInputs, maximumInputVoltage: 0 }), /Maximum input voltage/);
+  assert.match(errors.join(' '), /maximum-input-must-be-positive/);
+  assert.match(errors.join(' '), /adc-reference-must-be-positive/);
+  assert.match(errors.join(' '), /upper-resistor-count-out-of-range/);
+  assert.throws(() => voltageSensing.calculateVoltageSensingDesign({ ...defaultInputs, maximumInputVoltage: 0 }), /maximum-input-must-be-positive/);
 });

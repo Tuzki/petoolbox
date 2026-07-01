@@ -1,26 +1,12 @@
 ---
-import { getCollection, render } from 'astro:content';
-import ArticleLayout from '@/layouts/ArticleLayout.astro';
+import LegacyRedirect from '@/components/LegacyRedirect.astro';
 
-export async function getStaticPaths() {
-  const articles = await getCollection('articles', ({ data }) => !(import.meta.env.PROD && data.draft));
-
-  return articles.map((article) => ({
-    params: { slug: article.slug },
-    props: {
-      article,
-      relatedArticles: articles
-        .filter((candidate) => candidate.slug !== article.slug)
-        .filter((candidate) => candidate.data.category === article.data.category)
-        .slice(0, 3)
-    }
-  }));
+export function getStaticPaths() {
+  return [
+    { params: { slug: 'buck-inductor-selection' }, props: { to: '/en/articles/buck-inductor-selection/' } }
+  ];
 }
 
-const { article, relatedArticles } = Astro.props;
-const { Content, headings } = await render(article);
+const { to } = Astro.props;
 ---
-
-<ArticleLayout article={article} headings={headings} relatedArticles={relatedArticles}>
-  <Content />
-</ArticleLayout>
+<LegacyRedirect to={to} />

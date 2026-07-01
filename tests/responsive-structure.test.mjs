@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 const root = process.cwd();
-const articleHtml = readFileSync(join(root, 'dist', 'articles', 'buck-inductor-selection', 'index.html'), 'utf8');
+const articleHtml = readFileSync(join(root, 'dist', 'en', 'articles', 'buck-inductor-selection', 'index.html'), 'utf8');
 const articleCss = readCssBundle();
 
 function readCssBundle() {
@@ -20,7 +20,7 @@ test('desktop article layout contains sidebar toc and tool rail', () => {
   assert.match(articleHtml, /class="article-sidebar"/);
   assert.match(articleHtml, /On this page/);
   assert.match(articleHtml, /Tools for This Design/);
-  assert.match(articleHtml, /href="\/articles\/">Articles<\/a>/);
+  assert.match(articleHtml, /href="\/en\/articles\/">Articles<\/a>/);
   assert.equal(articleHtml.includes('class="related-articles"'), false);
   assert.match(articleCss, /grid-template-columns:minmax\(0,820px\) minmax\(280px,320px\)/);
   assert.match(articleCss, /position:sticky/);

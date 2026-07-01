@@ -2,21 +2,28 @@
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import { canonicalUrl, isPrivateMode, site } from '@/lib/site';
+import { localeHtmlLang, ogLocale, type Locale } from '@/lib/i18n/config';
+import { getLocalizedPath, stripLocalePrefix } from '@/lib/i18n/routes';
 import '@/styles/global.css';
 
 type Props = {
   title: string;
   description: string;
+  locale: Locale;
   pathname?: string;
 };
 
-const { title, description, pathname = Astro.url.pathname } = Astro.props;
+const { title, description, locale, pathname = Astro.url.pathname } = Astro.props;
 const pageTitle = title === site.name ? title : `${title} | ${site.name}`;
-const canonical = canonicalUrl(pathname);
+const canonicalPath = getLocalizedPath(pathname, locale);
+const canonical = canonicalUrl(canonicalPath);
+const neutralPath = stripLocalePrefix(pathname);
+const enUrl = canonicalUrl(getLocalizedPath(neutralPath, 'en'));
+const zhUrl = canonicalUrl(getLocalizedPath(neutralPath, 'zh'));
 ---
 
 <!doctype html>
-<html lang={site.lang}>
+<html lang={localeHtmlLang[locale]}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -24,16 +31,20 @@ const canonical = canonicalUrl(pathname);
     <meta name="description" content={description} />
     <meta name="robots" content={isPrivateMode ? 'noindex, nofollow' : 'index, follow'} />
     <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="en" href={enUrl} />
+    <link rel="alternate" hreflang="zh-CN" href={zhUrl} />
+    <link rel="alternate" hreflang="x-default" href={enUrl} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content={site.name} />
+    <meta property="og:locale" content={ogLocale[locale]} />
   </head>
   <body>
-    <Header />
+    <Header locale={locale} />
     <slot />
-    <Footer />
+    <Footer locale={locale} />
   </body>
 </html>

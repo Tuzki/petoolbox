@@ -1,0 +1,687 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import {
+  defaultSensingRcFilterInputs,
+  evaluateRcFilterDesign,
+  formatDb,
+  formatEngineering
+} from '@/lib/sensingRcFilter';
+import type { Locale } from '@/lib/i18n/config';
+import { getMessages } from '@/lib/i18n/messages';
+
+type Props = { locale: Locale };
+const { locale } = Astro.props;
+const tool = getMessages(locale).tools.items['sensing-rc-filter-designer'];
+const inputs = defaultSensingRcFilterInputs;
+const result = evaluateRcFilterDesign(inputs);
+const description = tool.description;
+const rcStatus = {
+  en: {
+    'good-balance': { label: 'GOOD BALANCE', copy: 'The useful signal is preserved while the selected noise frequency is attenuated.' },
+    'filter-too-weak': { label: 'FILTER TOO WEAK', copy: 'The useful signal is preserved, but noise attenuation is below the selected target.' },
+    'filter-too-slow': { label: 'FILTER TOO SLOW', copy: 'Noise attenuation is sufficient, but the useful signal is attenuated too much.' },
+    'target-conflict': { label: 'TARGET CONFLICT', copy: 'The current values satisfy neither the useful-signal-loss target nor the desired noise-attenuation target.' }
+  },
+  zh: {
+    'good-balance': { label: '平衡良好', copy: '有用信号得到保留，同时选定噪声频率被衰减。' },
+    'filter-too-weak': { label: '滤波偏弱', copy: '有用信号得到保留，但噪声衰减低于目标。' },
+    'filter-too-slow': { label: '滤波过慢', copy: '噪声衰减足够，但有用信号衰减过大。' },
+    'target-conflict': { label: '目标冲突', copy: '当前取值既不满足有用信号损失目标，也不满足噪声衰减目标。' }
+  }
+} as const;
+const rcActions = {
+  en: {
+    'values-meet-targets': 'The current RC values meet both targets.',
+    'increase-rc': 'Increase the filter resistor or capacitor, then verify that useful-signal attenuation and phase delay remain acceptable.',
+    'reduce-rc': 'Reduce the filter resistor or capacitor to move the cutoff frequency higher.',
+    'targets-conflict': 'The selected signal and noise frequencies may be too close for a single-pole RC filter. Consider a higher-order filter, synchronous sampling, or digital filtering.'
+  },
+  zh: {
+    'values-meet-targets': '当前 RC 取值同时满足两个目标。',
+    'increase-rc': '增大滤波电阻或电容，然后确认有用信号衰减和相位延迟仍可接受。',
+    'reduce-rc': '减小滤波电阻或电容，将截止频率上移。',
+    'targets-conflict': '选定的信号频率和噪声频率可能过于接近，单极点 RC 滤波器难以同时满足目标。可考虑高阶滤波、同步采样或数字滤波。'
+  }
+} as const;
+---
+
+<BaseLayout
+  title={tool.title}
+  description={description}
+  pathname="/tools/sensing-rc-filter-designer/"
+  locale={locale}
+>
+  <main class="page-shell tool-workbench rc-filter-tool" data-rc-filter-tool data-locale={locale}>
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href={`/${locale}/`}>{getMessages(locale).site.breadcrumbs.home}</a>
+      <span aria-hidden="true">/</span>
+      <a href={`/${locale}/tools/`}>{getMessages(locale).navigation.items['engineering-calculators']}</a>
+      <span aria-hidden="true">/</span>
+      <span>{tool.title}</span>
+    </nav>
+
+    <header class="tool-workbench__header">
+      <div>
+        <p class="section-eyebrow">Engineering Calculators</p>
+        <h1>{tool.title}</h1>
+        <p>Design and evaluate a first-order RC filter for voltage, current, and temperature sensing.</p>
+        <p>Check useful-signal attenuation, high-frequency noise rejection, phase delay, and response speed.</p>
+      </div>
+      <div class="tool-workbench__target">Standalone first-order RC model</div>
+    </header>
+
+    <div class="tool-workbench__layout">
+      <section class="tool-input-panel" aria-labelledby="rc-filter-inputs">
+        <h2 id="rc-filter-inputs">Inputs</h2>
+
+        <fieldset class="tool-field tool-segmented rc-source-mode" data-input="sourceMode">
+          <legend>Signal Source</legend>
+          <label>
+            <input type="radio" name="sourceMode" value="resistor-divider" checked />
+            <span>Resistor divider</span>
+            <small>Bus, input/output, battery, or NTC divider sensing</small>
+          </label>
+          <label>
+            <input type="radio" name="sourceMode" value="voltage-output" />
+            <span>Voltage-output source</span>
+            <small>Hall sensor, current-sense amplifier, op-amp, or isolation amplifier</small>
+          </label>
+        </fieldset>
+
+        <div class="rc-source-fields" data-source-fields="resistor-divider">
+          <div class="tool-field">
+            <label for="upper-resistance">Upper Resistance</label>
+            <div class="tool-control">
+              <input id="upper-resistance" data-input="upperResistanceKohms" type="number" min="0" step="1" value={inputs.upperResistanceKohms} />
+              <span>kΩ</span>
+            </div>
+          </div>
+          <div class="tool-field">
+            <label for="lower-resistance">Lower Resistance</label>
+            <div class="tool-control">
+              <input id="lower-resistance" data-input="lowerResistanceKohms" type="number" min="0" step="0.01" value={inputs.lowerResistanceKohms} />
+              <span>kΩ</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rc-source-fields" data-source-fields="voltage-output" hidden>
+          <div class="tool-field">
+            <label for="output-resistance">Output Resistance</label>
+            <div class="tool-control">
+              <input id="output-resistance" data-input="outputResistanceOhms" type="number" min="0" step="10" value={inputs.outputResistanceOhms} />
+              <span>Ω</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="tool-note" data-output="sourceNote">
+          Used for bus, input/output, battery-voltage, and NTC-divider sensing. Source resistance is calculated as Rupper || Rlower.
+        </p>
+
+        <div class="rc-input-section">
+          <h3>RC Filter</h3>
+          <div class="tool-field">
+            <label for="filter-resistance">Filter Resistor</label>
+            <div class="tool-control">
+              <input id="filter-resistance" data-input="filterResistanceKohms" type="number" min="0" step="0.1" value={inputs.filterResistanceKohms} />
+              <span>kΩ</span>
+            </div>
+          </div>
+          <div class="tool-field">
+            <label for="filter-capacitance">Filter Capacitor</label>
+            <div class="tool-control">
+              <input id="filter-capacitance" data-input="filterCapacitancePf" type="number" min="0.1" step="1" value={inputs.filterCapacitancePf} />
+              <span>pF</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rc-input-section">
+          <h3>Frequency Conditions</h3>
+          <div class="tool-field">
+            <label for="signal-frequency">Signal Frequency</label>
+            <div class="tool-control">
+              <input id="signal-frequency" data-input="signalFrequencyKhz" type="number" min="0.001" step="0.1" value={inputs.signalFrequencyKhz} />
+              <span>kHz</span>
+            </div>
+            <p class="tool-field__hint">The highest useful measurement or control frequency that should be preserved.</p>
+          </div>
+          <div class="tool-field">
+            <label for="noise-frequency">Noise Frequency</label>
+            <div class="tool-control">
+              <input id="noise-frequency" data-input="noiseFrequencyMhz" type="number" min="0.001" step="1" value={inputs.noiseFrequencyMhz} />
+              <span>MHz</span>
+            </div>
+            <p class="tool-field__hint">A switching-noise, ringing, or other dominant high-frequency interference component.</p>
+          </div>
+          <div class="tool-field">
+            <label for="max-signal-loss">Max Allowed Signal Loss</label>
+            <div class="tool-control">
+              <input id="max-signal-loss" data-input="maxAllowedSignalLossDb" type="number" min="0" step="0.05" value={inputs.maxAllowedSignalLossDb} />
+              <span>dB</span>
+            </div>
+            <p class="tool-field__hint">Maximum acceptable attenuation at the selected signal frequency.</p>
+          </div>
+          <div class="tool-field">
+            <label for="desired-noise-attenuation">Desired Noise Attenuation</label>
+            <div class="tool-control">
+              <input id="desired-noise-attenuation" data-input="desiredNoiseAttenuationDb" type="number" min="0" step="1" value={inputs.desiredNoiseAttenuationDb} />
+              <span>dB</span>
+            </div>
+            <p class="tool-field__hint">Positive target value. The response result is shown as a negative dB gain.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="tool-results">
+        <article class="tool-result-card rc-overview">
+          <div class="tool-result-card__heading">
+            <div>
+              <p class="category-eyebrow">Calculated Response</p>
+              <h2>First-order RC low-pass filter</h2>
+            </div>
+            <span class:list={['tool-check-pill', `tool-check-pill--${result.severity}`]} data-output="status">{rcStatus[locale][result.status].label}</span>
+          </div>
+
+          <div class="rc-diagram" aria-label="RC filter circuit diagram">
+            <svg viewBox="0 0 760 250" role="img">
+              <title>Signal source to Rfilter and Cfilter sense node</title>
+              <text x="30" y="84" class="rc-diagram__label" data-output="sourceLabel">Resistor divider</text>
+              <text x="30" y="108" class="rc-diagram__muted" data-output="sourceResistanceLabel">Rsource = {formatEngineering(result.sourceResistanceOhms, 'Ω')}</text>
+              <line x1="55" y1="145" x2="145" y2="145" />
+              <polyline points="145,145 160,126 180,164 200,126 220,164 240,126 255,145" />
+              <line x1="255" y1="145" x2="340" y2="145" />
+              <text x="200" y="108" class="rc-diagram__label" text-anchor="middle">Rfilter</text>
+              <circle cx="340" cy="145" r="6" />
+              <text x="308" y="123" class="rc-diagram__accent">Sense node</text>
+              <line x1="340" y1="145" x2="340" y2="180" />
+              <line x1="316" y1="180" x2="364" y2="180" />
+              <line x1="316" y1="195" x2="364" y2="195" />
+              <line x1="340" y1="195" x2="340" y2="223" />
+              <line x1="315" y1="223" x2="365" y2="223" />
+              <line x1="324" y1="233" x2="356" y2="233" />
+              <line x1="333" y1="243" x2="347" y2="243" />
+              <text x="378" y="194" class="rc-diagram__label">Cfilter</text>
+              <line x1="340" y1="145" x2="480" y2="145" />
+              <rect x="480" y="92" width="230" height="106" rx="14" />
+              <text x="595" y="126" text-anchor="middle" class="rc-diagram__label">ADC / controller input</text>
+              <text x="595" y="154" text-anchor="middle" class="rc-diagram__muted">Ideal first-order RC model</text>
+              <text x="595" y="177" text-anchor="middle" class="rc-diagram__muted">No internal ADC model</text>
+            </svg>
+          </div>
+
+          <p data-output="statusCopy">{rcStatus[locale][result.status].copy}</p>
+          <p class="tool-note" data-output="actionText">{rcActions[locale][result.actionCode]}</p>
+        </article>
+
+        <div class="metric-grid">
+          <div class="metric-tile">
+            <span>Cutoff Frequency</span>
+            <strong data-output="cutoffFrequency">{formatEngineering(result.cutoffFrequencyHz, 'Hz')}</strong>
+            <small data-output="tauSummary">τ = {formatEngineering(result.timeResponse.tauSeconds, 's')}</small>
+          </div>
+          <div class="metric-tile">
+            <span>Noise Attenuation</span>
+            <strong data-output="noiseAttenuation">{formatDb(result.noiseResponse.gainDb)}</strong>
+            <small data-output="noiseSummary">At {formatEngineering(result.noiseFrequencyHz, 'Hz')}</small>
+          </div>
+          <div class="metric-tile">
+            <span>Signal Attenuation</span>
+            <strong data-output="signalAttenuation">{formatDb(result.signalResponse.gainDb)}</strong>
+            <small data-output="signalSummary">At {formatEngineering(result.signalFrequencyHz, 'Hz')}</small>
+          </div>
+          <div class="metric-tile">
+            <span>Signal Phase Delay</span>
+            <strong data-output="signalPhase">{result.signalResponse.phaseDeg.toFixed(1)}°</strong>
+            <small>First-order phase lag</small>
+          </div>
+          <div class="metric-tile">
+            <span>10-90% Rise Time</span>
+            <strong data-output="riseTime">{formatEngineering(result.timeResponse.riseTime1090Seconds, 's')}</strong>
+            <small>Approximately 2.2τ</small>
+          </div>
+          <div class="metric-tile">
+            <span>1% Settling Time</span>
+            <strong data-output="settlingTime">{formatEngineering(result.timeResponse.settlingTime1PercentSeconds, 's')}</strong>
+            <small>Approximately 4.6τ</small>
+          </div>
+        </div>
+
+        <article class="tool-result-card rc-chart-panel">
+          <div class="tool-result-card__heading">
+            <div>
+              <h2>Frequency Response</h2>
+              <p>Log-frequency magnitude and phase response with fc, signal, and noise markers.</p>
+            </div>
+          </div>
+          <div class="rc-chart-grid">
+            <div class="rc-chart-card">
+              <div class="rc-chart-card__title">
+                <strong>Magnitude Response</strong>
+                <span>Gain in dB</span>
+              </div>
+              <canvas data-chart="magnitude" width="700" height="260"></canvas>
+            </div>
+            <div class="rc-chart-card">
+              <div class="rc-chart-card__title">
+                <strong>Phase Response</strong>
+                <span>Degrees</span>
+              </div>
+              <canvas data-chart="phase" width="700" height="260"></canvas>
+            </div>
+          </div>
+        </article>
+
+        <div class="tool-results__bottom">
+          <article class="tool-result-card">
+            <h2>Engineering Details</h2>
+            <div class="rc-detail-grid">
+              <span>Source Resistance</span><strong data-output="sourceResistance">{formatEngineering(result.sourceResistanceOhms, 'Ω')}</strong>
+              <span>Total Resistance</span><strong data-output="totalResistance">{formatEngineering(result.totalResistanceOhms, 'Ω')}</strong>
+              <span>Time Constant</span><strong data-output="timeConstant">{formatEngineering(result.timeResponse.tauSeconds, 's')}</strong>
+              <span>0.1% Settling Time</span><strong data-output="settlingTimePoint1">{formatEngineering(result.timeResponse.settlingTimePoint1PercentSeconds, 's')}</strong>
+              <span>Signal Amplitude Ratio</span><strong data-output="signalRatio">{(result.signalResponse.ratio * 100).toFixed(2)}%</strong>
+              <span>Noise Amplitude Ratio</span><strong data-output="noiseRatio">{(result.noiseResponse.ratio * 100).toFixed(3)}%</strong>
+              <span>Signal Frequency / Cutoff</span><strong data-output="signalToCutoff">{(result.signalFrequencyHz / result.cutoffFrequencyHz).toPrecision(3)}×</strong>
+              <span>Noise Frequency / Cutoff</span><strong data-output="noiseToCutoff">{(result.noiseFrequencyHz / result.cutoffFrequencyHz).toPrecision(3)}×</strong>
+            </div>
+          </article>
+
+          <article class="tool-result-card">
+            <h2>How to Use</h2>
+            <p>Choose the source type, enter the source resistance information, then set the series filter resistor and shunt capacitor.</p>
+            <p>Use the signal frequency for the highest useful measurement or control content that should be preserved.</p>
+            <p>Use the noise frequency for a switching component, ringing frequency, or other high-frequency interference to attenuate.</p>
+            <p class="tool-warning">This tool uses an ideal first-order RC model. Sensor bandwidth, amplifier stability, ADC input loading, PCB parasitics, and nonlinear effects are not included.</p>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+</BaseLayout>
+
+<script>
+  import {
+    calculateRcResponse,
+    evaluateRcFilterDesign,
+    formatDb,
+    formatEngineering,
+    isValidFilterInput,
+    parseRequiredNumber,
+    type SensingRcFilterInputs
+  } from '@/lib/sensingRcFilter';
+
+  const root = document.querySelector<HTMLElement>('[data-rc-filter-tool]');
+
+  if (root) {
+    const locale = root.dataset.locale === 'zh' ? 'zh' : 'en';
+    const rcStatus = {
+      en: {
+        'good-balance': { label: 'GOOD BALANCE', copy: 'The useful signal is preserved while the selected noise frequency is attenuated.' },
+        'filter-too-weak': { label: 'FILTER TOO WEAK', copy: 'The useful signal is preserved, but noise attenuation is below the selected target.' },
+        'filter-too-slow': { label: 'FILTER TOO SLOW', copy: 'Noise attenuation is sufficient, but the useful signal is attenuated too much.' },
+        'target-conflict': { label: 'TARGET CONFLICT', copy: 'The current values satisfy neither the useful-signal-loss target nor the desired noise-attenuation target.' }
+      },
+      zh: {
+        'good-balance': { label: '平衡良好', copy: '有用信号得到保留，同时选定噪声频率被衰减。' },
+        'filter-too-weak': { label: '滤波偏弱', copy: '有用信号得到保留，但噪声衰减低于目标。' },
+        'filter-too-slow': { label: '滤波过慢', copy: '噪声衰减足够，但有用信号衰减过大。' },
+        'target-conflict': { label: '目标冲突', copy: '当前取值既不满足有用信号损失目标，也不满足噪声衰减目标。' }
+      }
+    } as const;
+    const rcActions = {
+      en: {
+        'values-meet-targets': 'The current RC values meet both targets.',
+        'increase-rc': 'Increase the filter resistor or capacitor, then verify that useful-signal attenuation and phase delay remain acceptable.',
+        'reduce-rc': 'Reduce the filter resistor or capacitor to move the cutoff frequency higher.',
+        'targets-conflict': 'The selected signal and noise frequencies may be too close for a single-pole RC filter. Consider a higher-order filter, synchronous sampling, or digital filtering.'
+      },
+      zh: {
+        'values-meet-targets': '当前 RC 取值同时满足两个目标。',
+        'increase-rc': '增大滤波电阻或电容，然后确认有用信号衰减和相位延迟仍可接受。',
+        'reduce-rc': '减小滤波电阻或电容，将截止频率上移。',
+        'targets-conflict': '选定的信号频率和噪声频率可能过于接近，单极点 RC 滤波器难以同时满足目标。可考虑高阶滤波、同步采样或数字滤波。'
+      }
+    } as const;
+    const outputs = new Map(
+      Array.from(root.querySelectorAll<HTMLElement>('[data-output]')).map((element) => [element.dataset.output, element])
+    );
+    const text = (key: string, value: string) => {
+      const target = outputs.get(key);
+      if (target) target.textContent = value;
+    };
+    const readNumber = (name: string) => {
+      const element = root.querySelector<HTMLInputElement>(`[data-input="${name}"]`);
+      return parseRequiredNumber(element?.value ?? '');
+    };
+    const readInputs = (): SensingRcFilterInputs | null => {
+      const sourceMode = root.querySelector<HTMLInputElement>('input[name="sourceMode"]:checked')?.value === 'voltage-output' ? 'voltage-output' : 'resistor-divider';
+      const inputValues = {
+        upperResistanceKohms: readNumber('upperResistanceKohms'),
+        lowerResistanceKohms: readNumber('lowerResistanceKohms'),
+        outputResistanceOhms: readNumber('outputResistanceOhms'),
+        filterResistanceKohms: readNumber('filterResistanceKohms'),
+        filterCapacitancePf: readNumber('filterCapacitancePf'),
+        signalFrequencyKhz: readNumber('signalFrequencyKhz'),
+        noiseFrequencyMhz: readNumber('noiseFrequencyMhz'),
+        maxAllowedSignalLossDb: readNumber('maxAllowedSignalLossDb'),
+        desiredNoiseAttenuationDb: readNumber('desiredNoiseAttenuationDb')
+      };
+
+      const requiredValues = sourceMode === 'voltage-output'
+        ? [
+            inputValues.outputResistanceOhms,
+            inputValues.filterResistanceKohms,
+            inputValues.filterCapacitancePf,
+            inputValues.signalFrequencyKhz,
+            inputValues.noiseFrequencyMhz,
+            inputValues.maxAllowedSignalLossDb,
+            inputValues.desiredNoiseAttenuationDb
+          ]
+        : [
+            inputValues.upperResistanceKohms,
+            inputValues.lowerResistanceKohms,
+            inputValues.filterResistanceKohms,
+            inputValues.filterCapacitancePf,
+            inputValues.signalFrequencyKhz,
+            inputValues.noiseFrequencyMhz,
+            inputValues.maxAllowedSignalLossDb,
+            inputValues.desiredNoiseAttenuationDb
+          ];
+
+      if (requiredValues.some((value) => value === null)) return null;
+
+      const inputs: SensingRcFilterInputs = {
+        sourceMode,
+        upperResistanceKohms: inputValues.upperResistanceKohms ?? 0,
+        lowerResistanceKohms: inputValues.lowerResistanceKohms ?? 0,
+        outputResistanceOhms: inputValues.outputResistanceOhms ?? 0,
+        filterResistanceKohms: inputValues.filterResistanceKohms ?? 0,
+        filterCapacitancePf: inputValues.filterCapacitancePf ?? 0,
+        signalFrequencyKhz: inputValues.signalFrequencyKhz ?? 0,
+        noiseFrequencyMhz: inputValues.noiseFrequencyMhz ?? 0,
+        maxAllowedSignalLossDb: inputValues.maxAllowedSignalLossDb ?? 0,
+        desiredNoiseAttenuationDb: inputValues.desiredNoiseAttenuationDb ?? 0
+      };
+
+      return isValidFilterInput(inputs) ? inputs : null;
+    };
+
+    const render = () => {
+      const inputs = readInputs();
+      const sourceMode = root.querySelector<HTMLInputElement>('input[name="sourceMode"]:checked')?.value === 'voltage-output' ? 'voltage-output' : 'resistor-divider';
+      root.querySelector<HTMLElement>('[data-source-fields="resistor-divider"]')!.hidden = sourceMode !== 'resistor-divider';
+      root.querySelector<HTMLElement>('[data-source-fields="voltage-output"]')!.hidden = sourceMode !== 'voltage-output';
+      text(
+        'sourceNote',
+        sourceMode === 'voltage-output'
+          ? 'Used for Hall sensors, current-sense amplifiers, op-amp buffers, and isolation amplifiers. Enter the output resistance seen by the filter.'
+          : 'Used for bus, input/output, battery-voltage, and NTC-divider sensing. Source resistance is calculated as Rupper || Rlower.'
+      );
+
+      if (!inputs) {
+        renderInvalidState(sourceMode);
+        return;
+      }
+
+      const result = evaluateRcFilterDesign(inputs);
+      const status = outputs.get('status');
+      status?.classList.remove('tool-check-pill--good', 'tool-check-pill--warn', 'tool-check-pill--bad');
+      status?.classList.add(`tool-check-pill--${result.severity}`);
+      text('status', rcStatus[locale][result.status].label);
+      text('statusCopy', rcStatus[locale][result.status].copy);
+      text('actionText', rcActions[locale][result.actionCode]);
+      text('sourceLabel', inputs.sourceMode === 'voltage-output' ? 'Voltage-output source' : 'Resistor divider');
+      text('sourceResistanceLabel', `Rsource = ${formatEngineering(result.sourceResistanceOhms, 'Ω')}`);
+      text('sourceResistance', formatEngineering(result.sourceResistanceOhms, 'Ω'));
+      text('cutoffFrequency', formatEngineering(result.cutoffFrequencyHz, 'Hz'));
+      text('tauSummary', `τ = ${formatEngineering(result.timeResponse.tauSeconds, 's')}`);
+      text('noiseAttenuation', formatDb(result.noiseResponse.gainDb));
+      text('noiseSummary', `At ${formatEngineering(result.noiseFrequencyHz, 'Hz')}`);
+      text('signalAttenuation', formatDb(result.signalResponse.gainDb));
+      text('signalSummary', `At ${formatEngineering(result.signalFrequencyHz, 'Hz')}`);
+      text('signalPhase', `${result.signalResponse.phaseDeg.toFixed(1)}°`);
+      text('riseTime', formatEngineering(result.timeResponse.riseTime1090Seconds, 's'));
+      text('settlingTime', formatEngineering(result.timeResponse.settlingTime1PercentSeconds, 's'));
+      text('totalResistance', formatEngineering(result.totalResistanceOhms, 'Ω'));
+      text('timeConstant', formatEngineering(result.timeResponse.tauSeconds, 's'));
+      text('settlingTimePoint1', formatEngineering(result.timeResponse.settlingTimePoint1PercentSeconds, 's'));
+      text('signalRatio', `${(result.signalResponse.ratio * 100).toFixed(2)}%`);
+      text('noiseRatio', `${(result.noiseResponse.ratio * 100).toFixed(3)}%`);
+      text('signalToCutoff', result.cutoffFrequencyHz > 0 ? `${(result.signalFrequencyHz / result.cutoffFrequencyHz).toPrecision(3)}×` : '-');
+      text('noiseToCutoff', result.cutoffFrequencyHz > 0 ? `${(result.noiseFrequencyHz / result.cutoffFrequencyHz).toPrecision(3)}×` : '-');
+      drawCharts(result.cutoffFrequencyHz, result.signalFrequencyHz, result.noiseFrequencyHz);
+    };
+
+    const renderInvalidState = (sourceMode: 'resistor-divider' | 'voltage-output') => {
+      const status = outputs.get('status');
+      status?.classList.remove('tool-check-pill--good', 'tool-check-pill--warn', 'tool-check-pill--bad');
+      status?.classList.add('tool-check-pill--warn');
+      text('status', 'CHECK INPUTS');
+      text('statusCopy', 'Enter positive values for resistance, capacitance, signal frequency, and noise frequency.');
+      text('actionText', 'The calculation and frequency-response charts will update when all required inputs are valid.');
+      text('sourceLabel', sourceMode === 'voltage-output' ? 'Voltage-output source' : 'Resistor divider');
+      text('sourceResistanceLabel', 'Rsource = —');
+      for (const key of [
+        'sourceResistance',
+        'cutoffFrequency',
+        'tauSummary',
+        'noiseAttenuation',
+        'noiseSummary',
+        'signalAttenuation',
+        'signalSummary',
+        'signalPhase',
+        'riseTime',
+        'settlingTime',
+        'totalResistance',
+        'timeConstant',
+        'settlingTimePoint1',
+        'signalRatio',
+        'noiseRatio',
+        'signalToCutoff',
+        'noiseToCutoff'
+      ]) {
+        text(key, '—');
+      }
+      drawChartPlaceholder('[data-chart="magnitude"]');
+      drawChartPlaceholder('[data-chart="phase"]');
+    };
+
+    const chartRange = (cutoff: number, signal: number, noise: number) => {
+      const values = [cutoff, signal, noise].filter((value) => Number.isFinite(value) && value > 0);
+      const low = Math.min(...values);
+      const high = Math.max(...values);
+      return {
+        min: Math.max(0.1, 10 ** (Math.floor(Math.log10(low)) - 2)),
+        max: 10 ** (Math.ceil(Math.log10(high)) + 2)
+      };
+    };
+    const setupCanvas = (selector: string) => {
+      const canvas = root.querySelector<HTMLCanvasElement>(selector);
+      if (!canvas) return null;
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      const width = Math.max(320, Math.round(rect.width));
+      const height = 260;
+      canvas.width = width * ratio;
+      canvas.height = height * ratio;
+      canvas.style.height = `${height}px`;
+      const context = canvas.getContext('2d');
+      if (!context) return null;
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      return { context, width, height };
+    };
+    const xFor = (frequency: number, min: number, max: number, left: number, plotWidth: number) => (
+      left + (Math.log10(frequency) - Math.log10(min)) / (Math.log10(max) - Math.log10(min)) * plotWidth
+    );
+    const drawMarkers = (context: CanvasRenderingContext2D, top: number, bottom: number, markers: Array<{ x: number; label: string; color: string }>) => {
+      context.save();
+      context.font = '700 10px system-ui';
+      for (const marker of markers) {
+        context.strokeStyle = marker.color;
+        context.fillStyle = marker.color;
+        context.setLineDash([5, 4]);
+        context.beginPath();
+        context.moveTo(marker.x, top);
+        context.lineTo(marker.x, bottom);
+        context.stroke();
+        context.setLineDash([]);
+        context.fillText(marker.label, marker.x + 4, top + 12);
+      }
+      context.restore();
+    };
+    const drawLogGrid = (context: CanvasRenderingContext2D, min: number, max: number, left: number, right: number, top: number, bottom: number, width: number, height: number) => {
+      context.save();
+      context.font = '11px system-ui';
+      context.fillStyle = '#64748b';
+      for (let decade = Math.floor(Math.log10(min)); decade <= Math.ceil(Math.log10(max)); decade += 1) {
+        for (let multiplier = 1; multiplier < 10; multiplier += 1) {
+          const frequency = multiplier * 10 ** decade;
+          if (frequency < min || frequency > max) continue;
+          const x = xFor(frequency, min, max, left, width - left - right);
+          context.strokeStyle = multiplier === 1 ? '#d7e0eb' : '#eef2f7';
+          context.lineWidth = multiplier === 1 ? 1.1 : 0.7;
+          context.beginPath();
+          context.moveTo(x, top);
+          context.lineTo(x, height - bottom);
+          context.stroke();
+          if (multiplier === 1) {
+            context.textAlign = 'center';
+            context.fillText(formatEngineering(frequency, 'Hz', 2), x, height - 16);
+          }
+        }
+      }
+      context.restore();
+    };
+    const drawCharts = (cutoff: number, signal: number, noise: number) => {
+      if (!(cutoff > 0) || !(signal > 0) || !(noise > 0)) {
+        drawChartPlaceholder('[data-chart="magnitude"]');
+        drawChartPlaceholder('[data-chart="phase"]');
+        return;
+      }
+      const { min, max } = chartRange(cutoff, signal, noise);
+      drawMagnitude(cutoff, signal, noise, min, max);
+      drawPhase(cutoff, signal, noise, min, max);
+    };
+    const drawChartPlaceholder = (selector: string) => {
+      const canvas = setupCanvas(selector);
+      if (!canvas) return;
+      const { context, width, height } = canvas;
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, width, height);
+      context.strokeStyle = '#e2e8f0';
+      context.lineWidth = 1;
+      context.strokeRect(0.5, 0.5, width - 1, height - 1);
+      context.fillStyle = '#64748b';
+      context.font = '600 13px system-ui';
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText('Enter valid values to display the frequency response.', width / 2, height / 2);
+    };
+    const drawMagnitude = (cutoff: number, signal: number, noise: number, min: number, max: number) => {
+      const canvas = setupCanvas('[data-chart="magnitude"]');
+      if (!canvas) return;
+      const { context, width, height } = canvas;
+      const left = 58;
+      const right = 20;
+      const top = 18;
+      const bottom = 42;
+      const minDb = -80;
+      const maxDb = 2;
+      const plotWidth = width - left - right;
+      const plotHeight = height - top - bottom;
+      const yFor = (db: number) => top + (maxDb - db) / (maxDb - minDb) * plotHeight;
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, width, height);
+      context.font = '11px system-ui';
+      context.fillStyle = '#64748b';
+      context.strokeStyle = '#e2e8f0';
+      for (let db = 0; db >= minDb; db -= 10) {
+        const y = yFor(db);
+        context.beginPath();
+        context.moveTo(left, y);
+        context.lineTo(width - right, y);
+        context.stroke();
+        context.fillText(`${db} dB`, 12, y + 4);
+      }
+      drawLogGrid(context, min, max, left, right, top, bottom, width, height);
+      context.strokeStyle = '#1769aa';
+      context.lineWidth = 2.5;
+      context.beginPath();
+      for (let index = 0; index <= 500; index += 1) {
+        const frequency = 10 ** (Math.log10(min) + index / 500 * (Math.log10(max) - Math.log10(min)));
+        const x = xFor(frequency, min, max, left, plotWidth);
+        const y = yFor(Math.max(minDb, Math.min(maxDb, calculateRcResponse(frequency, cutoff).gainDb)));
+        if (index === 0) context.moveTo(x, y);
+        else context.lineTo(x, y);
+      }
+      context.stroke();
+      drawMarkers(context, top, height - bottom, [
+        { x: xFor(cutoff, min, max, left, plotWidth), label: 'fc', color: '#765a00' },
+        { x: xFor(signal, min, max, left, plotWidth), label: 'signal', color: '#146345' },
+        { x: xFor(noise, min, max, left, plotWidth), label: 'noise', color: '#943232' }
+      ]);
+    };
+    const drawPhase = (cutoff: number, signal: number, noise: number, min: number, max: number) => {
+      const canvas = setupCanvas('[data-chart="phase"]');
+      if (!canvas) return;
+      const { context, width, height } = canvas;
+      const left = 58;
+      const right = 20;
+      const top = 18;
+      const bottom = 42;
+      const minPhase = -95;
+      const maxPhase = 5;
+      const plotWidth = width - left - right;
+      const plotHeight = height - top - bottom;
+      const yFor = (phase: number) => top + (maxPhase - phase) / (maxPhase - minPhase) * plotHeight;
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, width, height);
+      context.font = '11px system-ui';
+      context.fillStyle = '#64748b';
+      context.strokeStyle = '#e2e8f0';
+      for (const phase of [0, -15, -30, -45, -60, -75, -90]) {
+        const y = yFor(phase);
+        context.beginPath();
+        context.moveTo(left, y);
+        context.lineTo(width - right, y);
+        context.stroke();
+        context.fillText(`${phase}°`, 16, y + 4);
+      }
+      drawLogGrid(context, min, max, left, right, top, bottom, width, height);
+      context.strokeStyle = '#0f766e';
+      context.lineWidth = 2.5;
+      context.beginPath();
+      for (let index = 0; index <= 500; index += 1) {
+        const frequency = 10 ** (Math.log10(min) + index / 500 * (Math.log10(max) - Math.log10(min)));
+        const x = xFor(frequency, min, max, left, plotWidth);
+        const y = yFor(calculateRcResponse(frequency, cutoff).phaseDeg);
+        if (index === 0) context.moveTo(x, y);
+        else context.lineTo(x, y);
+      }
+      context.stroke();
+      drawMarkers(context, top, height - bottom, [
+        { x: xFor(cutoff, min, max, left, plotWidth), label: 'fc', color: '#765a00' },
+        { x: xFor(signal, min, max, left, plotWidth), label: 'signal', color: '#146345' },
+        { x: xFor(noise, min, max, left, plotWidth), label: 'noise', color: '#943232' }
+      ]);
+    };
+
+    root.querySelectorAll('input').forEach((control) => {
+      control.addEventListener('input', render);
+      control.addEventListener('change', render);
+    });
+    root.querySelectorAll('input[name="sourceMode"]').forEach((control) => {
+      control.addEventListener('change', render);
+    });
+    window.addEventListener('resize', () => {
+      window.clearTimeout(Number(root.dataset.resizeTimer ?? 0));
+      root.dataset.resizeTimer = String(window.setTimeout(render, 80));
+    });
+    render();
+  }
+</script>

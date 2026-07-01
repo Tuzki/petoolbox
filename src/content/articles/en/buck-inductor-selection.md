@@ -1,5 +1,6 @@
 ---
 title: "How to Select an Inductor for a Buck Converter"
+articleId: "buck-inductor-selection"
 description: "A practical method for selecting inductance, ripple current, saturation current, and current rating for a buck converter."
 category: "converter-design"
 primaryTool: "buck-inductor-ripple-calculator"

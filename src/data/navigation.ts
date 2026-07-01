@@ -1,4 +1,8 @@
-import { formatToolStatus, getTool } from '@/data/tools';
+import { navigationRegistry } from './navigation.registry';
+import { formatToolStatus, getTool } from './tools';
+import { getMessages } from '@/lib/i18n/messages';
+import { getLocalizedPath } from '@/lib/i18n/routes';
+import type { Locale } from '@/lib/i18n/config';
 
 export type NavigationChild = {
   label: string;
@@ -18,57 +22,38 @@ export type NavigationItem = {
   sections?: NavigationSection[];
 };
 
-function toolItem(id: string, hrefOverride?: string): NavigationChild {
-  const tool = getTool(id);
-  return {
-    label: tool?.title ?? id,
-    href: hrefOverride ?? tool?.href,
-    status: tool ? formatToolStatus(tool.status) : 'Coming Soon'
-  };
+export function getProductNavigation(locale: Locale): NavigationItem[] {
+  const t = getMessages(locale);
+  return navigationRegistry.map((item) => ({
+    id: item.id,
+    label: t.navigation.items[item.id],
+    href: getLocalizedPath(item.route, locale),
+    sections: item.sections?.map((section) => ({
+      label: t.navigation.sections[section.id as keyof typeof t.navigation.sections],
+      children: section.toolIds.map((id) => {
+        const tool = getTool(id, locale);
+        return {
+          label: tool?.title ?? id,
+          href: tool?.href,
+          status: tool ? formatToolStatus(tool.status, locale) : t.site.status['coming-soon']
+        };
+      })
+    }))
+  }));
 }
 
-export const productNavigation: NavigationItem[] = [
-  {
-    id: 'topology-designers',
-    label: 'Topology Designers',
-    href: '/topology-designers/',
-    sections: [
-      { label: 'Non-Isolated', children: [toolItem('buck-converter-designer'), toolItem('boost-converter-designer')] },
-      { label: 'AC-DC', children: [toolItem('boost-pfc-designer')] },
-      { label: 'Isolated', children: [toolItem('flyback-converter-designer')] },
-      { label: 'Resonant', children: [toolItem('llc-resonant-converter-designer')] }
-    ]
-  },
-  {
-    id: 'engineering-calculators',
-    label: 'Engineering Calculators',
-    href: '/tools/',
-    sections: [
-      { label: 'Basic Circuits', children: [toolItem('rc-time-constant-calculator'), toolItem('voltage-divider-calculator'), toolItem('voltage-sensing-adc-scaling'), toolItem('sensing-rc-filter-designer')] },
-      { label: 'Power Stage', children: [toolItem('buck-inductor-ripple-calculator')] },
-      { label: 'Protection', children: [toolItem('rc-snubber-calculator'), toolItem('rcd-snubber-calculator')] }
-    ]
-  },
-  { id: 'magnetics', label: 'Magnetics Design', href: '/magnetics/' },
-  { id: 'control', label: 'Control Design', href: '/control/' },
-  { id: 'simulation', label: 'Simulation', href: '/simulation/' },
-  { id: 'articles', label: 'Articles', href: '/articles/' }
-];
-
-export const footerTools = [
-  { label: 'Topology Designers', href: '/topology-designers/' },
-  { label: 'Engineering Calculators', href: '/tools/' },
-  { label: 'Magnetics Design', href: '/magnetics/' },
-  { label: 'Control Design', href: '/control/' },
-  { label: 'Simulation & PULSE', href: '/simulation/' }
-];
-
-export const languageNavigation = [
-  { label: 'EN', status: 'available' as const },
-  { label: '中文', status: 'planned' as const, title: 'Chinese version coming soon' }
-];
+export function getFooterTools(locale: Locale) {
+  const t = getMessages(locale).navigation.items;
+  return [
+    { label: t['topology-designers'], href: getLocalizedPath('/topology-designers/', locale) },
+    { label: t['engineering-calculators'], href: getLocalizedPath('/tools/', locale) },
+    { label: t.magnetics, href: getLocalizedPath('/magnetics/', locale) },
+    { label: t.control, href: getLocalizedPath('/control/', locale) },
+    { label: t.simulation, href: getLocalizedPath('/simulation/', locale) }
+  ];
+}
 
 export function isActivePath(pathname: string, href: string): boolean {
-  if (href === '/') return pathname === '/';
-  return pathname === href || pathname.startsWith(href);
+  if (href.endsWith('/')) return pathname === href || pathname.startsWith(href);
+  return pathname === href;
 }

@@ -20,9 +20,9 @@ export type PackageRating = {
 
 export type EngineeringCheck = {
   id: string;
-  label: string;
+  messageCode: 'adc-headroom' | 'upper-voltage' | 'upper-power' | 'lower-power';
   status: CheckStatus;
-  detail: string;
+  values: Record<string, number | string>;
 };
 
 export type VoltageSensingResult = {
@@ -74,15 +74,15 @@ const E96_BASE = [
 export function validateVoltageSensingInputs(inputs: VoltageSensingInputs): string[] {
   const errors: string[] = [];
 
-  if (!(inputs.maximumInputVoltage > 0)) errors.push('Maximum input voltage must be greater than 0 V.');
-  if (!(inputs.adcReferenceVoltage > 0)) errors.push('ADC reference voltage must be greater than 0 V.');
-  if (![8, 10, 12, 14].includes(inputs.adcResolutionBits)) errors.push('ADC resolution must be 8, 10, 12, or 14 bits.');
-  if (!['E24', 'E96'].includes(inputs.resistorSeries)) errors.push('Select a supported resistor series.');
-  if (!Object.hasOwn(resistorPackageRatings, inputs.resistorSize)) errors.push('Select a supported resistor size.');
+  if (!(inputs.maximumInputVoltage > 0)) errors.push('maximum-input-must-be-positive');
+  if (!(inputs.adcReferenceVoltage > 0)) errors.push('adc-reference-must-be-positive');
+  if (![8, 10, 12, 14].includes(inputs.adcResolutionBits)) errors.push('adc-resolution-unsupported');
+  if (!['E24', 'E96'].includes(inputs.resistorSeries)) errors.push('resistor-series-unsupported');
+  if (!Object.hasOwn(resistorPackageRatings, inputs.resistorSize)) errors.push('resistor-size-unsupported');
   if (!Number.isInteger(inputs.upperResistorCount) || inputs.upperResistorCount < 1 || inputs.upperResistorCount > 30) {
-    errors.push('Number of series upper resistors must be an integer from 1 to 30.');
+    errors.push('upper-resistor-count-out-of-range');
   }
-  if (!['single-lower', 'parallel-lower'].includes(inputs.topology)) errors.push('Select a supported divider topology.');
+  if (!['single-lower', 'parallel-lower'].includes(inputs.topology)) errors.push('topology-unsupported');
 
   return errors;
 }
@@ -90,12 +90,12 @@ export function validateVoltageSensingInputs(inputs: VoltageSensingInputs): stri
 export function calculateVoltageSensingDesign(inputs: VoltageSensingInputs): VoltageSensingResult {
   const errors = validateVoltageSensingInputs(inputs);
   if (errors.length > 0) {
-    throw new Error(errors.join(' '));
+    throw new Error(errors.join(','));
   }
 
   const candidate = findBestCandidate(inputs);
   if (!candidate) {
-    throw new Error('No practical standard-value combination was found for these inputs.');
+    throw new Error('no-practical-combination');
   }
 
   const checks = buildEngineeringChecks(candidate, inputs.resistorSize);
@@ -232,27 +232,27 @@ function buildEngineeringChecks(result: Candidate, resistorSize: ResistorSize): 
   return [
     {
       id: 'adc-headroom',
-      label: 'ADC headroom',
+      messageCode: 'adc-headroom',
       status: adcHasHeadroom ? 'pass' : 'review',
-      detail: `${formatVoltage(result.adcVoltage)} at maximum input, using ${(result.adcUtilization * 100).toFixed(1)}% of the ADC range.`
+      values: { adcVoltage: result.adcVoltage, adcUtilization: result.adcUtilization }
     },
     {
       id: 'upper-voltage',
-      label: 'Upper resistor voltage stress',
+      messageCode: 'upper-voltage',
       status: statusFromRatio(upperVoltageRatio, 0.8, 1),
-      detail: `${formatVoltage(result.upperVoltageEachV)} per upper resistor; typical ${resistorSize} screening value is ${packageRating.workingVoltageV} V.`
+      values: { upperVoltageEachV: result.upperVoltageEachV, resistorSize, workingVoltageV: packageRating.workingVoltageV }
     },
     {
       id: 'upper-power',
-      label: 'Upper resistor power',
+      messageCode: 'upper-power',
       status: statusFromRatio(upperPowerRatio, 0.6, 1),
-      detail: `${formatPower(result.upperPowerEachW)} per upper resistor; typical ${resistorSize} screening value is ${formatPower(packageRating.powerW)}.`
+      values: { upperPowerEachW: result.upperPowerEachW, resistorSize, powerW: packageRating.powerW }
     },
     {
       id: 'lower-power',
-      label: 'Lower resistor power',
+      messageCode: 'lower-power',
       status: statusFromRatio(lowerPowerRatio, 0.6, 1),
-      detail: `${formatPower(result.lowerPowerEachW)} per lower resistor. Divider current is ${formatCurrent(result.dividerCurrentA)}.`
+      values: { lowerPowerEachW: result.lowerPowerEachW, dividerCurrentA: result.dividerCurrentA }
     }
   ];
 }

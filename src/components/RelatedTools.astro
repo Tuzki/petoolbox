@@ -1,20 +1,23 @@
 ---
 import RelatedToolCard from './RelatedToolCard.astro';
 import type { ToolInfo } from '@/lib/tools';
+import type { Locale } from '@/lib/i18n/config';
 
 type Props = {
   primaryTool: ToolInfo | null;
   relatedTools: ToolInfo[];
+  locale: Locale;
   compact?: boolean;
 };
 
-const { primaryTool, relatedTools, compact = false } = Astro.props;
+const { primaryTool, relatedTools, locale, compact = false } = Astro.props;
+const title = locale === 'zh' ? '相关设计工具' : 'Tools for This Design';
 ---
 
 <section class:list={['related-tools', { 'related-tools--compact': compact }]} aria-labelledby={compact ? 'mobile-tool-title' : 'tools-title'}>
-  <h2 id={compact ? 'mobile-tool-title' : 'tools-title'}>Tools for This Design</h2>
+  <h2 id={compact ? 'mobile-tool-title' : 'tools-title'}>{title}</h2>
   <div class="related-tools__list">
-    {primaryTool && <RelatedToolCard tool={primaryTool} primary />}
-    {relatedTools.map((tool) => <RelatedToolCard tool={tool} />)}
+    {primaryTool && <RelatedToolCard tool={primaryTool} locale={locale} primary />}
+    {relatedTools.map((tool) => <RelatedToolCard tool={tool} locale={locale} />)}
   </div>
 </section>

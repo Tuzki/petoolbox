@@ -1,5 +1,6 @@
 export type SignalSourceMode = 'resistor-divider' | 'voltage-output';
-export type RcFilterStatus = 'GOOD BALANCE' | 'FILTER TOO WEAK' | 'FILTER TOO SLOW' | 'TARGET CONFLICT';
+export type RcFilterStatus = 'good-balance' | 'filter-too-weak' | 'filter-too-slow' | 'target-conflict';
+export type RcFilterActionCode = 'values-meet-targets' | 'increase-rc' | 'reduce-rc' | 'targets-conflict';
 export type RcFilterSeverity = 'good' | 'warn' | 'bad';
 
 export type SensingRcFilterInputs = {
@@ -41,8 +42,7 @@ export type SensingRcFilterResult = {
   noisePass: boolean;
   status: RcFilterStatus;
   severity: RcFilterSeverity;
-  statusCopy: string;
-  actionText: string;
+  actionCode: RcFilterActionCode;
 };
 
 export const defaultSensingRcFilterInputs: SensingRcFilterInputs = {
@@ -180,39 +180,35 @@ export function calculateSourceResistance(inputs: SensingRcFilterInputs): number
   return parallelResistance(safePositive(inputs.upperResistanceKohms) * 1_000, safePositive(inputs.lowerResistanceKohms) * 1_000);
 }
 
-function evaluateStatus(signalPass: boolean, noisePass: boolean): Pick<SensingRcFilterResult, 'status' | 'severity' | 'statusCopy' | 'actionText'> {
+function evaluateStatus(signalPass: boolean, noisePass: boolean): Pick<SensingRcFilterResult, 'status' | 'severity' | 'actionCode'> {
   if (signalPass && noisePass) {
     return {
-      status: 'GOOD BALANCE',
+      status: 'good-balance',
       severity: 'good',
-      statusCopy: 'The useful signal is preserved while the selected noise frequency is attenuated.',
-      actionText: 'The current RC values meet both targets.'
+      actionCode: 'values-meet-targets'
     };
   }
 
   if (signalPass && !noisePass) {
     return {
-      status: 'FILTER TOO WEAK',
+      status: 'filter-too-weak',
       severity: 'warn',
-      statusCopy: 'The useful signal is preserved, but noise attenuation is below the selected target.',
-      actionText: 'Increase the filter resistor or capacitor, then verify that useful-signal attenuation and phase delay remain acceptable.'
+      actionCode: 'increase-rc'
     };
   }
 
   if (!signalPass && noisePass) {
     return {
-      status: 'FILTER TOO SLOW',
+      status: 'filter-too-slow',
       severity: 'bad',
-      statusCopy: 'Noise attenuation is sufficient, but the useful signal is attenuated too much.',
-      actionText: 'Reduce the filter resistor or capacitor to move the cutoff frequency higher.'
+      actionCode: 'reduce-rc'
     };
   }
 
   return {
-    status: 'TARGET CONFLICT',
+    status: 'target-conflict',
     severity: 'bad',
-    statusCopy: 'The current values satisfy neither the useful-signal-loss target nor the desired noise-attenuation target.',
-    actionText: 'The selected signal and noise frequencies may be too close for a single-pole RC filter. Consider a higher-order filter, synchronous sampling, or digital filtering.'
+    actionCode: 'targets-conflict'
   };
 }
 

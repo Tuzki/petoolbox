@@ -1,28 +1,38 @@
 ---
-import { footerTools, languageNavigation } from '@/data/navigation';
+import { getFooterTools } from '@/data/navigation';
 import { site } from '@/lib/site';
+import { getMessages } from '@/lib/i18n/messages';
+import { getLocalizedPath, swapLocaleInPath } from '@/lib/i18n/routes';
+import type { Locale } from '@/lib/i18n/config';
+
+type Props = { locale: Locale };
+const { locale } = Astro.props;
+const t = getMessages(locale);
+const footerTools = getFooterTools(locale);
+const otherLocale = locale === 'en' ? 'zh' : 'en';
+const otherHref = `${swapLocaleInPath(Astro.url.pathname, otherLocale)}${Astro.url.search}${Astro.url.hash}`;
 ---
 
 <footer class="site-footer">
   <div class="site-footer__inner">
     <div class="site-footer__brand">
       <strong>{site.name}</strong>
-      <p>{site.tagline}.</p>
+      <p>{t.site.tagline}.</p>
     </div>
     <nav class="site-footer__nav" aria-label="Footer tools">
-      <h2>Tools</h2>
+      <h2>{t.site.footer.tools}</h2>
       {footerTools.map((item) => <a href={item.href}>{item.label}</a>)}
     </nav>
     <nav class="site-footer__nav" aria-label="Footer resources">
-      <h2>Resources</h2>
-      <a href="/articles/">Articles</a>
-      <a href="/about/">About</a>
+      <h2>{t.site.footer.resources}</h2>
+      <a href={getLocalizedPath('/articles/', locale)}>{t.site.footer.articles}</a>
+      <a href={getLocalizedPath('/about/', locale)}>{t.site.footer.about}</a>
       <a href="https://github.com/Tuzki/petoolbox">GitHub</a>
     </nav>
     <div class="site-footer__nav" aria-label="Footer language">
-      <h2>Language</h2>
-      <span>{languageNavigation[0].label}</span>
-      <span>{languageNavigation[1].label} — Coming Soon</span>
+      <h2>{t.site.language}</h2>
+      <span aria-current="true">{t.site.languages[locale]}</span>
+      <a href={otherHref} hreflang={otherLocale === 'zh' ? 'zh-CN' : 'en'}>{t.site.languages[otherLocale]}</a>
     </div>
   </div>
 </footer>

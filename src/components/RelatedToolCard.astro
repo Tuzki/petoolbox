@@ -1,14 +1,16 @@
 ---
 import type { ToolInfo } from '@/lib/tools';
 import { formatToolStatus } from '@/lib/tools';
+import type { Locale } from '@/lib/i18n/config';
 
 type Props = {
   tool: ToolInfo;
+  locale: Locale;
   primary?: boolean;
 };
 
-const { tool, primary = false } = Astro.props;
-const label = primary ? 'Primary Tool' : formatToolStatus(tool.status);
+const { tool, locale, primary = false } = Astro.props;
+const label = primary ? (locale === 'zh' ? '主要工具' : 'Primary Tool') : formatToolStatus(tool.status, locale);
 ---
 
 {tool.status === 'available' && tool.href ? (
@@ -18,7 +20,7 @@ const label = primary ? 'Primary Tool' : formatToolStatus(tool.status);
     <span>{tool.description}</span>
   </a>
 ) : (
-  <article class:list={['tool-card', 'tool-card--planned', { 'tool-card--primary': primary }]} aria-label={`${tool.title} ${formatToolStatus(tool.status)} tool`}>
+  <article class:list={['tool-card', 'tool-card--planned', { 'tool-card--primary': primary }]} aria-label={`${tool.title} ${formatToolStatus(tool.status, locale)} tool`}>
     <span class="tool-card__label">{label}</span>
     <strong>{tool.title}</strong>
     <span>{tool.description}</span>

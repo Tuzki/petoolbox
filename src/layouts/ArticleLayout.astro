@@ -5,27 +5,32 @@ import BaseLayout from './BaseLayout.astro';
 import ArticleToc from '@/components/ArticleToc.astro';
 import RelatedTools from '@/components/RelatedTools.astro';
 import { getTool, getTools } from '@/lib/tools';
+import { articleHref, articleSlug, formatArticleDate, type ArticleEntry } from '@/lib/articles';
+import { getMessages } from '@/lib/i18n/messages';
+import type { Locale } from '@/lib/i18n/config';
 import '@/styles/article.css';
 
 type Props = {
   article: CollectionEntry<'articles'>;
   headings: MarkdownHeading[];
   relatedArticles: CollectionEntry<'articles'>[];
+  locale: Locale;
 };
 
-const { article, headings, relatedArticles } = Astro.props;
-const primaryTool = getTool(article.data.primaryTool);
-const relatedTools = getTools(article.data.relatedTools);
-const published = article.data.publishedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-const updated = article.data.updatedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+const { article, headings, relatedArticles, locale } = Astro.props;
+const t = getMessages(locale);
+const primaryTool = getTool(article.data.primaryTool, locale);
+const relatedTools = getTools(article.data.relatedTools, locale);
+const published = formatArticleDate(article.data.publishedAt, locale);
+const updated = formatArticleDate(article.data.updatedAt, locale);
 ---
 
-<BaseLayout title={article.data.title} description={article.data.description} pathname={`/articles/${article.slug}/`}>
+<BaseLayout title={article.data.title} description={article.data.description} pathname={`/articles/${articleSlug(article as ArticleEntry)}/`} locale={locale}>
   <main class="article-shell">
     <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
+      <a href={`/${locale}/`}>{t.site.breadcrumbs.home}</a>
       <span aria-hidden="true">/</span>
-      <a href="/articles/">Articles</a>
+      <a href={`/${locale}/articles/`}>{t.pages.articles.title}</a>
       <span aria-hidden="true">/</span>
       <span>{article.data.title}</span>
     </nav>
@@ -35,11 +40,11 @@ const updated = article.data.updatedAt.toLocaleDateString('en-US', { year: 'nume
       <h1>{article.data.title}</h1>
       <p class="article-hero__description">{article.data.description}</p>
       <div class="article-meta">
-        <span>PE Toolbox Editorial</span>
-        <span>Published {published}</span>
-        <span>Updated {updated}</span>
+        <span>{t.pages.articles.editorial}</span>
+        <span>{t.pages.articles.published} {published}</span>
+        <span>{t.pages.articles.updated} {updated}</span>
       </div>
-      {primaryTool && <div class="article-mobile-tool"><RelatedTools primaryTool={primaryTool} relatedTools={[]} compact /></div>}
+      {primaryTool && <div class="article-mobile-tool"><RelatedTools primaryTool={primaryTool} relatedTools={[]} locale={locale} compact /></div>}
       <ArticleToc headings={headings} mobile />
     </header>
 
@@ -50,17 +55,17 @@ const updated = article.data.updatedAt.toLocaleDateString('en-US', { year: 'nume
       <aside class="article-sidebar" aria-label="Article sidebar">
         <div class="article-sidebar__sticky">
           <ArticleToc headings={headings} />
-          <RelatedTools primaryTool={primaryTool} relatedTools={relatedTools} />
+          <RelatedTools primaryTool={primaryTool} relatedTools={relatedTools} locale={locale} />
         </div>
       </aside>
     </div>
 
     {relatedArticles.length > 0 && (
       <section class="related-articles" aria-labelledby="related-articles-title">
-        <h2 id="related-articles-title">Related Articles</h2>
+        <h2 id="related-articles-title">{t.pages.articles.related}</h2>
         <div class="related-articles__list">
           {relatedArticles.map((relatedArticle) => (
-            <a class="related-article-card" href={`/articles/${relatedArticle.slug}/`}>
+            <a class="related-article-card" href={articleHref(relatedArticle as ArticleEntry, locale)}>
               <span>{relatedArticle.data.category.replace('-', ' ')}</span>
               <strong>{relatedArticle.data.title}</strong>
               <small>{relatedArticle.data.description}</small>
