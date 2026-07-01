@@ -1,5 +1,6 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import type { Locale } from './i18n/config';
+import { getMessages } from './i18n/messages';
 
 export type ArticleEntry = CollectionEntry<'articles'>;
 
@@ -29,4 +30,11 @@ export function formatArticleDate(date: Date, locale: Locale): string {
 
 export function articleHref(article: ArticleEntry, locale: Locale): string {
   return `/${locale}/articles/${articleSlug(article)}/`;
+}
+
+export function articleCategoryLabel(category: string, locale: Locale): string {
+  const categories = getMessages(locale).pages.articles.categories as Record<string, string>;
+  const label = categories[category];
+  if (!label) throw new Error(`Unknown article category ID: ${category}`);
+  return label;
 }

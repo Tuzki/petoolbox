@@ -44,6 +44,11 @@ export const pageMessages = {
     title: '技术文章',
     description: 'PE Toolbox 的工程文章和设计指南。',
     categoryFallback: '工程文章',
+    tocLabel: '本文目录',
+    categories: {
+      'converter-design': '变换器设计',
+      'engineering-articles': '工程文章'
+    },
     empty: '暂无已发布文章。',
     related: '相关文章',
     editorial: 'PE Toolbox 编辑部',

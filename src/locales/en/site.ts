@@ -1,6 +1,6 @@
 export const siteMessages = {
   name: 'PE Toolbox',
-  tagline: 'Practical tools for power electronics engineers',
+  tagline: 'Practical tools for power electronics engineers.',
   language: 'Language',
   languages: { en: 'EN', zh: '中文' },
   footer: {

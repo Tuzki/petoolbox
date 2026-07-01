@@ -42,6 +42,11 @@ export const pageMessages = {
     title: 'Articles',
     description: 'Engineering articles and design guides from PE Toolbox.',
     categoryFallback: 'engineering article',
+    tocLabel: 'On this page',
+    categories: {
+      'converter-design': 'Converter Design',
+      'engineering-articles': 'Engineering Articles'
+    },
     empty: 'No articles are published yet.',
     related: 'Related Articles',
     editorial: 'PE Toolbox Editorial',

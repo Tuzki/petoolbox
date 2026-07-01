@@ -67,7 +67,9 @@ const zhForbiddenTerms = [
   'Resistor divider',
   'Engineering Details',
   'How to Use',
-  'CHECK INPUTS'
+  'CHECK INPUTS',
+  'On this page',
+  'converter design'
 ];
 
 const normalize = (text) => String(text ?? '').replace(/\s+/g, ' ').trim();
@@ -126,6 +128,42 @@ async function assertLanguageSwitchPreservesUrl(page, locale, route) {
   assert.equal(links.header, expected, `${locale} header language link preserves query/hash`);
   assert.equal(links.footer, expected, `${locale} footer language link preserves query/hash`);
   assert.equal(links.mobile, expected, `${locale} mobile language link preserves query/hash`);
+}
+
+async function assertArticleLocalization(page) {
+  await page.goto(`${baseUrl}/en/articles/`, { waitUntil: 'domcontentloaded' });
+  let text = await documentText(page);
+  assert.match(text, /Converter Design/);
+  assert.equal(text.includes('converter design'), false);
+  assert.match(text, /Practical tools for power electronics engineers\./);
+
+  await page.goto(`${baseUrl}/zh/articles/`, { waitUntil: 'domcontentloaded' });
+  text = await documentText(page);
+  assert.match(text, /变换器设计/);
+  assert.equal(text.includes('converter design'), false);
+  assert.match(text, /面向电力电子工程师的实用设计工具。/);
+  assert.equal(text.includes('面向电力电子工程师的实用设计工具.'), false);
+  assertNoZhLeak(text, 'zh articles index');
+
+  await page.goto(`${baseUrl}/en/articles/buck-inductor-selection/`, { waitUntil: 'domcontentloaded' });
+  text = await documentText(page);
+  assert.match(text, /On this page/);
+  assert.match(text, /Converter Design/);
+  assert.match(text, /Practical tools for power electronics engineers\./);
+
+  await page.goto(`${baseUrl}/zh/articles/buck-inductor-selection/`, { waitUntil: 'domcontentloaded' });
+  const zhArticle = await page.evaluate(() => ({
+    text: document.body.innerText,
+    tocLabels: Array.from(document.querySelectorAll('.article-toc summary, .article-toc h2')).map((node) => node.textContent?.trim()),
+    tocAria: Array.from(document.querySelectorAll('.article-toc[aria-label]')).map((node) => node.getAttribute('aria-label'))
+  }));
+  assert.match(zhArticle.text, /变换器设计/);
+  assert.equal(zhArticle.text.includes('On this page'), false);
+  assert.deepEqual(zhArticle.tocLabels, ['本文目录', '本文目录']);
+  assert.deepEqual(zhArticle.tocAria, ['本文目录']);
+  assert.match(zhArticle.text, /面向电力电子工程师的实用设计工具。/);
+  assert.equal(zhArticle.text.includes('面向电力电子工程师的实用设计工具.'), false);
+  assertNoZhLeak(zhArticle.text, 'zh article detail');
 }
 
 async function assertSymmetricRoute(page, viewport, locale, route) {
@@ -314,6 +352,7 @@ try {
 
     await assertLanguageSwitchPreservesUrl(page, 'en', '/tools/sensing-rc-filter-designer/');
     await assertLanguageSwitchPreservesUrl(page, 'zh', '/tools/sensing-rc-filter-designer/');
+    await assertArticleLocalization(page);
 
     if (viewport.name === 'desktop-1280') {
       await assertVoltageTool(page);

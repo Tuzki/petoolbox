@@ -2,7 +2,7 @@ import type { SiteMessages } from '../en/site';
 
 export const siteMessages = {
   name: 'PE Toolbox',
-  tagline: '面向电力电子工程师的实用设计工具',
+  tagline: '面向电力电子工程师的实用设计工具。',
   language: '语言',
   languages: { en: 'EN', zh: '中文' },
   footer: {

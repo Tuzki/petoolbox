@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { articleHref, formatArticleDate, getArticles } from '@/lib/articles';
+import { articleCategoryLabel, articleHref, formatArticleDate, getArticles } from '@/lib/articles';
 import { getMessages } from '@/lib/i18n/messages';
 import type { Locale } from '@/lib/i18n/config';
 
@@ -23,7 +23,7 @@ const articles = await getArticles(locale);
         {articles.length === 0 && <p>{t.empty}</p>}
         {articles.map((article) => (
           <a class="article-list__item" href={articleHref(article, locale)}>
-            <span>{article.data.category.replace('-', ' ')}</span>
+            <span>{articleCategoryLabel(article.data.category, locale)}</span>
             <strong>{article.data.title}</strong>
             <p>{article.data.description}</p>
             <time datetime={article.data.publishedAt.toISOString()}>{formatArticleDate(article.data.publishedAt, locale)}</time>

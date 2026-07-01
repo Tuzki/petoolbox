@@ -1,5 +1,5 @@
 ---
-import { getArticles, articleHref, formatArticleDate } from '@/lib/articles';
+import { getArticles, articleCategoryLabel, articleHref, formatArticleDate } from '@/lib/articles';
 import ToolCard from '@/components/ToolCard.astro';
 import ToolFilter from '@/components/ToolFilter.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
@@ -53,7 +53,7 @@ const articles = (await getArticles(locale)).filter((article) => !article.data.d
       <div class="latest-article-grid">
         {articles.map((article) => (
           <a class="article-list__item" href={articleHref(article, locale)}>
-            <span>{article.data.category}</span>
+            <span>{articleCategoryLabel(article.data.category, locale)}</span>
             <strong>{article.data.title}</strong>
             <p>{article.data.description}</p>
             <time datetime={article.data.publishedAt.toISOString()}>{formatArticleDate(article.data.publishedAt, locale)}</time>

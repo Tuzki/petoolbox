@@ -132,3 +132,34 @@ test('localized visible content is present', () => {
   assert.match(zhHtml, /工程计算工具/);
   assert.equal(zhHtml.includes('Chinese version coming soon'), false);
 });
+
+test('article chrome uses localized category and toc labels', () => {
+  const enIndex = read(pagePath('en', 'articles'));
+  const zhIndex = read(pagePath('zh', 'articles'));
+  const enArticle = read(pagePath('en', 'articles/buck-inductor-selection'));
+  const zhArticle = read(pagePath('zh', 'articles/buck-inductor-selection'));
+
+  assert.match(enIndex, /Converter Design/);
+  assert.equal(enIndex.includes('converter design'), false);
+  assert.match(zhIndex, /变换器设计/);
+  assert.equal(zhIndex.includes('converter design'), false);
+
+  assert.match(enArticle, /On this page/);
+  assert.match(enArticle, /Converter Design/);
+  assert.match(zhArticle, /本文目录/);
+  assert.match(zhArticle, /aria-label="本文目录"/);
+  assert.equal(zhArticle.includes('On this page'), false);
+  assert.match(zhArticle, /变换器设计/);
+});
+
+test('footer tagline punctuation is localized', () => {
+  const enHtml = read(pagePath('en', ''));
+  const zhHtml = read(pagePath('zh', ''));
+  const zhArticle = read(pagePath('zh', 'articles/buck-inductor-selection'));
+
+  assert.match(enHtml, /Practical tools for power electronics engineers\./);
+  assert.match(zhHtml, /面向电力电子工程师的实用设计工具。/);
+  assert.match(zhArticle, /面向电力电子工程师的实用设计工具。/);
+  assert.equal(zhHtml.includes('面向电力电子工程师的实用设计工具.'), false);
+  assert.equal(zhArticle.includes('面向电力电子工程师的实用设计工具.'), false);
+});

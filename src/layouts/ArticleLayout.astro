@@ -5,7 +5,7 @@ import BaseLayout from './BaseLayout.astro';
 import ArticleToc from '@/components/ArticleToc.astro';
 import RelatedTools from '@/components/RelatedTools.astro';
 import { getTool, getTools } from '@/lib/tools';
-import { articleHref, articleSlug, formatArticleDate, type ArticleEntry } from '@/lib/articles';
+import { articleCategoryLabel, articleHref, articleSlug, formatArticleDate, type ArticleEntry } from '@/lib/articles';
 import { getMessages } from '@/lib/i18n/messages';
 import type { Locale } from '@/lib/i18n/config';
 import '@/styles/article.css';
@@ -23,6 +23,7 @@ const primaryTool = getTool(article.data.primaryTool, locale);
 const relatedTools = getTools(article.data.relatedTools, locale);
 const published = formatArticleDate(article.data.publishedAt, locale);
 const updated = formatArticleDate(article.data.updatedAt, locale);
+const categoryLabel = articleCategoryLabel(article.data.category, locale);
 ---
 
 <BaseLayout title={article.data.title} description={article.data.description} pathname={`/articles/${articleSlug(article as ArticleEntry)}/`} locale={locale}>
@@ -36,7 +37,7 @@ const updated = formatArticleDate(article.data.updatedAt, locale);
     </nav>
 
     <header class="article-hero">
-      <p class="article-hero__category">{article.data.category.replace('-', ' ')}</p>
+      <p class="article-hero__category">{categoryLabel}</p>
       <h1>{article.data.title}</h1>
       <p class="article-hero__description">{article.data.description}</p>
       <div class="article-meta">
@@ -45,7 +46,7 @@ const updated = formatArticleDate(article.data.updatedAt, locale);
         <span>{t.pages.articles.updated} {updated}</span>
       </div>
       {primaryTool && <div class="article-mobile-tool"><RelatedTools primaryTool={primaryTool} relatedTools={[]} locale={locale} compact /></div>}
-      <ArticleToc headings={headings} mobile />
+      <ArticleToc headings={headings} locale={locale} mobile />
     </header>
 
     <div class="article-grid">
@@ -54,7 +55,7 @@ const updated = formatArticleDate(article.data.updatedAt, locale);
       </article>
       <aside class="article-sidebar" aria-label="Article sidebar">
         <div class="article-sidebar__sticky">
-          <ArticleToc headings={headings} />
+          <ArticleToc headings={headings} locale={locale} />
           <RelatedTools primaryTool={primaryTool} relatedTools={relatedTools} locale={locale} />
         </div>
       </aside>
@@ -66,7 +67,7 @@ const updated = formatArticleDate(article.data.updatedAt, locale);
         <div class="related-articles__list">
           {relatedArticles.map((relatedArticle) => (
             <a class="related-article-card" href={articleHref(relatedArticle as ArticleEntry, locale)}>
-              <span>{relatedArticle.data.category.replace('-', ' ')}</span>
+              <span>{articleCategoryLabel(relatedArticle.data.category, locale)}</span>
               <strong>{relatedArticle.data.title}</strong>
               <small>{relatedArticle.data.description}</small>
             </a>

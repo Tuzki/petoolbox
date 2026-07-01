@@ -1,19 +1,23 @@
 ---
 import type { MarkdownHeading } from 'astro';
+import type { Locale } from '@/lib/i18n/config';
+import { getMessages } from '@/lib/i18n/messages';
 
 type Props = {
   headings: MarkdownHeading[];
+  locale: Locale;
   mobile?: boolean;
 };
 
-const { headings, mobile = false } = Astro.props;
+const { headings, locale, mobile = false } = Astro.props;
+const label = getMessages(locale).pages.articles.tocLabel;
 const tocItems = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
 ---
 
 {tocItems.length > 0 && (
   mobile ? (
     <details class="article-toc article-toc--mobile">
-      <summary>On this page</summary>
+      <summary>{label}</summary>
       <ol>
         {tocItems.map((heading) => (
           <li class={`article-toc__item article-toc__item--h${heading.depth}`}>
@@ -23,8 +27,8 @@ const tocItems = headings.filter((heading) => heading.depth === 2 || heading.dep
       </ol>
     </details>
   ) : (
-    <nav class="article-toc" aria-label="On this page">
-      <h2>On this page</h2>
+    <nav class="article-toc" aria-label={label}>
+      <h2>{label}</h2>
       <ol>
         {tocItems.map((heading) => (
           <li class={`article-toc__item article-toc__item--h${heading.depth}`}>
