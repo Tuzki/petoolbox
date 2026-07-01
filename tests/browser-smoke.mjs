@@ -26,6 +26,7 @@ const symmetricRoutes = [
   '/about/',
   '/tools/voltage-sensing-adc-scaling/',
   '/tools/sensing-rc-filter-designer/',
+  '/tools/shunt-current-sensing-evaluator/',
   '/tools/llc-resonant-converter-designer/',
   '/articles/buck-inductor-selection/'
 ];
@@ -297,6 +298,80 @@ async function documentText(page) {
   return page.evaluate(() => document.body.innerText);
 }
 
+async function assertShuntTool(page) {
+  const states = {};
+  for (const locale of ['en', 'zh']) {
+    await page.goto(`${baseUrl}/${locale}/tools/shunt-current-sensing-evaluator/`, { waitUntil: 'domcontentloaded' });
+    states[locale] = await outputMap(page);
+    if (locale === 'zh') assertNoZhLeak(await documentText(page), 'zh shunt default');
+  }
+  assert.deepEqual(
+    pickOutputs(states.en, [
+      'equivalentResistance',
+      'peakShuntVoltage',
+      'powerPerShunt',
+      'currentResolution',
+      'bankEquivalentResistance',
+      'bankPeakShuntVoltage',
+      'totalContinuousLoss',
+      'bankPowerPerShunt',
+      'continuousCurrentPerShunt',
+      'peakCurrentPerShunt',
+      'positiveOutput',
+      'negativeOutput',
+      'sensitivity',
+      'adcRangeUsed',
+      'currentPerLsb'
+    ]),
+    pickOutputs(states.zh, [
+      'equivalentResistance',
+      'peakShuntVoltage',
+      'powerPerShunt',
+      'currentResolution',
+      'bankEquivalentResistance',
+      'bankPeakShuntVoltage',
+      'totalContinuousLoss',
+      'bankPowerPerShunt',
+      'continuousCurrentPerShunt',
+      'peakCurrentPerShunt',
+      'positiveOutput',
+      'negativeOutput',
+      'sensitivity',
+      'adcRangeUsed',
+      'currentPerLsb'
+    ]),
+    'shunt numeric outputs match across locales'
+  );
+
+  await page.goto(`${baseUrl}/en/tools/shunt-current-sensing-evaluator/`, { waitUntil: 'domcontentloaded' });
+  assert.equal(normalize(await page.locator('[data-output="status"]').textContent()), 'Design needs review');
+  await setInput(page, 'resistancePerShuntMohm', 2.0);
+  let outputs = await outputMap(page);
+  assert.equal(normalize(outputs.equivalentResistance), '1.000 mΩ');
+  assert.equal(normalize(outputs.peakShuntVoltage), '100.0 mV');
+
+  await page.selectOption('[data-input="currentType"]', 'ac');
+  assert.equal(normalize(await page.locator('[data-label="continuousCurrentLabel"]').textContent()), 'RMS current');
+  assert.equal(normalize(await page.locator('[data-label="currentPerShuntLabel"]').textContent()), 'RMS current per shunt');
+
+  await page.selectOption('[data-input="currentPolarity"]', 'unidirectional');
+  assert.equal(await page.locator('[data-negative-output]').evaluate((node) => node.hidden), true);
+
+  await page.goto(`${baseUrl}/en/tools/shunt-current-sensing-evaluator/`, { waitUntil: 'domcontentloaded' });
+  await setInput(page, 'ratedPowerPerShuntW', 0.5);
+  assert.equal(normalize(await page.locator('[data-output="status"]').textContent()), 'Check inputs');
+
+  await page.goto(`${baseUrl}/en/tools/shunt-current-sensing-evaluator/`, { waitUntil: 'domcontentloaded' });
+  await setInput(page, 'continuousCurrentA', 60.4);
+  assert.equal(await page.locator('[data-input="continuousCurrentA"]').inputValue(), '60');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${baseUrl}/en/tools/shunt-current-sensing-evaluator/`, { waitUntil: 'domcontentloaded' });
+  const noOverflow = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
+  assert.equal(noOverflow, true, 'shunt mobile overflow');
+  await page.setViewportSize({ width: 1280, height: 800 });
+}
+
 async function assertLlcTool(page) {
   const snapshots = {};
   for (const locale of ['en', 'zh']) {
@@ -357,6 +432,7 @@ try {
     if (viewport.name === 'desktop-1280') {
       await assertVoltageTool(page);
       await assertRcTool(page);
+      await assertShuntTool(page);
       await assertLlcTool(page);
     }
 

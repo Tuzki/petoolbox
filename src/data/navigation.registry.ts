@@ -24,7 +24,7 @@ export const navigationRegistry: NavigationRegistryItem[] = [
     id: 'engineering-calculators',
     route: '/tools/',
     sections: [
-      { id: 'basic-circuits', toolIds: ['rc-time-constant-calculator', 'voltage-divider-calculator', 'voltage-sensing-adc-scaling', 'sensing-rc-filter-designer'] },
+      { id: 'basic-circuits', toolIds: ['rc-time-constant-calculator', 'voltage-divider-calculator', 'voltage-sensing-adc-scaling', 'sensing-rc-filter-designer', 'shunt-current-sensing-evaluator'] },
       { id: 'power-stage', toolIds: ['buck-inductor-ripple-calculator'] },
       { id: 'protection', toolIds: ['rc-snubber-calculator', 'rcd-snubber-calculator'] }
     ]

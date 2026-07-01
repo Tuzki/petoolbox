@@ -17,6 +17,7 @@ export const toolMessages = {
     'voltage-divider-calculator': { title: 'Voltage Divider Calculator', description: 'Estimate divider ratios, output voltage and resistor selection for feedback networks.' },
     'voltage-sensing-adc-scaling': { title: 'Voltage Sensing & ADC Scaling', description: 'Select a practical high-voltage sensing divider and calculate ADC scaling, resolution, current and stress.' },
     'sensing-rc-filter-designer': { title: 'Sensing RC Filter Designer', description: 'Design a first-order RC filter for voltage, current and temperature sensing signal chains.' },
+    'shunt-current-sensing-evaluator': { title: 'Shunt Current Sensing Evaluator', description: 'Evaluate shunt-bank loss, current-sense amplifier output swing and ADC range usage for current sensing.' },
     'buck-inductor-ripple-calculator': { title: 'Buck Inductor Ripple Calculator', description: 'Estimate buck inductor ripple current from voltage, inductance, duty cycle and switching frequency.' },
     'rc-snubber-calculator': { title: 'RC Snubber Calculator', description: 'Size damping networks for ringing control using measured frequency and circuit assumptions.' },
     'rcd-snubber-calculator': { title: 'RCD Snubber Calculator', description: 'Estimate clamp and dissipation ranges for leakage-energy snubber design.' },

@@ -11,6 +11,7 @@ const formalRoutes = [
   'tools',
   'tools/voltage-sensing-adc-scaling',
   'tools/sensing-rc-filter-designer',
+  'tools/shunt-current-sensing-evaluator',
   'tools/llc-resonant-converter-designer',
   'topology-designers',
   'magnetics',
@@ -68,7 +69,7 @@ test('root and legacy routes are noindex redirects to English', () => {
   const rootHtml = read(join(dist, 'index.html'));
   assert.match(rootHtml, /url=\/en\//);
   assert.match(rootHtml, /noindex/);
-  for (const route of ['tools', 'articles', 'about', 'tools/voltage-sensing-adc-scaling']) {
+  for (const route of ['tools', 'articles', 'about', 'tools/voltage-sensing-adc-scaling', 'tools/shunt-current-sensing-evaluator']) {
     const html = read(join(dist, route, 'index.html'));
     assert.match(html, /noindex, follow/);
     assert.match(html, /url=\/en\//);
@@ -84,6 +85,24 @@ test('html lang and SEO alternates are emitted per locale', () => {
     assert.match(html, /hreflang="zh-CN" href="https:\/\/petoolbox.tech\/zh\/tools\/voltage-sensing-adc-scaling\/"/);
     assert.match(html, /hreflang="x-default" href="https:\/\/petoolbox.tech\/en\/tools\/voltage-sensing-adc-scaling\/"/);
   }
+});
+
+test('shunt current sensing page has localized copy and expected controls', () => {
+  const enHtml = read(pagePath('en', 'tools/shunt-current-sensing-evaluator'));
+  const zhHtml = read(pagePath('zh', 'tools/shunt-current-sensing-evaluator'));
+
+  assert.match(enHtml, /Shunt Current Sensing Evaluator/);
+  assert.equal(/[\u4e00-\u9fff]/.test(enHtml.replaceAll('中文', '')), false);
+  assert.match(zhHtml, /分流电阻电流采样评估器/);
+  for (const term of ['Design needs review', 'Current Condition', 'Power per shunt']) {
+    assert.equal(zhHtml.includes(term), false, `zh shunt page leaked "${term}"`);
+  }
+  assert.match(enHtml, /data-input="resistancePerShuntMohm"[^>]*step="0.1"/);
+  assert.match(enHtml, /data-input="ratedPowerPerShuntW"[^>]*step="0.1"/);
+  assert.match(enHtml, /data-input="csaGain"[^>]*step="1"/);
+  assert.match(enHtml, /0.500 mΩ/);
+  assert.match(enHtml, /50.0 mV/);
+  assert.match(enHtml, /80.6 mA\/LSB/);
 });
 
 test('language switch links keep the current path', () => {

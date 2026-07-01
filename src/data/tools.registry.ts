@@ -23,6 +23,7 @@ export const toolsRegistry: ToolRegistryItem[] = [
   { id: 'voltage-divider-calculator', slug: 'voltage-divider-calculator', category: 'calculators', symbol: 'VOUT / VIN', status: 'coming-soon' },
   { id: 'voltage-sensing-adc-scaling', slug: 'voltage-sensing-adc-scaling', category: 'calculators', symbol: 'ADC', status: 'available', route: '/tools/voltage-sensing-adc-scaling/' },
   { id: 'sensing-rc-filter-designer', slug: 'sensing-rc-filter-designer', category: 'calculators', symbol: 'RC', status: 'available', route: '/tools/sensing-rc-filter-designer/' },
+  { id: 'shunt-current-sensing-evaluator', slug: 'shunt-current-sensing-evaluator', category: 'calculators', symbol: 'I × R', status: 'available', route: '/tools/shunt-current-sensing-evaluator/' },
   { id: 'buck-inductor-ripple-calculator', slug: 'buck-inductor-ripple-calculator', category: 'calculators', symbol: 'ΔIL', status: 'coming-soon', route: '/tools/buck-inductor-ripple-calculator/' },
   { id: 'rc-snubber-calculator', slug: 'rc-snubber-calculator', category: 'calculators', symbol: 'R · C', status: 'coming-soon' },
   { id: 'rcd-snubber-calculator', slug: 'rcd-snubber-calculator', category: 'calculators', symbol: 'RCD', status: 'coming-soon' },
