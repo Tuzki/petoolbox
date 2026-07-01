@@ -20,6 +20,7 @@ export const toolMessages = {
     'voltage-sensing-adc-scaling': { title: '电压采样与 ADC 换算', description: '选择实用的高压采样分压器，并计算 ADC 换算、分辨率、电流和应力。' },
     'sensing-rc-filter-designer': { title: '采样 RC 滤波器设计工具', description: '为电压、电流和温度采样信号链设计一阶 RC 滤波器。' },
     'shunt-current-sensing-evaluator': { title: '分流电阻电流采样评估器', description: '评估电流采样中的分流电阻组损耗、电流采样放大器输出摆幅和 ADC 量程占用。' },
+    'gate-resistor-power-stress-evaluator': { title: '栅极电阻功率与应力评估器', description: '基于实际 E24 电阻值筛选栅极电阻平均功率、脉冲能量和栅极驱动损耗分布。' },
     'buck-inductor-ripple-calculator': { title: 'Buck 电感纹波计算器', description: '根据电压、电感、占空比和开关频率估算 Buck 电感纹波电流。' },
     'rc-snubber-calculator': { title: 'RC 吸收电路计算器', description: '基于实测振铃频率和电路假设估算阻尼网络取值。' },
     'rcd-snubber-calculator': { title: 'RCD 吸收电路计算器', description: '估算漏感能量吸收设计中的钳位和损耗范围。' },

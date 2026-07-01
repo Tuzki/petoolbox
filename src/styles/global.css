@@ -1245,6 +1245,73 @@ a.directory-card:hover {
   line-height: 1.5;
 }
 
+.gate-resistor-tool .gate-input-section {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 18px;
+}
+
+.gate-resistor-tool .gate-input-section:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.gate-resistor-tool .gate-input-section h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 0.96rem;
+  line-height: 1.35;
+}
+
+.gate-resistor-tool .tool-field--full {
+  grid-column: 1 / -1;
+}
+
+.gate-resistor-tool .tool-field[hidden],
+.gate-resistor-tool [data-off-inputs][hidden],
+.gate-resistor-tool [data-bank-card][hidden],
+.gate-resistor-tool .gate-validation[hidden] {
+  display: none;
+}
+
+.gate-resistor-tool .gate-validation {
+  border: 1px solid #ebb0b0;
+  border-radius: var(--radius-small);
+  background: #fff0f0;
+  color: #943232;
+  padding: 11px 12px;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.gate-resistor-tool .gate-summary--pass {
+  background: linear-gradient(180deg, #f5fbf8, var(--color-surface));
+}
+
+.gate-resistor-tool .gate-summary--review {
+  background: linear-gradient(180deg, #fffaf0, var(--color-surface));
+}
+
+.gate-resistor-tool .gate-summary--fail {
+  background: linear-gradient(180deg, #fff4f4, var(--color-surface));
+}
+
+.gate-resistor-tool .gate-bank-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.gate-resistor-tool .gate-bank-card {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-surface-elevated);
+  padding: 14px;
+}
+
 .rc-filter-tool .tool-check-pill--good {
   border-color: #a8d9c4;
   background: #edf9f3;
@@ -1612,7 +1679,8 @@ h1 {
 
   .metric-grid,
   .tool-results__bottom,
-  .shunt-current-tool .tool-result-grid {
+  .shunt-current-tool .tool-result-grid,
+  .gate-resistor-tool .gate-bank-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1666,6 +1734,10 @@ h1 {
 
   .shunt-current-tool .tool-form-grid--two {
     grid-template-columns: 1fr;
+  }
+
+  .gate-resistor-tool .tool-field--full {
+    grid-column: auto;
   }
 
   .tool-input-panel,

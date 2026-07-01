@@ -12,6 +12,7 @@ const formalRoutes = [
   'tools/voltage-sensing-adc-scaling',
   'tools/sensing-rc-filter-designer',
   'tools/shunt-current-sensing-evaluator',
+  'tools/gate-resistor-power-stress-evaluator',
   'tools/llc-resonant-converter-designer',
   'topology-designers',
   'magnetics',
@@ -69,7 +70,7 @@ test('root and legacy routes are noindex redirects to English', () => {
   const rootHtml = read(join(dist, 'index.html'));
   assert.match(rootHtml, /url=\/en\//);
   assert.match(rootHtml, /noindex/);
-  for (const route of ['tools', 'articles', 'about', 'tools/voltage-sensing-adc-scaling', 'tools/shunt-current-sensing-evaluator']) {
+  for (const route of ['tools', 'articles', 'about', 'tools/voltage-sensing-adc-scaling', 'tools/shunt-current-sensing-evaluator', 'tools/gate-resistor-power-stress-evaluator']) {
     const html = read(join(dist, route, 'index.html'));
     assert.match(html, /noindex, follow/);
     assert.match(html, /url=\/en\//);
@@ -103,6 +104,28 @@ test('shunt current sensing page has localized copy and expected controls', () =
   assert.match(enHtml, /0.500 mΩ/);
   assert.match(enHtml, /50.0 mV/);
   assert.match(enHtml, /80.6 mA\/LSB/);
+});
+
+test('gate resistor stress page has localized copy and constrained controls', () => {
+  const enHtml = read(pagePath('en', 'tools/gate-resistor-power-stress-evaluator'));
+  const zhHtml = read(pagePath('zh', 'tools/gate-resistor-power-stress-evaluator'));
+
+  assert.match(enHtml, /Gate Resistor Power and Stress Evaluator/);
+  assert.match(enHtml, /typical screening value/);
+  assert.equal(/[\u4e00-\u9fff]/.test(enHtml.replaceAll('中文', '')), false);
+  assert.match(zhHtml, /栅极电阻功率与应力评估器/);
+  assert.match(zhHtml, /典型筛选值/);
+  for (const term of ['Design Inputs', 'Average Power OK', 'Switching frequency', 'Loss Distribution']) {
+    assert.equal(zhHtml.includes(term), false, `zh gate page leaked "${term}"`);
+  }
+  assert.match(enHtml, /data-input="totalGateChargeNc"[^>]*step="0.1"/);
+  assert.match(enHtml, /data-input="equivalentGateCapacitanceNf"[^>]*step="0.1"/);
+  assert.match(enHtml, /data-input="switchingFrequencyKhz"[^>]*step="1"/);
+  assert.match(enHtml, /value="200"/);
+  assert.doesNotMatch(enHtml, /value="220"/);
+  assert.match(enHtml, /172.20 mW/);
+  assert.match(enHtml, /1.722 µJ/);
+  assert.match(enHtml, /8.20 mA/);
 });
 
 test('language switch links keep the current path', () => {

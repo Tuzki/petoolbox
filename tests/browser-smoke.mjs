@@ -27,6 +27,7 @@ const symmetricRoutes = [
   '/tools/voltage-sensing-adc-scaling/',
   '/tools/sensing-rc-filter-designer/',
   '/tools/shunt-current-sensing-evaluator/',
+  '/tools/gate-resistor-power-stress-evaluator/',
   '/tools/llc-resonant-converter-designer/',
   '/articles/buck-inductor-selection/'
 ];
@@ -372,6 +373,54 @@ async function assertShuntTool(page) {
   await page.setViewportSize({ width: 1280, height: 800 });
 }
 
+async function assertGateResistorTool(page) {
+  const keys = [
+    'deltaGateVoltage',
+    'totalGateDrivePower',
+    'averageSupplyCurrent',
+    'energyPerCycle',
+    'equivalentGateCharge',
+    'initialChargeCurrent',
+    'initialDischargeCurrent',
+    'externalLoss',
+    'driverLoss',
+    'internalLoss'
+  ];
+  const states = {};
+  for (const locale of ['en', 'zh']) {
+    await page.goto(`${baseUrl}/${locale}/tools/gate-resistor-power-stress-evaluator/`, { waitUntil: 'domcontentloaded' });
+    states[locale] = await outputMap(page);
+    if (locale === 'zh') assertNoZhLeak(await documentText(page), 'zh gate default');
+  }
+  assert.deepEqual(pickOutputs(states.en, keys), pickOutputs(states.zh, keys), 'gate numeric outputs match across locales');
+  assert.equal(normalize(states.en.totalGateDrivePower), '172.20 mW');
+  assert.equal(normalize(states.en.averageSupplyCurrent), '8.20 mA');
+  assert.equal(normalize(states.en.energyPerCycle), '1.722 µJ');
+
+  await page.goto(`${baseUrl}/en/tools/gate-resistor-power-stress-evaluator/`, { waitUntil: 'domcontentloaded' });
+  assert.equal(normalize(await page.locator('[data-output="overallStatus"]').textContent()), 'Fail');
+  await page.selectOption('[data-input="loadMode"]', 'cg');
+  assert.equal(await page.locator('[data-qg-field]').evaluate((node) => node.hidden), true);
+  assert.equal(await page.locator('[data-cg-field]').evaluate((node) => node.hidden), false);
+  assert.equal(normalize(await page.locator('[data-output="equivalentGateCharge"]').textContent()), '81.90 nC');
+
+  await page.selectOption('[data-input="driveMode"]', 'single');
+  assert.equal(await page.locator('[data-off-inputs]').evaluate((node) => node.hidden), true);
+  assert.equal(await page.locator('[data-bank-card="off"]').evaluate((node) => node.hidden), true);
+  assert.equal(normalize(await page.locator('[data-bank-output="onTitle"]').textContent()), 'Charge / Discharge Resistor Bank');
+
+  await page.goto(`${baseUrl}/en/tools/gate-resistor-power-stress-evaluator/`, { waitUntil: 'domcontentloaded' });
+  await setInput(page, 'switchingFrequencyKhz', 0);
+  assert.equal(normalize(await page.locator('[data-output="overallStatus"]').textContent()), 'Check inputs');
+  assert.match(await page.locator('[data-output="validation"]').textContent(), /Switching frequency must be greater than zero/);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${baseUrl}/en/tools/gate-resistor-power-stress-evaluator/`, { waitUntil: 'domcontentloaded' });
+  const noOverflow = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
+  assert.equal(noOverflow, true, 'gate resistor mobile overflow');
+  await page.setViewportSize({ width: 1280, height: 800 });
+}
+
 async function assertLlcTool(page) {
   const snapshots = {};
   for (const locale of ['en', 'zh']) {
@@ -433,6 +482,7 @@ try {
       await assertVoltageTool(page);
       await assertRcTool(page);
       await assertShuntTool(page);
+      await assertGateResistorTool(page);
       await assertLlcTool(page);
     }
 
