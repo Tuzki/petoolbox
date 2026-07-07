@@ -3,24 +3,25 @@ import type { PageMessages } from '../en/pages';
 export const pageMessages = {
   home: {
     title: 'PE Toolbox',
-    description: '电力电子设计工具、工程计算、控制工作流和仿真资源。',
-    eyebrow: '电力电子设计工具',
-    h1: '更快完成电源变换器设计。',
-    intro: '为电力电子工程师提供拓扑设计、工程计算、磁性元件、控制环路和仿真工具。',
-    explore: '浏览下方工具 ↓',
-    directoryEyebrow: '工具目录',
-    directoryTitle: '把电力电子工作流集中到一个入口。',
-    whyEyebrow: '为什么使用 PE Toolbox？',
-    whyTitle: '聚焦实际工程设计。',
+    description: '电力电子设计工具、浏览器端计算器、设计流程与工程笔记。',
+    h1: '电力电子设计工具',
+    intro: '面向电力电子工程师的浏览器端计算器、设计流程与工程笔记。',
+    actionsLabel: '首页操作',
+    exploreTools: '查看工具',
+    readArticles: '阅读文章',
+    featuredToolsTitle: '可用工具',
+    viewAllTools: '查看全部工具 →',
+    latestTitle: '最新文章',
+    latestLabel: '工程文章',
+    latestArticleTitle: '英伟达 800V 电源体系',
+    latestArticleDescription: '一篇面向工程师的架构解读，讨论高压机柜供电、48V 中间母线与 AI 服务器板级供电。',
+    viewAllArticles: '查看全部文章 →',
+    whyTitle: '为什么做 PE Toolbox',
     values: [
-      { title: '面向电力电子', text: '围绕变换器设计、磁性元件、控制和仿真构建。' },
-      { title: '无需注册', text: '直接在浏览器中使用工具。' },
-      { title: '公式和假设透明', text: '每个工具说明模型、单位和适用边界。' },
-      { title: '开放仿真生态', text: 'PULSE 将设计流程与仿真连接起来。' }
-    ],
-    latestEyebrow: '最新文章',
-    latestTitle: '工程笔记和设计指南。',
-    viewAllArticles: '查看全部文章 →'
+      { title: '浏览器端', text: '浏览器端工具，无需安装。' },
+      { title: '假设透明', text: '工程假设透明可查。' },
+      { title: '面向实用流程', text: '面向真实电力电子设计流程。' }
+    ]
   },
   categories: {
     tools: { title: '工程计算工具', description: '用于快速设计校核的电力电子工程计算工具。', intro: 'PE Toolbox 将提供实用的电路和功率级计算工具，用于快速工程校核。' },

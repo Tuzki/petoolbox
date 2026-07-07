@@ -31,6 +31,10 @@ function read(path) {
   return readFileSync(path, 'utf8');
 }
 
+function mainHtml(html) {
+  return html.match(/<main[\s\S]*?<\/main>/)?.[0] ?? '';
+}
+
 function frontmatter(file) {
   const source = read(file);
   const match = source.match(/^---\n([\s\S]*?)\n---/);
@@ -171,9 +175,30 @@ test('draft articles are not generated in production output', () => {
 test('localized visible content is present', () => {
   const enHtml = read(pagePath('en', ''));
   const zhHtml = read(pagePath('zh', ''));
-  assert.match(enHtml, /Design power converters faster/);
-  assert.match(zhHtml, /更快完成电源变换器设计/);
-  assert.match(zhHtml, /工程计算工具/);
+  const enMain = mainHtml(enHtml);
+  const zhMain = mainHtml(zhHtml);
+
+  assert.match(enMain, /Power Electronics Design Tools/);
+  assert.match(enMain, /Browser-based calculators, design workflows, and engineering notes/);
+  for (const term of ['power electronics', 'design tools', 'calculators', 'LLC Resonant Converter Designer', 'Shunt Current Sensing Evaluator', 'Gate Resistor Power and Stress Evaluator']) {
+    assert.match(enMain, new RegExp(term.replaceAll('&', '&amp;'), 'i'));
+  }
+  assert.match(enMain, /Featured Tools/);
+  assert.match(enMain, /Latest Article/);
+  assert.match(enMain, /NVIDIA 800V Power Architecture/);
+  assert.equal(enMain.includes('directory-card--coming-soon'), false);
+  assert.equal(enMain.includes('tool-filter'), false);
+
+  assert.match(zhMain, /电力电子设计工具/);
+  assert.match(zhMain, /浏览器端计算器、设计流程与工程笔记/);
+  for (const term of ['电力电子', '设计工具', '计算器', 'LLC 谐振变换器', '电流采样', '栅极电阻']) {
+    assert.match(zhMain, new RegExp(term));
+  }
+  assert.match(zhMain, /可用工具/);
+  assert.match(zhMain, /最新文章/);
+  assert.match(zhMain, /英伟达 800V 电源体系/);
+  assert.equal(zhMain.includes('directory-card--coming-soon'), false);
+  assert.equal(zhMain.includes('tool-filter'), false);
   assert.equal(zhHtml.includes('Chinese version coming soon'), false);
 });
 

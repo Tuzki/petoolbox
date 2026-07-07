@@ -1,24 +1,25 @@
 export const pageMessages = {
   home: {
     title: 'PE Toolbox',
-    description: 'Power electronics design tools, calculators, control workflows and simulation resources.',
-    eyebrow: 'Power Electronics Design Tools',
-    h1: 'Design power converters faster.',
-    intro: 'Topology design, engineering calculations, magnetics, control-loop design and simulation tools for power electronics engineers.',
-    explore: 'Explore the tools below ↓',
-    directoryEyebrow: 'Tool Directory',
-    directoryTitle: 'Power electronics workflows in one place.',
-    whyEyebrow: 'Why PE Toolbox?',
-    whyTitle: 'Focused on practical engineering work.',
+    description: 'Power electronics design tools, browser-based calculators, design workflows, and engineering notes.',
+    h1: 'Power Electronics Design Tools',
+    intro: 'Browser-based calculators, design workflows, and engineering notes for power electronics engineers.',
+    actionsLabel: 'Homepage actions',
+    exploreTools: 'Explore Tools',
+    readArticles: 'Read Articles',
+    featuredToolsTitle: 'Featured Tools',
+    viewAllTools: 'View all tools →',
+    latestTitle: 'Latest Article',
+    latestLabel: 'Engineering article',
+    latestArticleTitle: 'NVIDIA 800V Power Architecture',
+    latestArticleDescription: 'A practical engineering note on high-voltage rack power, 48V intermediate buses, and board-level power delivery for AI servers.',
+    viewAllArticles: 'View all articles →',
+    whyTitle: 'Why PE Toolbox',
     values: [
-      { title: 'Power-electronics focused', text: 'Built for converter design, magnetics, control and simulation.' },
-      { title: 'No registration required', text: 'Use tools directly in the browser.' },
-      { title: 'Engineering formulas and assumptions', text: 'Each tool explains its model, units and limitations.' },
-      { title: 'Open simulation ecosystem', text: 'PULSE connects design workflows with simulation.' }
-    ],
-    latestEyebrow: 'Latest Articles',
-    latestTitle: 'Engineering notes and design guides.',
-    viewAllArticles: 'View all articles →'
+      { title: 'Browser-based', text: 'Browser-based tools, no installation required.' },
+      { title: 'Visible assumptions', text: 'Engineering assumptions are visible.' },
+      { title: 'Practical workflows', text: 'Built for practical power electronics design workflows.' }
+    ]
   },
   categories: {
     tools: { title: 'Engineering Calculators', description: 'Power electronics engineering calculators for quick design checks.', intro: 'PE Toolbox will provide practical electrical and power-stage calculators for fast engineering checks.' },

@@ -1,9 +1,7 @@
 ---
-import { getArticles, articleCategoryLabel, articleHref, formatArticleDate } from '@/lib/articles';
-import ToolCard from '@/components/ToolCard.astro';
-import ToolFilter from '@/components/ToolFilter.astro';
+import { getArticles, articleHref } from '@/lib/articles';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { getDirectoryTools } from '@/data/tools';
+import { getTools } from '@/data/tools';
 import { getMessages } from '@/lib/i18n/messages';
 import { getLocalizedPath } from '@/lib/i18n/routes';
 import type { Locale } from '@/lib/i18n/config';
@@ -11,54 +9,63 @@ import type { Locale } from '@/lib/i18n/config';
 type Props = { locale: Locale };
 const { locale } = Astro.props;
 const t = getMessages(locale).pages.home;
-const directoryTools = getDirectoryTools(locale);
-const articles = (await getArticles(locale)).filter((article) => !article.data.draft).slice(0, 3);
+const featuredTools = getTools([
+  'llc-resonant-converter-designer',
+  'voltage-sensing-adc-scaling',
+  'sensing-rc-filter-designer',
+  'shunt-current-sensing-evaluator',
+  'gate-resistor-power-stress-evaluator'
+], locale);
+const latestArticle = (await getArticles(locale)).find((article) => article.data.articleId === 'nvidia-800v-power-architecture');
 ---
 
 <BaseLayout title={t.title} description={t.description} pathname="/" locale={locale}>
   <main class="home-shell">
     <section class="home-hero" aria-labelledby="home-title">
-      <p class="home-eyebrow">{t.eyebrow}</p>
       <h1 id="home-title">{t.h1}</h1>
       <p>{t.intro}</p>
-      <a class="home-hero__link" href="#tool-directory">{t.explore}</a>
-    </section>
-    <section class="tool-directory" id="tool-directory" aria-labelledby="tool-directory-title">
-      <div class="section-heading">
-        <p class="section-eyebrow">{t.directoryEyebrow}</p>
-        <h2 id="tool-directory-title">{t.directoryTitle}</h2>
-      </div>
-      <ToolFilter locale={locale} />
-      <div class="tool-card-grid">
-        {directoryTools.map((tool) => <ToolCard tool={tool} locale={locale} />)}
+      <div class="home-hero__actions" aria-label={t.actionsLabel}>
+        <a class="home-button home-button--primary" href={getLocalizedPath('/tools/', locale)}>{t.exploreTools}</a>
+        <a class="home-button" href={getLocalizedPath('/articles/', locale)}>{t.readArticles}</a>
       </div>
     </section>
-    <section class="home-section" aria-labelledby="why-title">
-      <div class="section-heading">
-        <p class="section-eyebrow">{t.whyEyebrow}</p>
-        <h2 id="why-title">{t.whyTitle}</h2>
-      </div>
-      <div class="value-grid">
-        {t.values.map((value) => <article class="value-card"><h3>{value.title}</h3><p>{value.text}</p></article>)}
-      </div>
-    </section>
-    <section class="home-section" aria-labelledby="latest-articles-title">
+
+    <section class="home-section" id="featured-tools" aria-labelledby="featured-tools-title">
       <div class="section-heading section-heading--row">
-        <div>
-          <p class="section-eyebrow">{t.latestEyebrow}</p>
-          <h2 id="latest-articles-title">{t.latestTitle}</h2>
-        </div>
-        <a href={getLocalizedPath('/articles/', locale)}>{t.viewAllArticles}</a>
+        <h2 id="featured-tools-title">{t.featuredToolsTitle}</h2>
+        <a href={getLocalizedPath('/tools/', locale)}>{t.viewAllTools}</a>
       </div>
-      <div class="latest-article-grid">
-        {articles.map((article) => (
-          <a class="article-list__item" href={articleHref(article, locale)}>
-            <span>{articleCategoryLabel(article.data.category, locale)}</span>
-            <strong>{article.data.title}</strong>
-            <p>{article.data.description}</p>
-            <time datetime={article.data.publishedAt.toISOString()}>{formatArticleDate(article.data.publishedAt, locale)}</time>
+      <div class="featured-tool-grid">
+        {featuredTools.map((tool) => (
+          <a class="featured-tool-card" href={tool.href}>
+            <span class="featured-tool-card__symbol">{tool.symbol}</span>
+            <strong>{tool.title}</strong>
+            <span>{tool.description}</span>
           </a>
         ))}
+      </div>
+    </section>
+
+    <section class="home-section" aria-labelledby="latest-articles-title">
+      <div class="section-heading section-heading--row">
+        <h2 id="latest-articles-title">{t.latestTitle}</h2>
+        <a href={getLocalizedPath('/articles/', locale)}>{t.viewAllArticles}</a>
+      </div>
+      {latestArticle && (
+        <a class="latest-article-card" href={articleHref(latestArticle, locale)}>
+          <span>{t.latestLabel}</span>
+          <strong>{t.latestArticleTitle}</strong>
+          <p>{t.latestArticleDescription}</p>
+        </a>
+      )}
+    </section>
+
+    <section class="home-section" aria-labelledby="why-title">
+      <div class="section-heading">
+        <h2 id="why-title">{t.whyTitle}</h2>
+      </div>
+      <div class="value-grid value-grid--compact">
+        {t.values.map((value) => <article class="value-card"><h3>{value.title}</h3><p>{value.text}</p></article>)}
       </div>
     </section>
   </main>
