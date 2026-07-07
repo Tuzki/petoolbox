@@ -5,6 +5,7 @@ import test from 'node:test';
 
 const root = process.cwd();
 const dist = join(root, 'dist');
+const vercelConfig = JSON.parse(readFileSync(join(root, 'vercel.json'), 'utf8'));
 const locales = ['en', 'zh'];
 const formalRoutes = [
   '',
@@ -70,10 +71,14 @@ test('formal routes are symmetric across English and Chinese', () => {
   }
 });
 
-test('root and legacy routes are noindex redirects to English', () => {
-  const rootHtml = read(join(dist, 'index.html'));
-  assert.match(rootHtml, /url=\/en\//);
-  assert.match(rootHtml, /noindex/);
+test('root path uses Vercel HTTP redirect to English', () => {
+  assert.deepEqual(
+    vercelConfig.redirects?.find((redirect) => redirect.source === '/'),
+    { source: '/', destination: '/en/', permanent: false }
+  );
+});
+
+test('legacy routes are noindex redirects to English', () => {
   for (const route of ['tools', 'articles', 'about', 'tools/voltage-sensing-adc-scaling', 'tools/shunt-current-sensing-evaluator', 'tools/gate-resistor-power-stress-evaluator']) {
     const html = read(join(dist, route, 'index.html'));
     assert.match(html, /noindex, follow/);
