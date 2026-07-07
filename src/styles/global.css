@@ -100,6 +100,7 @@ button:focus-visible {
   align-items: center;
   gap: 8px;
   color: var(--header-text);
+  font-size: 1.05rem;
   font-weight: 760;
   text-decoration: none;
 }
@@ -1779,7 +1780,7 @@ h1 {
 
   .site-header__brand {
     gap: 8px;
-    font-size: 0.98rem;
+    font-size: 1rem;
   }
 
   .site-header__mark {
