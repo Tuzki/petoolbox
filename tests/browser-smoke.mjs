@@ -175,6 +175,69 @@ async function assertArticleLocalization(page) {
   assertNoZhLeak(zhArticle.text, 'zh article detail');
 }
 
+async function assertLaunchCleanupConsistency(page) {
+  const staleEnglishTerms = [
+    'RC Time Constant Calculator',
+    'Voltage Divider Calculator',
+    'Buck Inductor Ripple Calculator',
+    'How to Select an Inductor for a Buck Converter'
+  ];
+  const staleChineseTerms = [
+    'RC 时间常数计算器',
+    '分压器计算器',
+    'Buck 电感纹波计算器',
+    '如何为 Buck 变换器选择电感'
+  ];
+  const routes = [
+    '/en/',
+    '/zh/',
+    '/en/articles/',
+    '/zh/articles/',
+    '/en/tools/',
+    '/zh/tools/',
+    '/en/tools/llc-resonant-converter-designer/',
+    '/zh/tools/llc-resonant-converter-designer/'
+  ];
+
+  for (const route of routes) {
+    await page.goto(`${baseUrl}${route}`, { waitUntil: 'domcontentloaded' });
+    const domText = await page.evaluate(() => document.body.textContent ?? '');
+    for (const term of staleEnglishTerms) assert.equal(domText.includes(term), false, `${route} should not include ${term}`);
+    for (const term of staleChineseTerms) assert.equal(domText.includes(term), false, `${route} should not include ${term}`);
+  }
+
+  await page.goto(`${baseUrl}/en/articles/`, { waitUntil: 'domcontentloaded' });
+  let articleLinks = await page.evaluate(() => Array.from(document.querySelectorAll('.article-list__item strong')).map((node) => node.textContent?.trim()));
+  assert.deepEqual(articleLinks, ['NVIDIA 800V Power Architecture: From Data Center Rack Power to AI Server Power Delivery']);
+
+  await page.goto(`${baseUrl}/zh/articles/`, { waitUntil: 'domcontentloaded' });
+  articleLinks = await page.evaluate(() => Array.from(document.querySelectorAll('.article-list__item strong')).map((node) => node.textContent?.trim()));
+  assert.deepEqual(articleLinks, ['英伟达 800V 电源体系：从数据中心机柜供电到 AI 服务器电源架构']);
+
+  await page.goto(`${baseUrl}/en/tools/`, { waitUntil: 'domcontentloaded' });
+  let toolText = await documentText(page);
+  assert.match(toolText, /Capacitor Ripple Current Calculator/);
+  assert.equal(toolText.includes('RC Time Constant Calculator'), false);
+  assert.equal(toolText.includes('Voltage Divider Calculator'), false);
+  assert.equal(toolText.includes('Buck Inductor Ripple Calculator'), false);
+
+  await page.goto(`${baseUrl}/zh/tools/`, { waitUntil: 'domcontentloaded' });
+  toolText = await documentText(page);
+  assert.match(toolText, /电容纹波电流计算器/);
+  assert.equal(toolText.includes('RC 时间常数计算器'), false);
+  assert.equal(toolText.includes('分压器计算器'), false);
+  assert.equal(toolText.includes('Buck 电感纹波计算器'), false);
+
+  for (const locale of ['en', 'zh']) {
+    await page.goto(`${baseUrl}/${locale}/tools/llc-resonant-converter-designer/`, { waitUntil: 'domcontentloaded' });
+    const statusPills = await page.evaluate(() => Array.from(document.querySelectorAll('.mega-menu .status-pill')).map((node) => node.textContent?.trim()));
+    assert.equal(statusPills.includes(locale === 'en' ? 'Available' : '可用'), false, `${locale} mega menu should not show available badges`);
+    assert.ok(statusPills.includes(locale === 'en' ? 'Coming Soon' : '规划中'), `${locale} mega menu should still show planned badges`);
+    const menuText = await page.evaluate(() => document.querySelector('.mega-menu--engineering-calculators')?.textContent ?? '');
+    assert.match(menuText, locale === 'en' ? /Capacitor Ripple Current Calculator/ : /电容纹波电流计算器/);
+  }
+}
+
 async function assertSymmetricRoute(page, viewport, locale, route) {
   await page.goto(`${baseUrl}${pathFor(locale, route)}`, { waitUntil: 'domcontentloaded' });
   const state = await readPageState(page);
@@ -484,6 +547,7 @@ try {
     await assertLanguageSwitchPreservesUrl(page, 'en', '/tools/sensing-rc-filter-designer/');
     await assertLanguageSwitchPreservesUrl(page, 'zh', '/tools/sensing-rc-filter-designer/');
     await assertArticleLocalization(page);
+    await assertLaunchCleanupConsistency(page);
 
     if (viewport.name === 'desktop-1280') {
       await assertVoltageTool(page);

@@ -15,7 +15,7 @@ export function articleSlug(article: ArticleEntry): string {
 }
 
 export async function getArticles(locale: Locale): Promise<ArticleEntry[]> {
-  return (await getCollection('articles', ({ data }) => !(import.meta.env.PROD && data.draft)))
+  return (await getCollection('articles', ({ data }) => !data.draft))
     .filter((article) => articleLocale(article) === locale)
     .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
 }
