@@ -98,7 +98,7 @@ button:focus-visible {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   color: var(--header-text);
   font-weight: 760;
   text-decoration: none;
@@ -107,22 +107,12 @@ button:focus-visible {
 .site-header__mark {
   display: block;
   flex: 0 0 auto;
-  width: 42px;
-  height: 30px;
-  color: var(--header-accent);
+  width: 28px;
+  height: 28px;
 }
 
 .site-header__brand:hover {
   color: #ffffff;
-}
-
-.site-header__mark path,
-.site-header__mark circle {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .site-header__nav {
@@ -1793,7 +1783,7 @@ h1 {
   }
 
   .site-header__mark {
-    width: 34px;
+    width: 26px;
     height: 26px;
   }
 

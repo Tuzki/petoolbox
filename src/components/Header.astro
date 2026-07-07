@@ -19,11 +19,7 @@ const otherHref = `${swapLocaleInPath(currentPath, otherLocale)}${Astro.url.sear
 <header class="site-header" data-site-header>
   <div class="site-header__inner">
     <a class="site-header__brand" href={getLocalizedPath('/', locale)} aria-label="PE Toolbox home">
-      <svg class="site-header__mark" viewBox="0 0 44 32" aria-hidden="true" focusable="false">
-        <path d="M3 18h7l3-8 6 16 5-20 5 12h12" />
-        <circle cx="10" cy="18" r="2" />
-        <circle cx="41" cy="18" r="2" />
-      </svg>
+      <img class="site-header__mark" src="/pe-toolbox-logo.svg" alt="" width="28" height="28" decoding="async" />
       <span>{site.name}</span>
     </a>
 
