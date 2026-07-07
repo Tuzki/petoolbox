@@ -3,11 +3,13 @@ import { formatToolStatus, getTool } from './tools';
 import { getMessages } from '@/lib/i18n/messages';
 import { getLocalizedPath } from '@/lib/i18n/routes';
 import type { Locale } from '@/lib/i18n/config';
+import type { ToolStatus } from './tools.registry';
 
 export type NavigationChild = {
   label: string;
   href?: string;
   status: string;
+  statusKind: ToolStatus;
 };
 
 export type NavigationSection = {
@@ -35,7 +37,8 @@ export function getProductNavigation(locale: Locale): NavigationItem[] {
         return {
           label: tool?.title ?? id,
           href: tool?.href,
-          status: tool ? formatToolStatus(tool.status, locale) : t.site.status['coming-soon']
+          status: tool ? formatToolStatus(tool.status, locale) : t.site.status['coming-soon'],
+          statusKind: tool?.status ?? 'coming-soon'
         };
       })
     }))

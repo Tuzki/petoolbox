@@ -61,7 +61,7 @@ const otherHref = `${swapLocaleInPath(currentPath, otherLocale)}${Astro.url.sear
                             {child.href ? (
                               <a class="mega-menu__entry" href={child.href}>
                                 <span>{child.label}</span>
-                                <span class="status-pill">{child.status}</span>
+                                {child.statusKind !== 'available' && <span class="status-pill">{child.status}</span>}
                               </a>
                             ) : (
                               <span class="mega-menu__entry mega-menu__entry--disabled">
@@ -126,7 +126,7 @@ const otherHref = `${swapLocaleInPath(currentPath, otherLocale)}${Astro.url.sear
                 child.href ? (
                   <a class="mobile-nav__subitem" href={child.href} data-mobile-link>
                     <span>{child.label}</span>
-                    <span class="status-pill">{child.status}</span>
+                    {child.statusKind !== 'available' && <span class="status-pill">{child.status}</span>}
                   </a>
                 ) : (
                   <span class="mobile-nav__subitem mobile-nav__subitem--disabled">

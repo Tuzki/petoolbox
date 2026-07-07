@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 const root = process.cwd();
-const articleHtml = readFileSync(join(root, 'dist', 'en', 'articles', 'buck-inductor-selection', 'index.html'), 'utf8');
+const articleHtml = readFileSync(join(root, 'dist', 'en', 'articles', 'nvidia-800v-power-architecture', 'index.html'), 'utf8');
 const articleCss = readCssBundle();
 
 function readCssBundle() {
@@ -45,9 +45,8 @@ test('primary tool appears before article body for mobile reading', () => {
   assert.ok(articleGridIndex > mobileToolIndex);
 });
 
-test('planned tool cards are rendered as non-links', () => {
-  assert.match(articleHtml, /aria-label="Output Capacitor Calculator Coming Soon tool"/);
-  assert.match(articleHtml, /aria-label="Buck Converter Designer Coming Soon tool"/);
-  assert.equal(articleHtml.includes('href="/tools/buck-inductor-ripple-calculator/">Output Capacitor Calculator'), false);
-  assert.equal(articleHtml.includes('href="/tools/buck-inductor-ripple-calculator/">Buck Converter Designer'), false);
+test('article related tool cards are localized links', () => {
+  assert.match(articleHtml, /href="\/en\/tools\/llc-resonant-converter-designer\/"/);
+  assert.match(articleHtml, /href="\/en\/tools\/voltage-sensing-adc-scaling\/"/);
+  assert.match(articleHtml, /href="\/en\/tools\/shunt-current-sensing-evaluator\/"/);
 });

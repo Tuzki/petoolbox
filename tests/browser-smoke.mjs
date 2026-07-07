@@ -29,7 +29,7 @@ const symmetricRoutes = [
   '/tools/shunt-current-sensing-evaluator/',
   '/tools/gate-resistor-power-stress-evaluator/',
   '/tools/llc-resonant-converter-designer/',
-  '/articles/buck-inductor-selection/'
+  '/articles/nvidia-800v-power-architecture/'
 ];
 const zhForbiddenTerms = [
   'Search',
@@ -135,31 +135,38 @@ async function assertLanguageSwitchPreservesUrl(page, locale, route) {
 async function assertArticleLocalization(page) {
   await page.goto(`${baseUrl}/en/articles/`, { waitUntil: 'domcontentloaded' });
   let text = await documentText(page);
-  assert.match(text, /Converter Design/);
+  assert.match(text, /Engineering Articles/);
+  assert.match(text, /NVIDIA 800V Power Architecture/);
+  assert.equal(text.includes('How to Select an Inductor for a Buck Converter'), false);
   assert.equal(text.includes('converter design'), false);
   assert.match(text, /Practical tools for power electronics engineers\./);
 
   await page.goto(`${baseUrl}/zh/articles/`, { waitUntil: 'domcontentloaded' });
   text = await documentText(page);
-  assert.match(text, /变换器设计/);
+  assert.match(text, /工程文章/);
+  assert.match(text, /英伟达 800V 电源体系/);
+  assert.equal(text.includes('如何为 Buck 变换器选择电感'), false);
   assert.equal(text.includes('converter design'), false);
   assert.match(text, /面向电力电子工程师的实用设计工具。/);
   assert.equal(text.includes('面向电力电子工程师的实用设计工具.'), false);
   assertNoZhLeak(text, 'zh articles index');
 
-  await page.goto(`${baseUrl}/en/articles/buck-inductor-selection/`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${baseUrl}/en/articles/nvidia-800v-power-architecture/`, { waitUntil: 'domcontentloaded' });
   text = await documentText(page);
   assert.match(text, /On this page/);
-  assert.match(text, /Converter Design/);
+  assert.match(text, /Engineering Articles/);
+  assert.match(text, /This article is a PE Toolbox technical interpretation/);
+  assert.equal(/official NVIDIA white paper/i.test(text), false);
   assert.match(text, /Practical tools for power electronics engineers\./);
 
-  await page.goto(`${baseUrl}/zh/articles/buck-inductor-selection/`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${baseUrl}/zh/articles/nvidia-800v-power-architecture/`, { waitUntil: 'domcontentloaded' });
   const zhArticle = await page.evaluate(() => ({
     text: document.body.innerText,
     tocLabels: Array.from(document.querySelectorAll('.article-toc summary, .article-toc h2')).map((node) => node.textContent?.trim()),
     tocAria: Array.from(document.querySelectorAll('.article-toc[aria-label]')).map((node) => node.getAttribute('aria-label'))
   }));
-  assert.match(zhArticle.text, /变换器设计/);
+  assert.match(zhArticle.text, /工程文章/);
+  assert.match(zhArticle.text, /本文是 PE Toolbox 对英伟达级别 AI 系统供电架构方向的技术解读/);
   assert.equal(zhArticle.text.includes('On this page'), false);
   assert.deepEqual(zhArticle.tocLabels, ['本文目录', '本文目录']);
   assert.deepEqual(zhArticle.tocAria, ['本文目录']);

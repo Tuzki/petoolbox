@@ -19,7 +19,7 @@ const formalRoutes = [
   'control',
   'simulation',
   'articles',
-  'articles/buck-inductor-selection',
+  'articles/nvidia-800v-power-architecture',
   'about'
 ];
 
@@ -129,19 +129,19 @@ test('gate resistor stress page has localized copy and constrained controls', ()
 });
 
 test('language switch links keep the current path', () => {
-  const enHtml = read(pagePath('en', 'articles/buck-inductor-selection'));
-  const zhHtml = read(pagePath('zh', 'articles/buck-inductor-selection'));
-  assert.match(enHtml, /href="\/zh\/articles\/buck-inductor-selection\/"/);
-  assert.match(zhHtml, /href="\/en\/articles\/buck-inductor-selection\/"/);
+  const enHtml = read(pagePath('en', 'articles/nvidia-800v-power-architecture'));
+  const zhHtml = read(pagePath('zh', 'articles/nvidia-800v-power-architecture'));
+  assert.match(enHtml, /href="\/zh\/articles\/nvidia-800v-power-architecture\/"/);
+  assert.match(zhHtml, /href="\/en\/articles\/nvidia-800v-power-architecture\/"/);
 });
 
 test('internal links stay within the active locale', () => {
   const enHtml = read(pagePath('en', ''));
   const zhHtml = read(pagePath('zh', ''));
   assert.match(enHtml, /href="\/en\/tools\/"/);
-  assert.match(enHtml, /href="\/en\/articles\/buck-inductor-selection\/"/);
+  assert.match(enHtml, /href="\/en\/articles\/nvidia-800v-power-architecture\/"/);
   assert.match(zhHtml, /href="\/zh\/tools\/"/);
-  assert.match(zhHtml, /href="\/zh\/articles\/buck-inductor-selection\/"/);
+  assert.match(zhHtml, /href="\/zh\/articles\/nvidia-800v-power-architecture\/"/);
 });
 
 test('article pairing is strict for current content', () => {
@@ -164,6 +164,8 @@ test('article pairing is strict for current content', () => {
 test('draft articles are not generated in production output', () => {
   assert.equal(existsSync(join(dist, 'en', 'articles', 'draft-hidden-test', 'index.html')), false);
   assert.equal(existsSync(join(dist, 'zh', 'articles', 'draft-hidden-test', 'index.html')), false);
+  assert.equal(existsSync(join(dist, 'en', 'articles', 'buck-inductor-selection', 'index.html')), false);
+  assert.equal(existsSync(join(dist, 'zh', 'articles', 'buck-inductor-selection', 'index.html')), false);
 });
 
 test('localized visible content is present', () => {
@@ -178,26 +180,30 @@ test('localized visible content is present', () => {
 test('article chrome uses localized category and toc labels', () => {
   const enIndex = read(pagePath('en', 'articles'));
   const zhIndex = read(pagePath('zh', 'articles'));
-  const enArticle = read(pagePath('en', 'articles/buck-inductor-selection'));
-  const zhArticle = read(pagePath('zh', 'articles/buck-inductor-selection'));
+  const enArticle = read(pagePath('en', 'articles/nvidia-800v-power-architecture'));
+  const zhArticle = read(pagePath('zh', 'articles/nvidia-800v-power-architecture'));
 
-  assert.match(enIndex, /Converter Design/);
+  assert.match(enIndex, /Engineering Articles/);
+  assert.match(enIndex, /NVIDIA 800V Power Architecture/);
+  assert.equal(enIndex.includes('How to Select an Inductor for a Buck Converter'), false);
   assert.equal(enIndex.includes('converter design'), false);
-  assert.match(zhIndex, /变换器设计/);
+  assert.match(zhIndex, /工程文章/);
+  assert.match(zhIndex, /英伟达 800V 电源体系/);
+  assert.equal(zhIndex.includes('如何为 Buck 变换器选择电感'), false);
   assert.equal(zhIndex.includes('converter design'), false);
 
   assert.match(enArticle, /On this page/);
-  assert.match(enArticle, /Converter Design/);
+  assert.match(enArticle, /Engineering Articles/);
   assert.match(zhArticle, /本文目录/);
   assert.match(zhArticle, /aria-label="本文目录"/);
   assert.equal(zhArticle.includes('On this page'), false);
-  assert.match(zhArticle, /变换器设计/);
+  assert.match(zhArticle, /工程文章/);
 });
 
 test('footer tagline punctuation is localized', () => {
   const enHtml = read(pagePath('en', ''));
   const zhHtml = read(pagePath('zh', ''));
-  const zhArticle = read(pagePath('zh', 'articles/buck-inductor-selection'));
+  const zhArticle = read(pagePath('zh', 'articles/nvidia-800v-power-architecture'));
 
   assert.match(enHtml, /Practical tools for power electronics engineers\./);
   assert.match(zhHtml, /面向电力电子工程师的实用设计工具。/);

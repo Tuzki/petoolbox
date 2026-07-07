@@ -9,7 +9,7 @@ relatedTools:
   - "buck-converter-designer"
 publishedAt: 2026-06-27
 updatedAt: 2026-06-27
-draft: false
+draft: true
 ---
 
 选择 Buck 电感通常从纹波电流开始，然后检查电流极限、损耗、尺寸和温升。本文保留核心方法，作为后续完整设计说明的基础。

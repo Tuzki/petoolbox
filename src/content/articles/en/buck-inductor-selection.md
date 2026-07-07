@@ -9,7 +9,7 @@ relatedTools:
   - "buck-converter-designer"
 publishedAt: 2026-06-27
 updatedAt: 2026-06-27
-draft: false
+draft: true
 ---
 
 Selecting a buck inductor starts with ripple current, then moves to current limits, losses, size, and temperature. This template article keeps the method visible without becoming a full design note.
