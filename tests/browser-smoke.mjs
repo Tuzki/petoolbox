@@ -220,6 +220,7 @@ async function assertLaunchCleanupConsistency(page) {
   assert.equal(toolText.includes('RC Time Constant Calculator'), false);
   assert.equal(toolText.includes('Voltage Divider Calculator'), false);
   assert.equal(toolText.includes('Buck Inductor Ripple Calculator'), false);
+  assert.equal(toolText.includes('Available'), false);
 
   await page.goto(`${baseUrl}/zh/tools/`, { waitUntil: 'domcontentloaded' });
   toolText = await documentText(page);
@@ -227,6 +228,7 @@ async function assertLaunchCleanupConsistency(page) {
   assert.equal(toolText.includes('RC 时间常数计算器'), false);
   assert.equal(toolText.includes('分压器计算器'), false);
   assert.equal(toolText.includes('Buck 电感纹波计算器'), false);
+  assert.equal(toolText.includes('可用'), false);
 
   for (const locale of ['en', 'zh']) {
     await page.goto(`${baseUrl}/${locale}/tools/llc-resonant-converter-designer/`, { waitUntil: 'domcontentloaded' });
