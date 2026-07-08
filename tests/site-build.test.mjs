@@ -21,6 +21,7 @@ const formalRoutes = [
   'simulation',
   'articles',
   'articles/nvidia-800v-power-architecture',
+  'feedback',
   'about'
 ];
 
@@ -78,6 +79,45 @@ test('root path uses Vercel HTTP redirect to English', () => {
   );
 });
 
+test('robots advertises public sitemap on the canonical domain', () => {
+  const robots = read(join(dist, 'robots.txt'));
+  assert.match(robots, /User-agent: \*/);
+  assert.match(robots, /Allow: \//);
+  assert.match(robots, /Sitemap: https:\/\/petoolbox\.tech\/sitemap-index\.xml/);
+  assert.equal(robots.includes('Disallow: /'), false);
+});
+
+test('sitemap uses canonical domain and excludes draft or retired launch content', () => {
+  const sitemap = read(join(dist, 'sitemap-index.xml'));
+  for (const route of [
+    '/en/',
+    '/zh/',
+    '/en/tools/',
+    '/zh/tools/',
+    '/en/articles/',
+    '/zh/articles/',
+    '/en/feedback/',
+    '/zh/feedback/',
+    '/en/articles/nvidia-800v-power-architecture/',
+    '/zh/articles/nvidia-800v-power-architecture/',
+    '/en/tools/llc-resonant-converter-designer/',
+    '/zh/tools/llc-resonant-converter-designer/',
+    '/en/tools/voltage-sensing-adc-scaling/',
+    '/zh/tools/voltage-sensing-adc-scaling/',
+    '/en/tools/sensing-rc-filter-designer/',
+    '/zh/tools/sensing-rc-filter-designer/',
+    '/en/tools/shunt-current-sensing-evaluator/',
+    '/zh/tools/shunt-current-sensing-evaluator/',
+    '/en/tools/gate-resistor-power-stress-evaluator/',
+    '/zh/tools/gate-resistor-power-stress-evaluator/'
+  ]) {
+    assert.match(sitemap, new RegExp(`https://petoolbox\\.tech${route}`));
+  }
+  for (const term of ['draft-hidden-test', 'buck-inductor-selection', 'rc-time-constant', 'voltage-divider', 'buck-inductor-ripple', 'petoolbox-git', 'petoolbox.vercel.app']) {
+    assert.equal(sitemap.includes(term), false, `sitemap should not include ${term}`);
+  }
+});
+
 test('legacy routes are noindex redirects to English', () => {
   for (const route of ['tools', 'articles', 'about', 'tools/voltage-sensing-adc-scaling', 'tools/shunt-current-sensing-evaluator', 'tools/gate-resistor-power-stress-evaluator']) {
     const html = read(join(dist, route, 'index.html'));
@@ -94,6 +134,77 @@ test('html lang and SEO alternates are emitted per locale', () => {
     assert.match(html, /hreflang="en" href="https:\/\/petoolbox.tech\/en\/tools\/voltage-sensing-adc-scaling\/"/);
     assert.match(html, /hreflang="zh-CN" href="https:\/\/petoolbox.tech\/zh\/tools\/voltage-sensing-adc-scaling\/"/);
     assert.match(html, /hreflang="x-default" href="https:\/\/petoolbox.tech\/en\/tools\/voltage-sensing-adc-scaling\/"/);
+  }
+});
+
+test('published tool pages have localized title and meta description', () => {
+  const cases = [
+    {
+      locale: 'en',
+      route: 'tools/llc-resonant-converter-designer',
+      title: 'LLC Resonant Converter Designer | PE Toolbox',
+      description: 'Design LLC resonant converters from input/output specifications, transformer ratio, resonant tank parameters, gain limits, and operating-point constraints.'
+    },
+    {
+      locale: 'en',
+      route: 'tools/voltage-sensing-adc-scaling',
+      title: 'Voltage Sensing and ADC Scaling Calculator | PE Toolbox',
+      description: 'Calculate resistor divider values, ADC input range, measurement resolution, voltage stress, and tolerance impact for high-voltage sensing circuits.'
+    },
+    {
+      locale: 'en',
+      route: 'tools/sensing-rc-filter-designer',
+      title: 'Sensing RC Filter Designer | PE Toolbox',
+      description: 'Design RC input filters for sensing and ADC interfaces, including cutoff frequency, settling behavior, source impedance, and sampling constraints.'
+    },
+    {
+      locale: 'en',
+      route: 'tools/shunt-current-sensing-evaluator',
+      title: 'Shunt Current Sensing Evaluator | PE Toolbox',
+      description: 'Evaluate shunt resistor current sensing circuits, including sense voltage, power loss, amplifier output range, resolution, and thermal stress.'
+    },
+    {
+      locale: 'en',
+      route: 'tools/gate-resistor-power-stress-evaluator',
+      title: 'Gate Resistor Power and Stress Evaluator | PE Toolbox',
+      description: 'Estimate gate resistor average power, pulse energy, peak stress, package margin, and parallel resistor sharing for power switch gate-drive design.'
+    },
+    {
+      locale: 'zh',
+      route: 'tools/llc-resonant-converter-designer',
+      title: 'LLC 谐振变换器设计器 | PE Toolbox',
+      description: '根据输入输出规格、变压器匝比、谐振腔参数、增益限制和运行点约束，评估 LLC 谐振变换器设计方案。'
+    },
+    {
+      locale: 'zh',
+      route: 'tools/voltage-sensing-adc-scaling',
+      title: '电压采样与 ADC 量程计算器 | PE Toolbox',
+      description: '计算高压采样分压电阻、ADC 输入范围、测量分辨率、电阻耐压、功耗和误差影响。'
+    },
+    {
+      locale: 'zh',
+      route: 'tools/sensing-rc-filter-designer',
+      title: '采样 RC 滤波器设计器 | PE Toolbox',
+      description: '用于传感与 ADC 接口的 RC 输入滤波器设计，评估截止频率、建立时间、源阻抗和采样约束。'
+    },
+    {
+      locale: 'zh',
+      route: 'tools/shunt-current-sensing-evaluator',
+      title: '分流电阻电流采样评估器 | PE Toolbox',
+      description: '评估分流电阻电流采样电路的采样电压、功耗、放大器输出范围、分辨率和热应力。'
+    },
+    {
+      locale: 'zh',
+      route: 'tools/gate-resistor-power-stress-evaluator',
+      title: '栅极电阻功率与应力评估器 | PE Toolbox',
+      description: '估算功率器件栅极驱动电阻的平均功率、脉冲能量、峰值应力、封装余量和并联分流情况。'
+    }
+  ];
+
+  for (const item of cases) {
+    const html = read(pagePath(item.locale, item.route));
+    assert.ok(html.includes(`<title>${item.title}</title>`), `${item.locale}/${item.route} title`);
+    assert.ok(html.includes(`<meta name="description" content="${item.description}"`), `${item.locale}/${item.route} description`);
   }
 });
 
@@ -149,8 +260,24 @@ test('internal links stay within the active locale', () => {
   const zhHtml = read(pagePath('zh', ''));
   assert.match(enHtml, /href="\/en\/tools\/"/);
   assert.match(enHtml, /href="\/en\/articles\/nvidia-800v-power-architecture\/"/);
+  assert.match(enHtml, /href="\/en\/feedback\/"/);
   assert.match(zhHtml, /href="\/zh\/tools\/"/);
   assert.match(zhHtml, /href="\/zh\/articles\/nvidia-800v-power-architecture\/"/);
+  assert.match(zhHtml, /href="\/zh\/feedback\/"/);
+});
+
+test('feedback pages are localized and do not invent a contact channel', () => {
+  const enHtml = read(pagePath('en', 'feedback'));
+  const zhHtml = read(pagePath('zh', 'feedback'));
+
+  assert.match(enHtml, /<h1 id="feedback-title">Feedback<\/h1>/);
+  assert.match(enHtml, /published contact channel once it is available/);
+  assert.match(zhHtml, /<h1 id="feedback-title">反馈<\/h1>/);
+  assert.match(zhHtml, /后续公布的联系渠道反馈/);
+  for (const html of [enHtml, zhHtml]) {
+    assert.equal(html.includes('mailto:'), false);
+    assert.equal(/github\.com\/[^"]*issues/i.test(html), false);
+  }
 });
 
 test('article pairing is strict for current content', () => {

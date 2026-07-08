@@ -24,6 +24,7 @@ const symmetricRoutes = [
   '/simulation/',
   '/articles/',
   '/about/',
+  '/feedback/',
   '/tools/voltage-sensing-adc-scaling/',
   '/tools/sensing-rc-filter-designer/',
   '/tools/shunt-current-sensing-evaluator/',

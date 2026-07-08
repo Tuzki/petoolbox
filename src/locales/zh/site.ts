@@ -9,7 +9,8 @@ export const siteMessages = {
     tools: '工具',
     resources: '资源',
     articles: '技术文章',
-    about: '关于'
+    about: '关于',
+    feedback: '反馈'
   },
   breadcrumbs: {
     home: '首页'

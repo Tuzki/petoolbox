@@ -2,7 +2,7 @@ export type SiteMode = 'private' | 'public';
 
 const rawMode = import.meta.env.PUBLIC_SITE_MODE;
 
-export const siteMode: SiteMode = rawMode === 'public' ? 'public' : 'private';
+export const siteMode: SiteMode = rawMode === 'private' ? 'private' : 'public';
 
 export const site = {
   name: 'PE Toolbox',

@@ -39,6 +39,15 @@ export const pageMessages = {
     scopeLabel: 'Current scope',
     scope: ['Topology design', 'Engineering calculations', 'Magnetics', 'Control', 'PULSE simulation']
   },
+  feedback: {
+    title: 'Feedback',
+    description: 'Feedback guidance for PE Toolbox calculation issues, assumptions, edge cases, and future power electronics design tools.',
+    h1: 'Feedback',
+    paragraphs: [
+      'PE Toolbox is still in an early public version. If you find a calculation issue, unclear assumption, missing edge case, or a tool that would be useful for power electronics design, please send feedback through the published contact channel once it is available.',
+      'For useful engineering feedback, include the tool name, input values, expected result, actual result, and a short explanation.'
+    ]
+  },
   articles: {
     title: 'Articles',
     description: 'Engineering articles and design guides from PE Toolbox.',

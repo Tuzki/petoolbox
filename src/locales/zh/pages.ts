@@ -41,6 +41,15 @@ export const pageMessages = {
     scopeLabel: '当前范围',
     scope: ['拓扑设计', '工程计算', '磁性元件', '控制', 'PULSE 仿真']
   },
+  feedback: {
+    title: '反馈',
+    description: 'PE Toolbox 关于计算问题、工程假设、边界条件和后续电力电子设计工具的反馈说明。',
+    h1: '反馈',
+    paragraphs: [
+      'PE Toolbox 仍处于早期公开版本。如果你发现计算问题、边界条件不清楚、假设说明不足，或者希望增加某个电力电子设计工具，欢迎通过后续公布的联系渠道反馈。',
+      '有效的工程反馈最好包括：工具名称、输入参数、期望结果、实际结果，以及简短说明。'
+    ]
+  },
   articles: {
     title: '技术文章',
     description: 'PE Toolbox 的工程文章和设计指南。',

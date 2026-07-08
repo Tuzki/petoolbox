@@ -7,7 +7,8 @@ export const siteMessages = {
     tools: 'Tools',
     resources: 'Resources',
     articles: 'Articles',
-    about: 'About'
+    about: 'About',
+    feedback: 'Feedback'
   },
   breadcrumbs: {
     home: 'Home'

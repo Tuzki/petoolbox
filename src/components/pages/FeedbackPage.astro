@@ -1,0 +1,23 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getMessages } from '@/lib/i18n/messages';
+import type { Locale } from '@/lib/i18n/config';
+
+type Props = { locale: Locale };
+const { locale } = Astro.props;
+const t = getMessages(locale).pages.feedback;
+---
+
+<BaseLayout title={t.title} description={t.description} pathname="/feedback/" locale={locale}>
+  <main class="page-shell feedback-page">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href={`/${locale}/`}>{getMessages(locale).site.breadcrumbs.home}</a>
+      <span aria-hidden="true">/</span>
+      <span>{t.title}</span>
+    </nav>
+    <section aria-labelledby="feedback-title">
+      <h1 id="feedback-title">{t.h1}</h1>
+      {t.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+    </section>
+  </main>
+</BaseLayout>
