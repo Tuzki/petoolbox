@@ -1,6 +1,7 @@
 ---
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
+import Analytics from '@vercel/analytics/astro';
 import { canonicalUrl, isPrivateMode, site } from '@/lib/site';
 import { localeHtmlLang, ogLocale, type Locale } from '@/lib/i18n/config';
 import { getLocalizedPath, stripLocalePrefix } from '@/lib/i18n/routes';
@@ -46,5 +47,6 @@ const zhUrl = canonicalUrl(getLocalizedPath(neutralPath, 'zh'));
     <Header locale={locale} />
     <slot />
     <Footer locale={locale} />
+    <Analytics />
   </body>
 </html>

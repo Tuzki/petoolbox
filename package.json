@@ -12,6 +12,7 @@
     "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "astro": "^5.10.1"
   },
   "devDependencies": {
