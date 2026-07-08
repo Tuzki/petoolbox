@@ -1,0 +1,31 @@
+---
+import LLCDesignerApp from '@/components/tools/llc-designer/LLCDesignerApp.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import type { Locale } from '@/lib/i18n/config';
+import { getMessages } from '@/lib/i18n/messages';
+import '@/styles/llc-designer.css';
+
+type Props = { locale: Locale };
+const { locale } = Astro.props;
+const tool = getMessages(locale).tools.items['llc-resonant-converter-designer'];
+const title = tool.title;
+const description = tool.description;
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  pathname="/tools/llc-resonant-converter-designer/"
+  locale={locale}
+>
+  <main class="llc-designer-page">
+    <nav class="breadcrumb page-shell" aria-label="Breadcrumb">
+      <a href={`/${locale}/`}>{getMessages(locale).site.breadcrumbs.home}</a>
+      <span aria-hidden="true">/</span>
+      <a href={`/${locale}/topology-designers/`}>{getMessages(locale).navigation.items['topology-designers']}</a>
+      <span aria-hidden="true">/</span>
+      <span>{title}</span>
+    </nav>
+    <LLCDesignerApp locale={locale} />
+  </main>
+</BaseLayout>

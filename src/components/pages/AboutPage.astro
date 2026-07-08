@@ -1,0 +1,26 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getMessages } from '@/lib/i18n/messages';
+import type { Locale } from '@/lib/i18n/config';
+
+type Props = { locale: Locale };
+const { locale } = Astro.props;
+const t = getMessages(locale).pages.about;
+---
+
+<BaseLayout title={t.title} description={t.description} pathname="/about/" locale={locale}>
+  <main class="page-shell about-page">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href={`/${locale}/`}>{getMessages(locale).site.breadcrumbs.home}</a>
+      <span aria-hidden="true">/</span>
+      <span>{t.title}</span>
+    </nav>
+    <section class="content-panel" aria-labelledby="about-title">
+      <h1 id="about-title">{t.h1}</h1>
+      {t.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+      <div class="scope-list" aria-label={t.scopeLabel}>
+        {t.scope.map((item) => <span>{item}</span>)}
+      </div>
+    </section>
+  </main>
+</BaseLayout>

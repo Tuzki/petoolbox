@@ -1,0 +1,565 @@
+import assert from 'node:assert/strict';
+import { mkdirSync, readFileSync } from 'node:fs';
+import { chromium } from 'playwright-core';
+
+const baseUrl = process.env.PREVIEW_URL || 'http://127.0.0.1:4321';
+const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const outputDir = new URL('../test-artifacts/', import.meta.url);
+const llcBaseline = JSON.parse(readFileSync(new URL('./fixtures/default-v5-baseline.json', import.meta.url), 'utf8'));
+
+mkdirSync(outputDir, { recursive: true });
+
+const browser = await chromium.launch({ executablePath: chromePath, headless: true });
+const viewports = [
+  { name: 'desktop-1280', width: 1280, height: 800 },
+  { name: 'tablet-768', width: 768, height: 1024 },
+  { name: 'mobile-390', width: 390, height: 844 }
+];
+const symmetricRoutes = [
+  '/',
+  '/tools/',
+  '/topology-designers/',
+  '/magnetics/',
+  '/control/',
+  '/simulation/',
+  '/articles/',
+  '/about/',
+  '/tools/voltage-sensing-adc-scaling/',
+  '/tools/sensing-rc-filter-designer/',
+  '/tools/shunt-current-sensing-evaluator/',
+  '/tools/gate-resistor-power-stress-evaluator/',
+  '/tools/llc-resonant-converter-designer/',
+  '/articles/nvidia-800v-power-architecture/'
+];
+const zhForbiddenTerms = [
+  'Search',
+  'Reset',
+  'Run',
+  'Calculate',
+  'Inputs',
+  'Outputs',
+  'Results',
+  'Recommended',
+  'Selected',
+  'Specifications',
+  'Search Summary',
+  'Recommended Designs',
+  'Selected Design',
+  'Candidate Space',
+  'Operating Points',
+  'Advanced Analysis',
+  'Engineering Check',
+  'Firmware Scaling',
+  'Calculated Design',
+  'Pass',
+  'Review',
+  'Fail',
+  'Failed',
+  'Marginal',
+  'Feasible',
+  'No candidates',
+  'No results',
+  'Input error',
+  'Numerical issue',
+  'Coming Soon',
+  'Available',
+  'Learn more',
+  'Read article',
+  'Voltage-output source',
+  'Resistor divider',
+  'Engineering Details',
+  'How to Use',
+  'CHECK INPUTS',
+  'On this page',
+  'converter design'
+];
+
+const normalize = (text) => String(text ?? '').replace(/\s+/g, ' ').trim();
+const pathFor = (locale, route) => `/${locale}${route}`;
+
+async function readPageState(page) {
+  return page.evaluate(() => ({
+    noOverflow: document.documentElement.scrollWidth <= innerWidth,
+    lang: document.documentElement.lang,
+    h1: document.querySelector('h1')?.textContent?.trim() ?? '',
+    body: document.body.innerText,
+    canonical: document.querySelector('link[rel="canonical"]')?.getAttribute('href') ?? '',
+    alternateCount: document.querySelectorAll('link[rel="alternate"]').length,
+    headerLanguage: Array.from(document.querySelectorAll('.site-header__language a')).map((link) => link.getAttribute('href')),
+    footerLanguage: Array.from(document.querySelectorAll('.site-footer__language a')).map((link) => link.getAttribute('href')),
+    navLinks: Array.from(document.querySelectorAll('.site-nav__link')).map((link) => link.getAttribute('href')),
+    activeLanguage: document.querySelector('.language-link--active')?.textContent?.trim() ?? ''
+  }));
+}
+
+function assertNoZhLeak(text, route) {
+  const hits = zhForbiddenTerms.filter((term) => text.includes(term));
+  assert.deepEqual(hits, [], `${route} Chinese UI leaks English terms`);
+}
+
+function pickOutputs(outputs, keys) {
+  return Object.fromEntries(keys.map((key) => [key, normalize(outputs[key])]));
+}
+
+async function outputMap(page) {
+  return page.evaluate(() => Object.fromEntries(
+    Array.from(document.querySelectorAll('[data-output]')).map((node) => [node.getAttribute('data-output'), node.textContent])
+  ));
+}
+
+async function setInput(page, name, value) {
+  const locator = page.locator(`[data-input="${name}"]`);
+  await locator.fill(String(value));
+  await locator.dispatchEvent('input');
+  await locator.dispatchEvent('change');
+}
+
+async function assertLanguageSwitchPreservesUrl(page, locale, route) {
+  await page.goto(`${baseUrl}${pathFor(locale, route)}?r=1000&c=1e-9#results`, { waitUntil: 'domcontentloaded' });
+  const nextLocale = locale === 'en' ? 'zh' : 'en';
+  const expected = `${pathFor(nextLocale, route)}?r=1000&c=1e-9#results`;
+  const links = await page.evaluate(async () => {
+    document.querySelector('[data-mobile-menu-button]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    return {
+      header: document.querySelector('.site-header__language a')?.getAttribute('href'),
+      footer: document.querySelector('.site-footer__language a')?.getAttribute('href'),
+      mobile: document.querySelector('.mobile-nav__language a')?.getAttribute('href')
+    };
+  });
+  assert.equal(links.header, expected, `${locale} header language link preserves query/hash`);
+  assert.equal(links.footer, expected, `${locale} footer language link preserves query/hash`);
+  assert.equal(links.mobile, expected, `${locale} mobile language link preserves query/hash`);
+}
+
+async function assertArticleLocalization(page) {
+  await page.goto(`${baseUrl}/en/articles/`, { waitUntil: 'domcontentloaded' });
+  let text = await documentText(page);
+  assert.match(text, /Engineering Articles/);
+  assert.match(text, /NVIDIA 800V Power Architecture/);
+  assert.equal(text.includes('How to Select an Inductor for a Buck Converter'), false);
+  assert.equal(text.includes('converter design'), false);
+  assert.match(text, /Practical tools for power electronics engineers\./);
+
+  await page.goto(`${baseUrl}/zh/articles/`, { waitUntil: 'domcontentloaded' });
+  text = await documentText(page);
+  assert.match(text, /工程文章/);
+  assert.match(text, /英伟达 800V 电源体系/);
+  assert.equal(text.includes('如何为 Buck 变换器选择电感'), false);
+  assert.equal(text.includes('converter design'), false);
+  assert.match(text, /面向电力电子工程师的实用设计工具。/);
+  assert.equal(text.includes('面向电力电子工程师的实用设计工具.'), false);
+  assertNoZhLeak(text, 'zh articles index');
+
+  await page.goto(`${baseUrl}/en/articles/nvidia-800v-power-architecture/`, { waitUntil: 'domcontentloaded' });
+  text = await documentText(page);
+  assert.match(text, /On this page/);
+  assert.match(text, /Engineering Articles/);
+  assert.match(text, /This article is a PE Toolbox technical interpretation/);
+  assert.equal(/official NVIDIA white paper/i.test(text), false);
+  assert.match(text, /Practical tools for power electronics engineers\./);
+
+  await page.goto(`${baseUrl}/zh/articles/nvidia-800v-power-architecture/`, { waitUntil: 'domcontentloaded' });
+  const zhArticle = await page.evaluate(() => ({
+    text: document.body.innerText,
+    tocLabels: Array.from(document.querySelectorAll('.article-toc summary, .article-toc h2')).map((node) => node.textContent?.trim()),
+    tocAria: Array.from(document.querySelectorAll('.article-toc[aria-label]')).map((node) => node.getAttribute('aria-label'))
+  }));
+  assert.match(zhArticle.text, /工程文章/);
+  assert.match(zhArticle.text, /本文是 PE Toolbox 对英伟达级别 AI 系统供电架构方向的技术解读/);
+  assert.equal(zhArticle.text.includes('On this page'), false);
+  assert.deepEqual(zhArticle.tocLabels, ['本文目录', '本文目录']);
+  assert.deepEqual(zhArticle.tocAria, ['本文目录']);
+  assert.match(zhArticle.text, /面向电力电子工程师的实用设计工具。/);
+  assert.equal(zhArticle.text.includes('面向电力电子工程师的实用设计工具.'), false);
+  assertNoZhLeak(zhArticle.text, 'zh article detail');
+}
+
+async function assertLaunchCleanupConsistency(page) {
+  const staleEnglishTerms = [
+    'RC Time Constant Calculator',
+    'Voltage Divider Calculator',
+    'Buck Inductor Ripple Calculator',
+    'How to Select an Inductor for a Buck Converter'
+  ];
+  const staleChineseTerms = [
+    'RC 时间常数计算器',
+    '分压器计算器',
+    'Buck 电感纹波计算器',
+    '如何为 Buck 变换器选择电感'
+  ];
+  const routes = [
+    '/en/',
+    '/zh/',
+    '/en/articles/',
+    '/zh/articles/',
+    '/en/tools/',
+    '/zh/tools/',
+    '/en/tools/llc-resonant-converter-designer/',
+    '/zh/tools/llc-resonant-converter-designer/'
+  ];
+
+  for (const route of routes) {
+    await page.goto(`${baseUrl}${route}`, { waitUntil: 'domcontentloaded' });
+    const domText = await page.evaluate(() => document.body.textContent ?? '');
+    for (const term of staleEnglishTerms) assert.equal(domText.includes(term), false, `${route} should not include ${term}`);
+    for (const term of staleChineseTerms) assert.equal(domText.includes(term), false, `${route} should not include ${term}`);
+  }
+
+  await page.goto(`${baseUrl}/en/articles/`, { waitUntil: 'domcontentloaded' });
+  let articleLinks = await page.evaluate(() => Array.from(document.querySelectorAll('.article-list__item strong')).map((node) => node.textContent?.trim()));
+  assert.deepEqual(articleLinks, ['NVIDIA 800V Power Architecture: From Data Center Rack Power to AI Server Power Delivery']);
+
+  await page.goto(`${baseUrl}/zh/articles/`, { waitUntil: 'domcontentloaded' });
+  articleLinks = await page.evaluate(() => Array.from(document.querySelectorAll('.article-list__item strong')).map((node) => node.textContent?.trim()));
+  assert.deepEqual(articleLinks, ['英伟达 800V 电源体系：从数据中心机柜供电到 AI 服务器电源架构']);
+
+  await page.goto(`${baseUrl}/en/tools/`, { waitUntil: 'domcontentloaded' });
+  let toolText = await documentText(page);
+  assert.match(toolText, /Capacitor Ripple Current Calculator/);
+  assert.equal(toolText.includes('RC Time Constant Calculator'), false);
+  assert.equal(toolText.includes('Voltage Divider Calculator'), false);
+  assert.equal(toolText.includes('Buck Inductor Ripple Calculator'), false);
+
+  await page.goto(`${baseUrl}/zh/tools/`, { waitUntil: 'domcontentloaded' });
+  toolText = await documentText(page);
+  assert.match(toolText, /电容纹波电流计算器/);
+  assert.equal(toolText.includes('RC 时间常数计算器'), false);
+  assert.equal(toolText.includes('分压器计算器'), false);
+  assert.equal(toolText.includes('Buck 电感纹波计算器'), false);
+
+  for (const locale of ['en', 'zh']) {
+    await page.goto(`${baseUrl}/${locale}/tools/llc-resonant-converter-designer/`, { waitUntil: 'domcontentloaded' });
+    const statusPills = await page.evaluate(() => Array.from(document.querySelectorAll('.mega-menu .status-pill')).map((node) => node.textContent?.trim()));
+    assert.equal(statusPills.includes(locale === 'en' ? 'Available' : '可用'), false, `${locale} mega menu should not show available badges`);
+    assert.ok(statusPills.includes(locale === 'en' ? 'Coming Soon' : '规划中'), `${locale} mega menu should still show planned badges`);
+    const menuText = await page.evaluate(() => document.querySelector('.mega-menu--engineering-calculators')?.textContent ?? '');
+    assert.match(menuText, locale === 'en' ? /Capacitor Ripple Current Calculator/ : /电容纹波电流计算器/);
+  }
+}
+
+async function assertSymmetricRoute(page, viewport, locale, route) {
+  await page.goto(`${baseUrl}${pathFor(locale, route)}`, { waitUntil: 'domcontentloaded' });
+  const state = await readPageState(page);
+  assert.equal(state.noOverflow, true, `${viewport.name} ${locale}${route} overflow`);
+  assert.equal(state.lang, locale === 'zh' ? 'zh-CN' : 'en');
+  assert.match(state.canonical, new RegExp(`${pathFor(locale, route)}$`), `${locale}${route} canonical`);
+  assert.equal(state.alternateCount, 3, `${locale}${route} alternate links`);
+  assert.ok(state.navLinks.every((href) => href?.startsWith(`/${locale}/`)), `${locale}${route} nav links localized`);
+  if (locale === 'zh') {
+    assert.equal(state.activeLanguage, '中文');
+    assertNoZhLeak(state.body, `${locale}${route}`);
+    assert.equal(state.body.includes('Chinese version coming soon'), false);
+  } else {
+    assert.equal(state.activeLanguage, 'EN');
+    assert.equal(/[\u4e00-\u9fff]/.test(state.body.replaceAll('中文', '')), false, `${locale}${route} English UI leaks Chinese text`);
+  }
+}
+
+async function assertVoltageTool(page) {
+  const states = {};
+  for (const locale of ['en', 'zh']) {
+    await page.goto(`${baseUrl}/${locale}/tools/voltage-sensing-adc-scaling/`, { waitUntil: 'domcontentloaded' });
+    await setInput(page, 'maximumInputVoltage', 400);
+    states[locale] = await outputMap(page);
+    if (locale === 'zh') assertNoZhLeak(await documentText(page), 'zh voltage after update');
+  }
+  assert.deepEqual(
+    pickOutputs(states.en, [
+      'upperString',
+      'lowerBranch',
+      'flowInput',
+      'flowAdc',
+      'flowCode',
+      'adcUtilization',
+      'scalingRatio',
+      'nominalAccuracy',
+      'inputResolution',
+      'dividerCurrent',
+      'dividerPower',
+      'firmwareCode'
+    ]),
+    pickOutputs(states.zh, [
+      'upperString',
+      'lowerBranch',
+      'flowInput',
+      'flowAdc',
+      'flowCode',
+      'adcUtilization',
+      'scalingRatio',
+      'nominalAccuracy',
+      'inputResolution',
+      'dividerCurrent',
+      'dividerPower',
+      'firmwareCode'
+    ]),
+    'voltage numeric outputs match across locales'
+  );
+
+  await page.goto(`${baseUrl}/zh/tools/voltage-sensing-adc-scaling/`, { waitUntil: 'domcontentloaded' });
+  await setInput(page, 'maximumInputVoltage', 0);
+  const invalidText = await page.locator('[data-error-for="maximumInputVoltage"]').textContent();
+  assert.match(invalidText ?? '', /请输入大于 0 V 的电压/);
+  assertNoZhLeak(await documentText(page), 'zh voltage invalid state');
+}
+
+async function assertRcTool(page) {
+  const scenarios = [
+    { name: 'default', values: {} },
+    { name: 'weak', values: { filterCapacitancePf: 0.1 } },
+    { name: 'slow', values: { filterCapacitancePf: 100000 } },
+    { name: 'conflict', values: { signalFrequencyKhz: 100, noiseFrequencyMhz: 0.101, filterCapacitancePf: 10, maxAllowedSignalLossDb: 0.001, desiredNoiseAttenuationDb: 80 } }
+  ];
+  for (const scenario of scenarios) {
+    const states = {};
+    for (const locale of ['en', 'zh']) {
+      await page.goto(`${baseUrl}/${locale}/tools/sensing-rc-filter-designer/`, { waitUntil: 'domcontentloaded' });
+      for (const [name, value] of Object.entries(scenario.values)) await setInput(page, name, value);
+      states[locale] = await outputMap(page);
+      if (locale === 'zh') assertNoZhLeak(await documentText(page), `zh rc ${scenario.name}`);
+    }
+    assert.deepEqual(
+      pickOutputs(states.en, [
+        'sourceResistanceLabel',
+        'sourceResistance',
+        'cutoffFrequency',
+        'tauSummary',
+        'noiseAttenuation',
+        'signalAttenuation',
+        'signalPhase',
+        'riseTime',
+        'settlingTime',
+        'totalResistance',
+        'timeConstant',
+        'settlingTimePoint1',
+        'signalRatio',
+        'noiseRatio',
+        'signalToCutoff',
+        'noiseToCutoff'
+      ]),
+      pickOutputs(states.zh, [
+        'sourceResistanceLabel',
+        'sourceResistance',
+        'cutoffFrequency',
+        'tauSummary',
+        'noiseAttenuation',
+        'signalAttenuation',
+        'signalPhase',
+        'riseTime',
+        'settlingTime',
+        'totalResistance',
+        'timeConstant',
+        'settlingTimePoint1',
+        'signalRatio',
+        'noiseRatio',
+        'signalToCutoff',
+        'noiseToCutoff'
+      ]),
+      `rc ${scenario.name} numeric outputs match`
+    );
+  }
+
+  await page.goto(`${baseUrl}/zh/tools/sensing-rc-filter-designer/`, { waitUntil: 'domcontentloaded' });
+  await setInput(page, 'filterCapacitancePf', 0);
+  assert.match(await page.locator('[data-output="status"]').textContent(), /检查输入/);
+  assertNoZhLeak(await documentText(page), 'zh rc invalid state');
+}
+
+async function documentText(page) {
+  return page.evaluate(() => document.body.innerText);
+}
+
+async function assertShuntTool(page) {
+  const states = {};
+  for (const locale of ['en', 'zh']) {
+    await page.goto(`${baseUrl}/${locale}/tools/shunt-current-sensing-evaluator/`, { waitUntil: 'domcontentloaded' });
+    states[locale] = await outputMap(page);
+    if (locale === 'zh') assertNoZhLeak(await documentText(page), 'zh shunt default');
+  }
+  assert.deepEqual(
+    pickOutputs(states.en, [
+      'equivalentResistance',
+      'peakShuntVoltage',
+      'powerPerShunt',
+      'currentResolution',
+      'bankEquivalentResistance',
+      'bankPeakShuntVoltage',
+      'totalContinuousLoss',
+      'bankPowerPerShunt',
+      'continuousCurrentPerShunt',
+      'peakCurrentPerShunt',
+      'positiveOutput',
+      'negativeOutput',
+      'sensitivity',
+      'adcRangeUsed',
+      'currentPerLsb'
+    ]),
+    pickOutputs(states.zh, [
+      'equivalentResistance',
+      'peakShuntVoltage',
+      'powerPerShunt',
+      'currentResolution',
+      'bankEquivalentResistance',
+      'bankPeakShuntVoltage',
+      'totalContinuousLoss',
+      'bankPowerPerShunt',
+      'continuousCurrentPerShunt',
+      'peakCurrentPerShunt',
+      'positiveOutput',
+      'negativeOutput',
+      'sensitivity',
+      'adcRangeUsed',
+      'currentPerLsb'
+    ]),
+    'shunt numeric outputs match across locales'
+  );
+
+  await page.goto(`${baseUrl}/en/tools/shunt-current-sensing-evaluator/`, { waitUntil: 'domcontentloaded' });
+  assert.equal(normalize(await page.locator('[data-output="status"]').textContent()), 'Design needs review');
+  await setInput(page, 'resistancePerShuntMohm', 2.0);
+  let outputs = await outputMap(page);
+  assert.equal(normalize(outputs.equivalentResistance), '1.000 mΩ');
+  assert.equal(normalize(outputs.peakShuntVoltage), '100.0 mV');
+
+  await page.selectOption('[data-input="currentType"]', 'ac');
+  assert.equal(normalize(await page.locator('[data-label="continuousCurrentLabel"]').textContent()), 'RMS current');
+  assert.equal(normalize(await page.locator('[data-label="currentPerShuntLabel"]').textContent()), 'RMS current per shunt');
+
+  await page.selectOption('[data-input="currentPolarity"]', 'unidirectional');
+  assert.equal(await page.locator('[data-negative-output]').evaluate((node) => node.hidden), true);
+
+  await page.goto(`${baseUrl}/en/tools/shunt-current-sensing-evaluator/`, { waitUntil: 'domcontentloaded' });
+  await setInput(page, 'ratedPowerPerShuntW', 0.5);
+  assert.equal(normalize(await page.locator('[data-output="status"]').textContent()), 'Check inputs');
+
+  await page.goto(`${baseUrl}/en/tools/shunt-current-sensing-evaluator/`, { waitUntil: 'domcontentloaded' });
+  await setInput(page, 'continuousCurrentA', 60.4);
+  assert.equal(await page.locator('[data-input="continuousCurrentA"]').inputValue(), '60');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${baseUrl}/en/tools/shunt-current-sensing-evaluator/`, { waitUntil: 'domcontentloaded' });
+  const noOverflow = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
+  assert.equal(noOverflow, true, 'shunt mobile overflow');
+  await page.setViewportSize({ width: 1280, height: 800 });
+}
+
+async function assertGateResistorTool(page) {
+  const keys = [
+    'deltaGateVoltage',
+    'totalGateDrivePower',
+    'averageSupplyCurrent',
+    'energyPerCycle',
+    'equivalentGateCharge',
+    'initialChargeCurrent',
+    'initialDischargeCurrent',
+    'externalLoss',
+    'driverLoss',
+    'internalLoss'
+  ];
+  const states = {};
+  for (const locale of ['en', 'zh']) {
+    await page.goto(`${baseUrl}/${locale}/tools/gate-resistor-power-stress-evaluator/`, { waitUntil: 'domcontentloaded' });
+    states[locale] = await outputMap(page);
+    if (locale === 'zh') assertNoZhLeak(await documentText(page), 'zh gate default');
+  }
+  assert.deepEqual(pickOutputs(states.en, keys), pickOutputs(states.zh, keys), 'gate numeric outputs match across locales');
+  assert.equal(normalize(states.en.totalGateDrivePower), '172.20 mW');
+  assert.equal(normalize(states.en.averageSupplyCurrent), '8.20 mA');
+  assert.equal(normalize(states.en.energyPerCycle), '1.722 µJ');
+
+  await page.goto(`${baseUrl}/en/tools/gate-resistor-power-stress-evaluator/`, { waitUntil: 'domcontentloaded' });
+  assert.equal(normalize(await page.locator('[data-output="overallStatus"]').textContent()), 'Fail');
+  await page.selectOption('[data-input="loadMode"]', 'cg');
+  assert.equal(await page.locator('[data-qg-field]').evaluate((node) => node.hidden), true);
+  assert.equal(await page.locator('[data-cg-field]').evaluate((node) => node.hidden), false);
+  assert.equal(normalize(await page.locator('[data-output="equivalentGateCharge"]').textContent()), '81.90 nC');
+
+  await page.selectOption('[data-input="driveMode"]', 'single');
+  assert.equal(await page.locator('[data-off-inputs]').evaluate((node) => node.hidden), true);
+  assert.equal(await page.locator('[data-bank-card="off"]').evaluate((node) => node.hidden), true);
+  assert.equal(normalize(await page.locator('[data-bank-output="onTitle"]').textContent()), 'Charge / Discharge Resistor Bank');
+
+  await page.goto(`${baseUrl}/en/tools/gate-resistor-power-stress-evaluator/`, { waitUntil: 'domcontentloaded' });
+  await setInput(page, 'switchingFrequencyKhz', 0);
+  assert.equal(normalize(await page.locator('[data-output="overallStatus"]').textContent()), 'Check inputs');
+  assert.match(await page.locator('[data-output="validation"]').textContent(), /Switching frequency must be greater than zero/);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${baseUrl}/en/tools/gate-resistor-power-stress-evaluator/`, { waitUntil: 'domcontentloaded' });
+  const noOverflow = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
+  assert.equal(noOverflow, true, 'gate resistor mobile overflow');
+  await page.setViewportSize({ width: 1280, height: 800 });
+}
+
+async function assertLlcTool(page) {
+  const snapshots = {};
+  for (const locale of ['en', 'zh']) {
+    await page.goto(`${baseUrl}/${locale}/tools/llc-resonant-converter-designer/`, { waitUntil: 'domcontentloaded' });
+    await page.locator('#runBtn').click();
+    await page.waitForFunction(() => document.querySelectorAll('#recommendBody tr.click-row').length > 0, null, { timeout: 30000 });
+    await page.waitForFunction(() => document.querySelector('#mFeasible')?.textContent?.trim() !== '—', null, { timeout: 30000 });
+
+    await page.locator('.ratio-overview').nth(1).click();
+    const activeRatio = normalize(await page.locator('.ratio-overview.active').textContent());
+    await page.locator('#recommendBody tr.click-row').nth(1).click();
+    const selected = normalize(await page.locator('#selectedPanel').textContent());
+    await page.locator('#cornerBody tr').nth(1).click();
+    await page.waitForTimeout(250);
+    await page.locator('#curveBtn').click();
+    await page.waitForFunction(() => (document.querySelector('#gainPlot')?.children.length ?? 0) > 4, null, { timeout: 30000 });
+
+    const snapshot = await page.evaluate(() => ({
+      total: document.querySelector('#mTotal')?.textContent?.trim(),
+      feasible: document.querySelector('#mFeasible')?.textContent?.trim(),
+      marginal: document.querySelector('#mMarginal')?.textContent?.trim(),
+      failed: document.querySelector('#mFailed')?.textContent?.trim(),
+      rows: Array.from(document.querySelectorAll('#recommendBody tr.click-row')).slice(0, 3).map((row) => Array.from(row.children).slice(0, 12).map((cell) => cell.textContent?.replace(/\s+/g, ' ').trim().replace(/可行|Feasible/g, 'OK').replace(/临界|Marginal/g, 'WARN').replace(/失败|Failed/g, 'BAD').replace(/数值异常|Numerical issue/g, 'NUM'))),
+      ratioCards: Array.from(document.querySelectorAll('.ratio-overview')).map((card) => card.textContent?.replace(/\s+/g, ' ').trim().replace(/可行\/临界|Feasible\/marginal/g, 'OK').replace(/最佳裕量|Best margin/g, 'M')),
+      cornerRows: Array.from(document.querySelectorAll('#cornerBody tr')).map((row) => Array.from(row.children).map((cell) => cell.textContent?.replace(/\s+/g, ' ').trim().replace(/通过|Pass/g, 'OK').replace(/高频降压|High-frequency buck/g, 'BUCK').replace(/低频升压|Low-frequency boost/g, 'BOOST').replace(/近谐振|Near resonance/g, 'RES'))),
+      selectedPanel: document.querySelector('#selectedPanel')?.textContent?.replace(/\s+/g, ' ').trim().replace(/最差裕量|Worst margin/g, 'M').replace(/所需 fs|必需 fs|Required fs/g, 'FS').replace(/限制|Limit/g, 'L').replace(/最差 Ir,pk|Worst Ir,pk/g, 'IPK').replace(/最差 Ir,rms|Worst Ir,rms/g, 'IRMS').replace(/最差 VCr,pk|Worst VCr,pk/g, 'VCR').replace(/最小换流电流|Minimum commutation current|Min commutation/g, 'COMM').replace(/可行|Feasible/g, 'OK').replace(/9 个运行点均可达到，并具有正的最坏工况裕量。|All 9 operating points are reachable with positive worst-case margin.|所有运行点可达且裕量满足约束。|All operating points are reachable with positive constraint margin./g, 'PASS'),
+      curveSummary: document.querySelector('#curveSummary')?.textContent?.replace(/\s+/g, ' ').trim(),
+      gainChildren: document.querySelector('#gainPlot')?.children.length ?? 0,
+      stateChildren: document.querySelector('#statePlot')?.children.length ?? 0,
+      waveChildren: document.querySelector('#wavePlot')?.children.length ?? 0
+    }));
+    snapshots[locale] = { activeRatio, selected, snapshot };
+    assert.equal(snapshot.total, String(llcBaseline.total));
+    assert.ok(Number(snapshot.feasible) > 0);
+    assert.ok(snapshot.gainChildren > 4);
+    assert.ok(snapshot.stateChildren > 4);
+    assert.ok(snapshot.waveChildren > 4);
+    if (locale === 'zh') assertNoZhLeak(await documentText(page), 'zh llc after search');
+  }
+
+  assert.deepEqual(snapshots.en.snapshot.rows, snapshots.zh.snapshot.rows, 'llc recommended rows match');
+  assert.deepEqual(snapshots.en.snapshot.ratioCards, snapshots.zh.snapshot.ratioCards, 'llc ratio summaries match');
+  assert.deepEqual(snapshots.en.snapshot.cornerRows, snapshots.zh.snapshot.cornerRows, 'llc operating rows match');
+  assert.equal(snapshots.en.snapshot.selectedPanel, snapshots.zh.snapshot.selectedPanel, 'llc selected design numerics match');
+}
+
+try {
+  for (const viewport of viewports) {
+    const page = await browser.newPage({ viewport });
+    for (const locale of ['en', 'zh']) {
+      for (const route of symmetricRoutes) await assertSymmetricRoute(page, viewport, locale, route);
+    }
+
+    await assertLanguageSwitchPreservesUrl(page, 'en', '/tools/sensing-rc-filter-designer/');
+    await assertLanguageSwitchPreservesUrl(page, 'zh', '/tools/sensing-rc-filter-designer/');
+    await assertArticleLocalization(page);
+    await assertLaunchCleanupConsistency(page);
+
+    if (viewport.name === 'desktop-1280') {
+      await assertVoltageTool(page);
+      await assertRcTool(page);
+      await assertShuntTool(page);
+      await assertGateResistorTool(page);
+      await assertLlcTool(page);
+    }
+
+    await page.screenshot({ path: new URL(`bilingual-${viewport.name}.png`, outputDir).pathname, fullPage: true });
+    await page.close();
+  }
+} finally {
+  await browser.close();
+}

@@ -1,0 +1,243 @@
+import assert from 'node:assert/strict';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import test from 'node:test';
+
+const root = process.cwd();
+const dist = join(root, 'dist');
+const vercelConfig = JSON.parse(readFileSync(join(root, 'vercel.json'), 'utf8'));
+const locales = ['en', 'zh'];
+const formalRoutes = [
+  '',
+  'tools',
+  'tools/voltage-sensing-adc-scaling',
+  'tools/sensing-rc-filter-designer',
+  'tools/shunt-current-sensing-evaluator',
+  'tools/gate-resistor-power-stress-evaluator',
+  'tools/llc-resonant-converter-designer',
+  'topology-designers',
+  'magnetics',
+  'control',
+  'simulation',
+  'articles',
+  'articles/nvidia-800v-power-architecture',
+  'about'
+];
+
+function pagePath(locale, route) {
+  return join(dist, locale, route, 'index.html');
+}
+
+function read(path) {
+  return readFileSync(path, 'utf8');
+}
+
+function mainHtml(html) {
+  return html.match(/<main[\s\S]*?<\/main>/)?.[0] ?? '';
+}
+
+function frontmatter(file) {
+  const source = read(file);
+  const match = source.match(/^---\n([\s\S]*?)\n---/);
+  assert.ok(match, `${file} is missing frontmatter`);
+  const data = {};
+  let currentArray = null;
+  for (const line of match[1].split('\n')) {
+    const arrayItem = line.match(/^\s+-\s+"?([^"]+)"?\s*$/);
+    if (arrayItem && currentArray) {
+      data[currentArray].push(arrayItem[1]);
+      continue;
+    }
+    const pair = line.match(/^([A-Za-z0-9]+):\s*(.*)$/);
+    if (!pair) continue;
+    const [, key, rawValue] = pair;
+    currentArray = null;
+    if (rawValue === '') {
+      data[key] = [];
+      currentArray = key;
+    } else if (rawValue === 'null') data[key] = null;
+    else if (rawValue === 'true' || rawValue === 'false') data[key] = rawValue === 'true';
+    else if (rawValue === '[]') data[key] = [];
+    else data[key] = rawValue.replace(/^"|"$/g, '');
+  }
+  return data;
+}
+
+test('formal routes are symmetric across English and Chinese', () => {
+  for (const route of formalRoutes) {
+    for (const locale of locales) {
+      assert.ok(existsSync(pagePath(locale, route)), `/${locale}/${route} was not generated`);
+    }
+  }
+});
+
+test('root path uses Vercel HTTP redirect to English', () => {
+  assert.deepEqual(
+    vercelConfig.redirects?.find((redirect) => redirect.source === '/'),
+    { source: '/', destination: '/en/', permanent: false }
+  );
+});
+
+test('legacy routes are noindex redirects to English', () => {
+  for (const route of ['tools', 'articles', 'about', 'tools/voltage-sensing-adc-scaling', 'tools/shunt-current-sensing-evaluator', 'tools/gate-resistor-power-stress-evaluator']) {
+    const html = read(join(dist, route, 'index.html'));
+    assert.match(html, /noindex, follow/);
+    assert.match(html, /url=\/en\//);
+  }
+});
+
+test('html lang and SEO alternates are emitted per locale', () => {
+  for (const locale of locales) {
+    const html = read(pagePath(locale, 'tools/voltage-sensing-adc-scaling'));
+    assert.match(html, new RegExp(`<html lang="${locale === 'zh' ? 'zh-CN' : 'en'}"`));
+    assert.match(html, new RegExp(`<link rel="canonical" href="https://petoolbox.tech/${locale}/tools/voltage-sensing-adc-scaling/"`));
+    assert.match(html, /hreflang="en" href="https:\/\/petoolbox.tech\/en\/tools\/voltage-sensing-adc-scaling\/"/);
+    assert.match(html, /hreflang="zh-CN" href="https:\/\/petoolbox.tech\/zh\/tools\/voltage-sensing-adc-scaling\/"/);
+    assert.match(html, /hreflang="x-default" href="https:\/\/petoolbox.tech\/en\/tools\/voltage-sensing-adc-scaling\/"/);
+  }
+});
+
+test('shunt current sensing page has localized copy and expected controls', () => {
+  const enHtml = read(pagePath('en', 'tools/shunt-current-sensing-evaluator'));
+  const zhHtml = read(pagePath('zh', 'tools/shunt-current-sensing-evaluator'));
+
+  assert.match(enHtml, /Shunt Current Sensing Evaluator/);
+  assert.equal(/[\u4e00-\u9fff]/.test(enHtml.replaceAll('中文', '')), false);
+  assert.match(zhHtml, /分流电阻电流采样评估器/);
+  for (const term of ['Design needs review', 'Current Condition', 'Power per shunt']) {
+    assert.equal(zhHtml.includes(term), false, `zh shunt page leaked "${term}"`);
+  }
+  assert.match(enHtml, /data-input="resistancePerShuntMohm"[^>]*step="0.1"/);
+  assert.match(enHtml, /data-input="ratedPowerPerShuntW"[^>]*step="0.1"/);
+  assert.match(enHtml, /data-input="csaGain"[^>]*step="1"/);
+  assert.match(enHtml, /0.500 mΩ/);
+  assert.match(enHtml, /50.0 mV/);
+  assert.match(enHtml, /80.6 mA\/LSB/);
+});
+
+test('gate resistor stress page has localized copy and constrained controls', () => {
+  const enHtml = read(pagePath('en', 'tools/gate-resistor-power-stress-evaluator'));
+  const zhHtml = read(pagePath('zh', 'tools/gate-resistor-power-stress-evaluator'));
+
+  assert.match(enHtml, /Gate Resistor Power and Stress Evaluator/);
+  assert.match(enHtml, /typical screening value/);
+  assert.equal(/[\u4e00-\u9fff]/.test(enHtml.replaceAll('中文', '')), false);
+  assert.match(zhHtml, /栅极电阻功率与应力评估器/);
+  assert.match(zhHtml, /典型筛选值/);
+  for (const term of ['Design Inputs', 'Average Power OK', 'Switching frequency', 'Loss Distribution']) {
+    assert.equal(zhHtml.includes(term), false, `zh gate page leaked "${term}"`);
+  }
+  assert.match(enHtml, /data-input="totalGateChargeNc"[^>]*step="0.1"/);
+  assert.match(enHtml, /data-input="equivalentGateCapacitanceNf"[^>]*step="0.1"/);
+  assert.match(enHtml, /data-input="switchingFrequencyKhz"[^>]*step="1"/);
+  assert.match(enHtml, /value="200"/);
+  assert.doesNotMatch(enHtml, /value="220"/);
+  assert.match(enHtml, /172.20 mW/);
+  assert.match(enHtml, /1.722 µJ/);
+  assert.match(enHtml, /8.20 mA/);
+});
+
+test('language switch links keep the current path', () => {
+  const enHtml = read(pagePath('en', 'articles/nvidia-800v-power-architecture'));
+  const zhHtml = read(pagePath('zh', 'articles/nvidia-800v-power-architecture'));
+  assert.match(enHtml, /href="\/zh\/articles\/nvidia-800v-power-architecture\/"/);
+  assert.match(zhHtml, /href="\/en\/articles\/nvidia-800v-power-architecture\/"/);
+});
+
+test('internal links stay within the active locale', () => {
+  const enHtml = read(pagePath('en', ''));
+  const zhHtml = read(pagePath('zh', ''));
+  assert.match(enHtml, /href="\/en\/tools\/"/);
+  assert.match(enHtml, /href="\/en\/articles\/nvidia-800v-power-architecture\/"/);
+  assert.match(zhHtml, /href="\/zh\/tools\/"/);
+  assert.match(zhHtml, /href="\/zh\/articles\/nvidia-800v-power-architecture\/"/);
+});
+
+test('article pairing is strict for current content', () => {
+  const enDir = join(root, 'src', 'content', 'articles', 'en');
+  const zhDir = join(root, 'src', 'content', 'articles', 'zh');
+  const enFiles = readdirSync(enDir).filter((file) => file.endsWith('.md')).sort();
+  const zhFiles = readdirSync(zhDir).filter((file) => file.endsWith('.md')).sort();
+  assert.deepEqual(zhFiles, enFiles);
+  for (const file of enFiles) {
+    const en = frontmatter(join(enDir, file));
+    const zh = frontmatter(join(zhDir, file));
+    for (const key of ['articleId', 'category', 'primaryTool', 'publishedAt', 'updatedAt', 'draft']) {
+      assert.deepEqual(zh[key], en[key], `${file} mismatch: ${key}`);
+    }
+    assert.notEqual(zh.title, en.title, `${file} title should be localized`);
+    assert.notEqual(zh.description, en.description, `${file} description should be localized`);
+  }
+});
+
+test('draft articles are not generated in production output', () => {
+  assert.equal(existsSync(join(dist, 'en', 'articles', 'draft-hidden-test', 'index.html')), false);
+  assert.equal(existsSync(join(dist, 'zh', 'articles', 'draft-hidden-test', 'index.html')), false);
+  assert.equal(existsSync(join(dist, 'en', 'articles', 'buck-inductor-selection', 'index.html')), false);
+  assert.equal(existsSync(join(dist, 'zh', 'articles', 'buck-inductor-selection', 'index.html')), false);
+});
+
+test('localized visible content is present', () => {
+  const enHtml = read(pagePath('en', ''));
+  const zhHtml = read(pagePath('zh', ''));
+  const enMain = mainHtml(enHtml);
+  const zhMain = mainHtml(zhHtml);
+
+  assert.match(enMain, /Power Electronics Design Tools/);
+  assert.match(enMain, /Browser-based calculators, design workflows, and engineering notes/);
+  for (const term of ['power electronics', 'design tools', 'calculators', 'LLC Resonant Converter Designer', 'Shunt Current Sensing Evaluator', 'Gate Resistor Power and Stress Evaluator']) {
+    assert.match(enMain, new RegExp(term.replaceAll('&', '&amp;'), 'i'));
+  }
+  assert.match(enMain, /Featured Tools/);
+  assert.match(enMain, /Latest Article/);
+  assert.match(enMain, /NVIDIA 800V Power Architecture/);
+  assert.equal(enMain.includes('directory-card--coming-soon'), false);
+  assert.equal(enMain.includes('tool-filter'), false);
+
+  assert.match(zhMain, /电力电子设计工具/);
+  assert.match(zhMain, /浏览器端计算器、设计流程与工程笔记/);
+  for (const term of ['电力电子', '设计工具', '计算器', 'LLC 谐振变换器', '电流采样', '栅极电阻']) {
+    assert.match(zhMain, new RegExp(term));
+  }
+  assert.match(zhMain, /可用工具/);
+  assert.match(zhMain, /最新文章/);
+  assert.match(zhMain, /英伟达 800V 电源体系/);
+  assert.equal(zhMain.includes('directory-card--coming-soon'), false);
+  assert.equal(zhMain.includes('tool-filter'), false);
+  assert.equal(zhHtml.includes('Chinese version coming soon'), false);
+});
+
+test('article chrome uses localized category and toc labels', () => {
+  const enIndex = read(pagePath('en', 'articles'));
+  const zhIndex = read(pagePath('zh', 'articles'));
+  const enArticle = read(pagePath('en', 'articles/nvidia-800v-power-architecture'));
+  const zhArticle = read(pagePath('zh', 'articles/nvidia-800v-power-architecture'));
+
+  assert.match(enIndex, /Engineering Articles/);
+  assert.match(enIndex, /NVIDIA 800V Power Architecture/);
+  assert.equal(enIndex.includes('How to Select an Inductor for a Buck Converter'), false);
+  assert.equal(enIndex.includes('converter design'), false);
+  assert.match(zhIndex, /工程文章/);
+  assert.match(zhIndex, /英伟达 800V 电源体系/);
+  assert.equal(zhIndex.includes('如何为 Buck 变换器选择电感'), false);
+  assert.equal(zhIndex.includes('converter design'), false);
+
+  assert.match(enArticle, /On this page/);
+  assert.match(enArticle, /Engineering Articles/);
+  assert.match(zhArticle, /本文目录/);
+  assert.match(zhArticle, /aria-label="本文目录"/);
+  assert.equal(zhArticle.includes('On this page'), false);
+  assert.match(zhArticle, /工程文章/);
+});
+
+test('footer tagline punctuation is localized', () => {
+  const enHtml = read(pagePath('en', ''));
+  const zhHtml = read(pagePath('zh', ''));
+  const zhArticle = read(pagePath('zh', 'articles/nvidia-800v-power-architecture'));
+
+  assert.match(enHtml, /Practical tools for power electronics engineers\./);
+  assert.match(zhHtml, /面向电力电子工程师的实用设计工具。/);
+  assert.match(zhArticle, /面向电力电子工程师的实用设计工具。/);
+  assert.equal(zhHtml.includes('面向电力电子工程师的实用设计工具.'), false);
+  assert.equal(zhArticle.includes('面向电力电子工程师的实用设计工具.'), false);
+});

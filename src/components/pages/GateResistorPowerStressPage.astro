@@ -1,0 +1,643 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import type { Locale } from '@/lib/i18n/config';
+import { getLocalizedPath } from '@/lib/i18n/routes';
+import { getMessages } from '@/lib/i18n/messages';
+import {
+  calculateGateResistorPowerStress,
+  defaultGateResistorPowerStressInputs,
+  gateResistorE24Values,
+  gateResistorPackagePowerW
+} from '@/lib/gateResistorPowerStress';
+
+type Props = {
+  locale: Locale;
+};
+
+const { locale } = Astro.props;
+const messages = getMessages(locale);
+const tool = messages.tools.items['gate-resistor-power-stress-evaluator'];
+const defaults = defaultGateResistorPowerStressInputs;
+const initial = calculateGateResistorPowerStress(defaults);
+const packageOptions = Object.entries(gateResistorPackagePowerW);
+const resistorOptions = gateResistorE24Values.map((value) => ({
+  value,
+  label: value < 10 ? `${value.toFixed(1)} Ω` : `${value % 1 ? value.toFixed(1) : value.toFixed(0)} Ω`
+}));
+
+const labels = {
+  en: {
+    eyebrow: 'Engineering Calculators',
+    target: 'Gate-drive resistor screening',
+    breadcrumbTools: 'Tools',
+    inputs: 'Design Inputs',
+    load: 'Gate Load',
+    loadModel: 'Input model',
+    qgMode: 'Total gate charge Qg',
+    cgMode: 'Equivalent gate capacitance Cg',
+    qg: 'Total gate charge Qg',
+    cg: 'Equivalent gate capacitance Cg',
+    fsw: 'Switching frequency',
+    voltage: 'Gate Voltage',
+    vOn: 'Turn-on gate voltage Vg,on',
+    vOff: 'Turn-off gate voltage Vg,off',
+    voltageHint: 'Gate-voltage swing ΔVg = Vg,on − Vg,off. It directly determines gate-drive energy.',
+    resistance: 'Driver and Device Resistance',
+    rSource: 'Driver source resistance',
+    rSink: 'Driver sink resistance',
+    rgInt: 'Internal gate resistance',
+    arrangement: 'Resistor Arrangement',
+    driveMode: 'Resistor arrangement',
+    single: 'Single resistor for charge and discharge',
+    split: 'Separate turn-on and turn-off resistor banks',
+    onBank: 'Turn-on resistor bank',
+    offBank: 'Turn-off resistor bank',
+    singleBank: 'Charge / Discharge Resistor Bank',
+    resistorValue: 'Resistor value per device',
+    parallelCount: 'Parallel count',
+    resistorPackage: 'Resistor package',
+    packageNote: 'Package powers are typical screening values, not universal ratings for every resistor series.',
+    summaryTitle: 'Average Power Status',
+    statusCopy: {
+      pass: 'Average Power OK · Pulse Check Required',
+      review: 'Review · Pulse Check Required',
+      fail: 'Fail · Pulse Check Required'
+    },
+    statusDetail: {
+      pass: 'Each physical resistor is at or below 15% of its typical package rating. Verify repetitive-pulse capability separately.',
+      review: 'At least one physical resistor is above 15% but not above 20% of its typical package rating. Add margin and verify pulse capability.',
+      fail: 'At least one physical resistor exceeds 20% of its typical package rating. Increase package size or parallel count, or reduce drive energy.'
+    },
+    status: { pass: 'Average Power OK', review: 'Review', fail: 'Fail' },
+    loadTitle: 'Gate-Drive Load',
+    boundary: 'No Qgd, Miller plateau, switching-time, dv/dt, di/dt, switching-loss, overshoot, or ringing estimate is made.',
+    pGate: 'Total gate-drive power',
+    iAvg: 'Average supply current',
+    eCycle: 'Energy per switching cycle',
+    qEq: 'Equivalent gate charge',
+    iOn: 'Initial charge current',
+    iOff: 'Initial discharge current',
+    bankTitle: 'External Resistor Banks',
+    bankIntro: 'Average loss is checked against 20% of the selected package typical rating. Passing average power does not prove repetitive-pulse capability.',
+    selectedConfig: 'Selected configuration',
+    effectiveResistance: 'Effective resistance',
+    totalBankLoss: 'Total bank loss',
+    lossPerResistor: 'Loss per resistor',
+    energyPerPulse: 'Energy per resistor per pulse',
+    energyPerCycle: 'Energy per resistor per cycle',
+    pulsePower: 'Initial instantaneous power per resistor',
+    packageRating: 'Typical package rating',
+    designLimit: '20% design limit',
+    ratedLoading: 'Rated-power loading',
+    designUtil: '20% design-limit utilization',
+    distributionTitle: 'Loss Distribution',
+    externalLoss: 'External resistor loss',
+    driverLoss: 'Driver output-stage loss',
+    internalLoss: 'Internal gate-resistance loss',
+    noteTitle: 'Engineering Boundary',
+    note: 'Average-power acceptance does not prove pulse capability; verify the exact resistor series data sheet, ambient-temperature derating, PCB conditions, and repetitive-pulse curve.',
+    invalid: 'Check inputs',
+    errors: {
+      'switching-frequency-must-be-positive': 'Switching frequency must be greater than zero.',
+      'turn-on-voltage-must-exceed-turn-off-voltage': 'Turn-on gate voltage must be higher than turn-off gate voltage.',
+      'gate-charge-must-be-positive': 'Qg must be greater than zero.',
+      'gate-capacitance-must-be-positive': 'Equivalent Cg must be greater than zero.',
+      'driver-source-resistance-cannot-be-negative': 'Driver source resistance cannot be negative.',
+      'driver-sink-resistance-cannot-be-negative': 'Driver sink resistance cannot be negative.',
+      'internal-gate-resistance-cannot-be-negative': 'Internal gate resistance cannot be negative.'
+    }
+  },
+  zh: {
+    eyebrow: '工程计算工具',
+    target: '栅极驱动电阻筛选',
+    breadcrumbTools: '工具',
+    inputs: '设计输入',
+    load: '门极负载',
+    loadModel: '输入模型',
+    qgMode: '总栅极电荷 Qg',
+    cgMode: '等效栅极电容 Cg',
+    qg: '总栅极电荷 Qg',
+    cg: '等效栅极电容 Cg',
+    fsw: '开关频率',
+    voltage: '栅极电压',
+    vOn: '开通栅极电压 Vg,on',
+    vOff: '关断栅极电压 Vg,off',
+    voltageHint: '栅极电压摆幅 ΔVg = Vg,on − Vg,off，该电压直接决定栅极驱动能量。',
+    resistance: '驱动器与器件电阻',
+    rSource: '驱动器拉电流等效电阻',
+    rSink: '驱动器灌电流等效电阻',
+    rgInt: '功率器件内部栅极电阻',
+    arrangement: '电阻配置',
+    driveMode: '电阻配置',
+    single: '开通与关断共用同一组电阻',
+    split: '开通与关断使用独立电阻组',
+    onBank: '开通电阻组',
+    offBank: '关断电阻组',
+    singleBank: '充放电共用电阻组',
+    resistorValue: '单颗电阻阻值',
+    parallelCount: '并联数量',
+    resistorPackage: '电阻封装',
+    packageNote: '封装功率是典型筛选值，不代表所有厂商同封装电阻都具有相同额定功率。',
+    summaryTitle: '平均功率状态',
+    statusCopy: {
+      pass: '平均功率合格 · 仍需检查脉冲能力',
+      review: '复核 · 仍需检查脉冲能力',
+      fail: '不通过 · 仍需检查脉冲能力'
+    },
+    statusDetail: {
+      pass: '每颗物理电阻不超过典型封装额定功率的 15%，仍需单独验证重复脉冲能力。',
+      review: '至少一颗物理电阻高于典型封装额定功率的 15% 且不超过 20%，需要增加裕量并验证脉冲能力。',
+      fail: '至少一颗物理电阻超过典型封装额定功率的 20%，需要增大封装、增加并联数量或降低驱动能量。'
+    },
+    status: { pass: '平均功率合格', review: '复核', fail: '不通过' },
+    loadTitle: '门极驱动负载',
+    boundary: '本工具不估算 Qgd、米勒平台、开关时间、dv/dt、di/dt、开关损耗、过冲或振铃。',
+    pGate: '总栅极驱动功率',
+    iAvg: '平均驱动电源电流',
+    eCycle: '每开关周期驱动能量',
+    qEq: '等效栅极电荷',
+    iOn: '初始充电电流',
+    iOff: '初始放电电流',
+    bankTitle: '外部电阻组',
+    bankIntro: '平均损耗按所选封装典型额定功率的 20% 筛选。平均功率通过不代表重复脉冲能力通过。',
+    selectedConfig: '所选配置',
+    effectiveResistance: '等效电阻',
+    totalBankLoss: '电阻组总损耗',
+    lossPerResistor: '单颗电阻损耗',
+    energyPerPulse: '单颗电阻每次动作能量',
+    energyPerCycle: '单颗电阻每周期能量',
+    pulsePower: '单颗电阻初始瞬时功率',
+    packageRating: '典型封装额定功率',
+    designLimit: '20% 设计限制',
+    ratedLoading: '额定功率负载率',
+    designUtil: '20% 设计限制利用率',
+    distributionTitle: '损耗分布',
+    externalLoss: '外部栅极电阻损耗',
+    driverLoss: '驱动器输出级损耗',
+    internalLoss: '器件内部栅极电阻损耗',
+    noteTitle: '工程边界',
+    note: '平均功率通过不代表脉冲能力通过；仍需检查具体电阻系列的数据手册、温度降额、PCB 条件和重复脉冲曲线。',
+    invalid: '检查输入',
+    errors: {
+      'switching-frequency-must-be-positive': '开关频率必须大于零。',
+      'turn-on-voltage-must-exceed-turn-off-voltage': '开通栅极电压必须高于关断栅极电压。',
+      'gate-charge-must-be-positive': 'Qg 必须大于零。',
+      'gate-capacitance-must-be-positive': '等效 Cg 必须大于零。',
+      'driver-source-resistance-cannot-be-negative': '驱动器拉电流等效电阻不能为负数。',
+      'driver-sink-resistance-cannot-be-negative': '驱动器灌电流等效电阻不能为负数。',
+      'internal-gate-resistance-cannot-be-negative': '功率器件内部栅极电阻不能为负数。'
+    }
+  }
+} as const;
+
+const text = labels[locale];
+const formatPower = (watts: number) => watts < 1 ? `${(watts * 1000).toFixed(2)} mW` : `${watts.toFixed(2)} W`;
+const formatEnergy = (joules: number) => joules < 1e-6 ? `${(joules * 1e9).toFixed(1)} nJ` : `${(joules * 1e6).toFixed(3)} µJ`;
+const formatResistance = (ohms: number) => `${ohms < 10 ? ohms.toFixed(1) : ohms.toFixed(1)} Ω`;
+const formatCurrent = (amps: number) => amps < 1 ? `${(amps * 1000).toFixed(2)} mA` : `${amps.toFixed(3)} A`;
+const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
+const tone = initial.overallStatus === 'pass' ? 'pass' : initial.overallStatus === 'review' ? 'review' : 'fail';
+---
+
+<BaseLayout title={tool.title} description={tool.description} pathname="/tools/gate-resistor-power-stress-evaluator/" locale={locale}>
+  <main class="page-shell tool-workbench shunt-current-tool gate-resistor-tool" data-gate-resistor-tool data-locale={locale}>
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href={getLocalizedPath('/', locale)}>PE Toolbox</a>
+      <span aria-hidden="true">/</span>
+      <a href={getLocalizedPath('/tools/', locale)}>{text.breadcrumbTools}</a>
+      <span aria-hidden="true">/</span>
+      <span>{tool.title}</span>
+    </nav>
+
+    <section class="tool-workbench__header">
+      <div>
+        <p class="section-eyebrow">{text.eyebrow}</p>
+        <h1>{tool.title}</h1>
+        <p>{tool.description}</p>
+      </div>
+      <div class="tool-workbench__target">{text.target}</div>
+    </section>
+
+    <section class="tool-workbench__layout" aria-label={tool.title}>
+      <aside class="tool-input-panel">
+        <h2>{text.inputs}</h2>
+
+        <section class="gate-input-section">
+          <h3>{text.load}</h3>
+          <div class="tool-form-grid tool-form-grid--two">
+            <label class="tool-field tool-field--full">
+              <span>{text.loadModel}</span>
+              <select data-input="loadMode">
+                <option value="qg" selected>{text.qgMode}</option>
+                <option value="cg">{text.cgMode}</option>
+              </select>
+            </label>
+            <label class="tool-field" data-qg-field>
+              <span>{text.qg}</span>
+              <input data-input="totalGateChargeNc" type="number" min="0.1" step="0.1" value={defaults.totalGateChargeNc} />
+              <small>nC</small>
+            </label>
+            <label class="tool-field" data-cg-field hidden>
+              <span>{text.cg}</span>
+              <input data-input="equivalentGateCapacitanceNf" type="number" min="0.1" step="0.1" value={defaults.equivalentGateCapacitanceNf} />
+              <small>nF</small>
+            </label>
+            <label class="tool-field">
+              <span>{text.fsw}</span>
+              <input data-input="switchingFrequencyKhz" type="number" min="1" step="1" value={defaults.switchingFrequencyKhz} />
+              <small>kHz</small>
+            </label>
+          </div>
+        </section>
+
+        <section class="gate-input-section">
+          <h3>{text.voltage}</h3>
+          <div class="tool-form-grid tool-form-grid--two">
+            <label class="tool-field">
+              <span>{text.vOn}</span>
+              <input data-input="turnOnGateVoltageV" type="number" step="0.1" value={defaults.turnOnGateVoltageV} />
+              <small>V</small>
+            </label>
+            <label class="tool-field">
+              <span>{text.vOff}</span>
+              <input data-input="turnOffGateVoltageV" type="number" step="0.1" value={defaults.turnOffGateVoltageV} />
+              <small>V</small>
+            </label>
+          </div>
+          <p class="tool-help-text">{text.voltageHint}</p>
+        </section>
+
+        <section class="gate-input-section">
+          <h3>{text.resistance}</h3>
+          <div class="tool-form-grid tool-form-grid--two">
+            <label class="tool-field">
+              <span>{text.rSource}</span>
+              <input data-input="driverSourceResistanceOhms" type="number" min="0" step="0.1" value={defaults.driverSourceResistanceOhms} />
+              <small>Ω</small>
+            </label>
+            <label class="tool-field">
+              <span>{text.rSink}</span>
+              <input data-input="driverSinkResistanceOhms" type="number" min="0" step="0.1" value={defaults.driverSinkResistanceOhms} />
+              <small>Ω</small>
+            </label>
+            <label class="tool-field">
+              <span>{text.rgInt}</span>
+              <input data-input="internalGateResistanceOhms" type="number" min="0" step="0.1" value={defaults.internalGateResistanceOhms} />
+              <small>Ω</small>
+            </label>
+          </div>
+        </section>
+
+        <section class="gate-input-section">
+          <h3>{text.arrangement}</h3>
+          <div class="tool-form-grid">
+            <label class="tool-field">
+              <span>{text.driveMode}</span>
+              <select data-input="driveMode">
+                <option value="single">{text.single}</option>
+                <option value="split" selected>{text.split}</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="gate-input-section">
+          <h3 data-label="onBankInputTitle">{text.onBank}</h3>
+          <div class="tool-form-grid tool-form-grid--two">
+            <label class="tool-field">
+              <span>{text.resistorValue}</span>
+              <select data-input="turnOnResistorOhms">
+                {resistorOptions.map((option) => <option value={option.value} selected={option.value === defaults.turnOnBank.resistorOhms}>{option.label}</option>)}
+              </select>
+            </label>
+            <label class="tool-field">
+              <span>{text.parallelCount}</span>
+              <select data-input="turnOnParallelCount">
+                {[1, 2, 3, 4, 5].map((value) => <option value={value} selected={value === defaults.turnOnBank.parallelCount}>{value}</option>)}
+              </select>
+            </label>
+            <label class="tool-field tool-field--full">
+              <span>{text.resistorPackage}</span>
+              <select data-input="turnOnPackageCode">
+                {packageOptions.map(([code, rating]) => <option value={code} selected={code === defaults.turnOnBank.packageCode}>{code} · {formatPower(rating)} {locale === 'zh' ? '典型筛选值' : 'typical screening value'}</option>)}
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="gate-input-section" data-off-inputs>
+          <h3>{text.offBank}</h3>
+          <div class="tool-form-grid tool-form-grid--two">
+            <label class="tool-field">
+              <span>{text.resistorValue}</span>
+              <select data-input="turnOffResistorOhms">
+                {resistorOptions.map((option) => <option value={option.value} selected={option.value === defaults.turnOffBank.resistorOhms}>{option.label}</option>)}
+              </select>
+            </label>
+            <label class="tool-field">
+              <span>{text.parallelCount}</span>
+              <select data-input="turnOffParallelCount">
+                {[1, 2, 3, 4, 5].map((value) => <option value={value} selected={value === defaults.turnOffBank.parallelCount}>{value}</option>)}
+              </select>
+            </label>
+            <label class="tool-field tool-field--full">
+              <span>{text.resistorPackage}</span>
+              <select data-input="turnOffPackageCode">
+                {packageOptions.map(([code, rating]) => <option value={code} selected={code === defaults.turnOffBank.packageCode}>{code} · {formatPower(rating)} {locale === 'zh' ? '典型筛选值' : 'typical screening value'}</option>)}
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <p class="tool-help-text">{text.packageNote}</p>
+        <div class="gate-validation" data-output="validation" hidden></div>
+      </aside>
+
+      <section class="tool-results-stack">
+        <article class={`tool-result-card tool-result-card--primary gate-summary gate-summary--${initial.overallStatus}`}>
+          <div class="tool-result-card__heading">
+            <div>
+              <p>{text.summaryTitle}</p>
+              <h2 data-output="summaryStatus">{text.statusCopy[initial.overallStatus]}</h2>
+            </div>
+            <span class={`tool-check-pill tool-check-pill--${tone}`} data-output="overallStatus">{text.status[initial.overallStatus]}</span>
+          </div>
+          <p data-output="summaryDetail">{text.statusDetail[initial.overallStatus]}</p>
+        </article>
+
+        <article class="tool-result-card">
+          <h2>{text.loadTitle}</h2>
+          <p>{text.boundary}</p>
+          <div class="metric-grid metric-grid--compact">
+            <div class="metric-tile"><span>ΔVg</span><strong data-output="deltaGateVoltage">{initial.deltaGateVoltageV.toFixed(1)} V</strong></div>
+            <div class="metric-tile"><span>{text.pGate}</span><strong data-output="totalGateDrivePower">{formatPower(initial.totalGateDrivePowerW)}</strong></div>
+            <div class="metric-tile"><span>{text.iAvg}</span><strong data-output="averageSupplyCurrent">{formatCurrent(initial.averageSupplyCurrentA)}</strong></div>
+            <div class="metric-tile"><span>{text.eCycle}</span><strong data-output="energyPerCycle">{formatEnergy(initial.energyPerCycleJ)}</strong></div>
+            <div class="metric-tile"><span>{text.qEq}</span><strong data-output="equivalentGateCharge">{initial.equivalentGateChargeNc.toFixed(2)} nC</strong></div>
+            <div class="metric-tile"><span>{text.iOn}</span><strong data-output="initialChargeCurrent">{formatCurrent(initial.initialChargeCurrentA)}</strong></div>
+            <div class="metric-tile"><span>{text.iOff}</span><strong data-output="initialDischargeCurrent">{formatCurrent(initial.initialDischargeCurrentA)}</strong></div>
+          </div>
+        </article>
+
+        <article class="tool-result-card">
+          <h2>{text.bankTitle}</h2>
+          <p>{text.bankIntro}</p>
+          <div class="gate-bank-grid" data-bank-grid>
+            {initial.banks.map((bank, index) => (
+              <article class="gate-bank-card" data-bank-card={index === 0 ? 'on' : 'off'}>
+                <div class="tool-result-card__heading">
+                  <div>
+                    <p>{text.selectedConfig}</p>
+                    <h2 data-bank-output={`${index === 0 ? 'on' : 'off'}Title`}>{bank.titleKey === 'single' ? text.singleBank : bank.titleKey === 'turn-on' ? text.onBank : text.offBank}</h2>
+                    <p data-bank-output={`${index === 0 ? 'on' : 'off'}Config`}>{formatResistance(bank.selectedResistanceOhms)} × {bank.parallelCount} · {bank.packageCode}</p>
+                  </div>
+                  <span class={`tool-check-pill tool-check-pill--${bank.status === 'pass' ? 'pass' : bank.status === 'review' ? 'review' : 'fail'}`} data-bank-output={`${index === 0 ? 'on' : 'off'}Status`}>{text.status[bank.status]}</span>
+                </div>
+                <div class="metric-grid metric-grid--compact">
+                  <div class="metric-tile"><span>{text.effectiveResistance}</span><strong data-bank-output={`${index === 0 ? 'on' : 'off'}EffectiveResistance`}>{formatResistance(bank.effectiveResistanceOhms)}</strong></div>
+                  <div class="metric-tile"><span>{text.totalBankLoss}</span><strong data-bank-output={`${index === 0 ? 'on' : 'off'}TotalLoss`}>{formatPower(bank.totalBankLossW)}</strong></div>
+                  <div class="metric-tile"><span>{text.lossPerResistor}</span><strong data-bank-output={`${index === 0 ? 'on' : 'off'}LossEach`}>{formatPower(bank.lossPerResistorW)}</strong></div>
+                  <div class="metric-tile"><span data-bank-output={`${index === 0 ? 'on' : 'off'}EnergyLabel`}>{bank.titleKey === 'single' ? text.energyPerCycle : text.energyPerPulse}</span><strong data-bank-output={`${index === 0 ? 'on' : 'off'}EnergyEach`}>{formatEnergy(bank.energyPerResistorJ)}</strong></div>
+                  <div class="metric-tile"><span>{text.pulsePower}</span><strong data-bank-output={`${index === 0 ? 'on' : 'off'}PulsePower`}>{formatPower(bank.initialInstantaneousPowerPerResistorW)}</strong></div>
+                  <div class="metric-tile"><span>{text.packageRating}</span><strong data-bank-output={`${index === 0 ? 'on' : 'off'}PackageRating`}>{formatPower(bank.typicalPackageRatingW)}</strong></div>
+                  <div class="metric-tile"><span>{text.designLimit}</span><strong data-bank-output={`${index === 0 ? 'on' : 'off'}DesignLimit`}>{formatPower(bank.designLimitW)}</strong></div>
+                  <div class="metric-tile"><span>{text.ratedLoading}</span><strong data-bank-output={`${index === 0 ? 'on' : 'off'}RatedLoading`}>{formatPercent(bank.ratedPowerLoading)}</strong></div>
+                  <div class="metric-tile"><span>{text.designUtil}</span><strong data-bank-output={`${index === 0 ? 'on' : 'off'}DesignUtil`}>{formatPercent(bank.designLimitUtilization)}</strong></div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </article>
+
+        <article class="tool-result-card">
+          <h2>{text.distributionTitle}</h2>
+          <div class="metric-grid metric-grid--compact">
+            <div class="metric-tile"><span>{text.externalLoss}</span><strong data-output="externalLoss">{formatPower(initial.externalResistorLossW)}</strong></div>
+            <div class="metric-tile"><span>{text.driverLoss}</span><strong data-output="driverLoss">{formatPower(initial.driverOutputStageLossW)}</strong></div>
+            <div class="metric-tile"><span>{text.internalLoss}</span><strong data-output="internalLoss">{formatPower(initial.internalGateResistanceLossW)}</strong></div>
+          </div>
+        </article>
+
+        <article class="tool-result-card">
+          <h2>{text.noteTitle}</h2>
+          <p>{text.note}</p>
+        </article>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    import {
+      calculateGateResistorPowerStress,
+      normalizeGateResistorPowerStressInputs,
+      validateGateResistorPowerStressInputs
+    } from '@/lib/gateResistorPowerStress';
+    import type { GateResistorPowerStressInputs, GateStressStatus } from '@/lib/gateResistorPowerStress';
+
+    const root = document.querySelector('[data-gate-resistor-tool]');
+    if (root) {
+      const toolRoot = root as HTMLElement;
+      const locale = toolRoot.dataset.locale === 'zh' ? 'zh' : 'en';
+      const labels = {
+        en: {
+          qg: 'Total gate charge Qg',
+          cg: 'Equivalent gate capacitance Cg',
+          onBank: 'Turn-on resistor bank',
+          offBank: 'Turn-off resistor bank',
+          singleBank: 'Charge / Discharge Resistor Bank',
+          energyPerPulse: 'Energy per resistor per pulse',
+          energyPerCycle: 'Energy per resistor per cycle',
+          statusCopy: { pass: 'Average Power OK · Pulse Check Required', review: 'Review · Pulse Check Required', fail: 'Fail · Pulse Check Required' },
+          statusDetail: {
+            pass: 'Each physical resistor is at or below 15% of its typical package rating. Verify repetitive-pulse capability separately.',
+            review: 'At least one physical resistor is above 15% but not above 20% of its typical package rating. Add margin and verify pulse capability.',
+            fail: 'At least one physical resistor exceeds 20% of its typical package rating. Increase package size or parallel count, or reduce drive energy.'
+          },
+          status: { pass: 'Average Power OK', review: 'Review', fail: 'Fail' },
+          invalid: 'Check inputs',
+          errors: {
+            'switching-frequency-must-be-positive': 'Switching frequency must be greater than zero.',
+            'turn-on-voltage-must-exceed-turn-off-voltage': 'Turn-on gate voltage must be higher than turn-off gate voltage.',
+            'gate-charge-must-be-positive': 'Qg must be greater than zero.',
+            'gate-capacitance-must-be-positive': 'Equivalent Cg must be greater than zero.',
+            'driver-source-resistance-cannot-be-negative': 'Driver source resistance cannot be negative.',
+            'driver-sink-resistance-cannot-be-negative': 'Driver sink resistance cannot be negative.',
+            'internal-gate-resistance-cannot-be-negative': 'Internal gate resistance cannot be negative.'
+          }
+        },
+        zh: {
+          qg: '总栅极电荷 Qg',
+          cg: '等效栅极电容 Cg',
+          onBank: '开通电阻组',
+          offBank: '关断电阻组',
+          singleBank: '充放电共用电阻组',
+          energyPerPulse: '单颗电阻每次动作能量',
+          energyPerCycle: '单颗电阻每周期能量',
+          statusCopy: { pass: '平均功率合格 · 仍需检查脉冲能力', review: '复核 · 仍需检查脉冲能力', fail: '不通过 · 仍需检查脉冲能力' },
+          statusDetail: {
+            pass: '每颗物理电阻不超过典型封装额定功率的 15%，仍需单独验证重复脉冲能力。',
+            review: '至少一颗物理电阻高于典型封装额定功率的 15% 且不超过 20%，需要增加裕量并验证脉冲能力。',
+            fail: '至少一颗物理电阻超过典型封装额定功率的 20%，需要增大封装、增加并联数量或降低驱动能量。'
+          },
+          status: { pass: '平均功率合格', review: '复核', fail: '不通过' },
+          invalid: '检查输入',
+          errors: {
+            'switching-frequency-must-be-positive': '开关频率必须大于零。',
+            'turn-on-voltage-must-exceed-turn-off-voltage': '开通栅极电压必须高于关断栅极电压。',
+            'gate-charge-must-be-positive': 'Qg 必须大于零。',
+            'gate-capacitance-must-be-positive': '等效 Cg 必须大于零。',
+            'driver-source-resistance-cannot-be-negative': '驱动器拉电流等效电阻不能为负数。',
+            'driver-sink-resistance-cannot-be-negative': '驱动器灌电流等效电阻不能为负数。',
+            'internal-gate-resistance-cannot-be-negative': '功率器件内部栅极电阻不能为负数。'
+          }
+        }
+      }[locale];
+      type InputElement = HTMLInputElement | HTMLSelectElement;
+      const inputs: Record<string, InputElement> = {};
+      for (const input of Array.from(toolRoot.querySelectorAll<InputElement>('[data-input]'))) {
+        const key = input.getAttribute('data-input');
+        if (key) inputs[key] = input;
+      }
+      const outputs: Record<string, HTMLElement> = {};
+      for (const node of Array.from(toolRoot.querySelectorAll<HTMLElement>('[data-output]'))) {
+        const key = node.getAttribute('data-output');
+        if (key) outputs[key] = node;
+      }
+      const bankOutputs: Record<string, HTMLElement> = {};
+      for (const node of Array.from(toolRoot.querySelectorAll<HTMLElement>('[data-bank-output]'))) {
+        const key = node.getAttribute('data-bank-output');
+        if (key) bankOutputs[key] = node;
+      }
+      const formatPower = (watts: number) => watts < 1 ? `${(watts * 1000).toFixed(2)} mW` : `${watts.toFixed(2)} W`;
+      const formatEnergy = (joules: number) => joules < 1e-6 ? `${(joules * 1e9).toFixed(1)} nJ` : `${(joules * 1e6).toFixed(3)} µJ`;
+      const formatResistance = (ohms: number) => `${ohms.toFixed(1)} Ω`;
+      const formatCurrent = (amps: number) => amps < 1 ? `${(amps * 1000).toFixed(2)} mA` : `${amps.toFixed(3)} A`;
+      const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
+      const toneFor = (status: GateStressStatus) => status === 'pass' ? 'pass' : status === 'review' ? 'review' : 'fail';
+
+      function stringValue(name: string): string {
+        return inputs[name]?.value ?? '';
+      }
+
+      function numberValue(name: string): number {
+        return Number(stringValue(name));
+      }
+
+      function readInputs(): GateResistorPowerStressInputs {
+        return {
+          loadMode: stringValue('loadMode') === 'cg' ? 'cg' : 'qg',
+          totalGateChargeNc: numberValue('totalGateChargeNc'),
+          equivalentGateCapacitanceNf: numberValue('equivalentGateCapacitanceNf'),
+          switchingFrequencyKhz: numberValue('switchingFrequencyKhz'),
+          turnOnGateVoltageV: numberValue('turnOnGateVoltageV'),
+          turnOffGateVoltageV: numberValue('turnOffGateVoltageV'),
+          driverSourceResistanceOhms: numberValue('driverSourceResistanceOhms'),
+          driverSinkResistanceOhms: numberValue('driverSinkResistanceOhms'),
+          internalGateResistanceOhms: numberValue('internalGateResistanceOhms'),
+          driveMode: stringValue('driveMode') === 'single' ? 'single' : 'split',
+          turnOnBank: {
+            resistorOhms: numberValue('turnOnResistorOhms'),
+            parallelCount: numberValue('turnOnParallelCount'),
+            packageCode: stringValue('turnOnPackageCode') as GateResistorPowerStressInputs['turnOnBank']['packageCode']
+          },
+          turnOffBank: {
+            resistorOhms: numberValue('turnOffResistorOhms'),
+            parallelCount: numberValue('turnOffParallelCount'),
+            packageCode: stringValue('turnOffPackageCode') as GateResistorPowerStressInputs['turnOffBank']['packageCode']
+          }
+        };
+      }
+
+      function write(name: string, value: string) {
+        if (outputs[name]) outputs[name].textContent = value;
+      }
+
+      function writeBank(name: string, value: string) {
+        if (bankOutputs[name]) bankOutputs[name].textContent = value;
+      }
+
+      function setPill(node: HTMLElement | undefined, status: GateStressStatus) {
+        node?.classList.remove('tool-check-pill--pass', 'tool-check-pill--review', 'tool-check-pill--fail');
+        node?.classList.add(`tool-check-pill--${toneFor(status)}`);
+      }
+
+      function errorText(error: string): string {
+        return (labels.errors as Record<string, string>)[error] ?? error;
+      }
+
+      function renderBank(prefix: 'on' | 'off', bank: ReturnType<typeof calculateGateResistorPowerStress>['banks'][number]) {
+        writeBank(`${prefix}Title`, bank.titleKey === 'single' ? labels.singleBank : bank.titleKey === 'turn-on' ? labels.onBank : labels.offBank);
+        writeBank(`${prefix}Config`, `${formatResistance(bank.selectedResistanceOhms)} × ${bank.parallelCount} · ${bank.packageCode}`);
+        writeBank(`${prefix}Status`, labels.status[bank.status]);
+        writeBank(`${prefix}EffectiveResistance`, formatResistance(bank.effectiveResistanceOhms));
+        writeBank(`${prefix}TotalLoss`, formatPower(bank.totalBankLossW));
+        writeBank(`${prefix}LossEach`, formatPower(bank.lossPerResistorW));
+        writeBank(`${prefix}EnergyLabel`, bank.titleKey === 'single' ? labels.energyPerCycle : labels.energyPerPulse);
+        writeBank(`${prefix}EnergyEach`, formatEnergy(bank.energyPerResistorJ));
+        writeBank(`${prefix}PulsePower`, formatPower(bank.initialInstantaneousPowerPerResistorW));
+        writeBank(`${prefix}PackageRating`, formatPower(bank.typicalPackageRatingW));
+        writeBank(`${prefix}DesignLimit`, formatPower(bank.designLimitW));
+        writeBank(`${prefix}RatedLoading`, formatPercent(bank.ratedPowerLoading));
+        writeBank(`${prefix}DesignUtil`, formatPercent(bank.designLimitUtilization));
+        setPill(bankOutputs[`${prefix}Status`], bank.status);
+      }
+
+      function render() {
+        const raw = readInputs();
+        const qgField = toolRoot.querySelector<HTMLElement>('[data-qg-field]');
+        const cgField = toolRoot.querySelector<HTMLElement>('[data-cg-field]');
+        const offInputs = toolRoot.querySelector<HTMLElement>('[data-off-inputs]');
+        const offCard = toolRoot.querySelector<HTMLElement>('[data-bank-card="off"]');
+        const onInputTitle = toolRoot.querySelector<HTMLElement>('[data-label="onBankInputTitle"]');
+        if (qgField) qgField.hidden = raw.loadMode !== 'qg';
+        if (cgField) cgField.hidden = raw.loadMode !== 'cg';
+        if (offInputs) offInputs.hidden = raw.driveMode === 'single';
+        if (offCard) offCard.hidden = raw.driveMode === 'single';
+        if (onInputTitle) onInputTitle.textContent = raw.driveMode === 'single' ? labels.singleBank : labels.onBank;
+
+        const validation = validateGateResistorPowerStressInputs(raw);
+        const validationNode = outputs.validation;
+        if (validation.length > 0) {
+          if (validationNode) {
+            validationNode.hidden = false;
+            validationNode.textContent = validation.map(errorText).join(' ');
+          }
+          write('summaryStatus', labels.invalid);
+          write('overallStatus', labels.invalid);
+          write('summaryDetail', validation.map(errorText).join(' '));
+          return;
+        }
+        if (validationNode) validationNode.hidden = true;
+
+        const normalized = normalizeGateResistorPowerStressInputs(raw);
+        const result = calculateGateResistorPowerStress(normalized);
+        write('summaryStatus', labels.statusCopy[result.overallStatus]);
+        write('overallStatus', labels.status[result.overallStatus]);
+        write('summaryDetail', labels.statusDetail[result.overallStatus]);
+        setPill(outputs.overallStatus, result.overallStatus);
+        const summary = toolRoot.querySelector<HTMLElement>('.gate-summary');
+        summary?.classList.remove('gate-summary--pass', 'gate-summary--review', 'gate-summary--fail');
+        summary?.classList.add(`gate-summary--${result.overallStatus}`);
+
+        write('deltaGateVoltage', `${result.deltaGateVoltageV.toFixed(1)} V`);
+        write('totalGateDrivePower', formatPower(result.totalGateDrivePowerW));
+        write('averageSupplyCurrent', formatCurrent(result.averageSupplyCurrentA));
+        write('energyPerCycle', formatEnergy(result.energyPerCycleJ));
+        write('equivalentGateCharge', `${result.equivalentGateChargeNc.toFixed(2)} nC`);
+        write('initialChargeCurrent', formatCurrent(result.initialChargeCurrentA));
+        write('initialDischargeCurrent', formatCurrent(result.initialDischargeCurrentA));
+        renderBank('on', result.banks[0]);
+        if (result.banks[1]) renderBank('off', result.banks[1]);
+        write('externalLoss', formatPower(result.externalResistorLossW));
+        write('driverLoss', formatPower(result.driverOutputStageLossW));
+        write('internalLoss', formatPower(result.internalGateResistanceLossW));
+      }
+
+      for (const input of Object.values(inputs)) {
+        input.addEventListener('input', render);
+        input.addEventListener('change', render);
+      }
+      render();
+    }
+  </script>
+</BaseLayout>

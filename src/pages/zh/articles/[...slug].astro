@@ -1,0 +1,27 @@
+---
+import { render } from 'astro:content';
+import ArticleLayout from '@/layouts/ArticleLayout.astro';
+import { articleLocale, articleSlug, getArticles } from '@/lib/articles';
+
+export async function getStaticPaths() {
+  const articles = await getArticles('zh');
+  return articles.map((article) => ({
+    params: { slug: articleSlug(article) },
+    props: {
+      article,
+      relatedArticles: articles
+        .filter((candidate) => candidate.slug !== article.slug)
+        .filter((candidate) => candidate.data.category === article.data.category)
+        .slice(0, 3)
+    }
+  }));
+}
+
+const { article, relatedArticles } = Astro.props;
+if (articleLocale(article) !== 'zh') throw new Error(`Expected Chinese article for ${article.id}`);
+const { Content, headings } = await render(article);
+---
+
+<ArticleLayout article={article} headings={headings} relatedArticles={relatedArticles} locale="zh">
+  <Content />
+</ArticleLayout>

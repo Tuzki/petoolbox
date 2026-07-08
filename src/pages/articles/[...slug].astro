@@ -1,0 +1,12 @@
+---
+import LegacyRedirect from '@/components/LegacyRedirect.astro';
+
+export function getStaticPaths() {
+  return [
+    { params: { slug: 'nvidia-800v-power-architecture' }, props: { to: '/en/articles/nvidia-800v-power-architecture/' } }
+  ];
+}
+
+const { to } = Astro.props;
+---
+<LegacyRedirect to={to} />

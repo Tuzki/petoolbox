@@ -1,14 +1,4 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
-import { site } from '@/lib/site';
+import LegacyRedirect from '@/components/LegacyRedirect.astro';
 ---
-
-<BaseLayout title={site.name} description={site.tagline} pathname="/">
-  <main class="home-shell placeholder-shell">
-    <section class="home-intro" aria-labelledby="home-title">
-      <h1 id="home-title">PE Toolbox</h1>
-      <p>Practical tools for power electronics engineers.</p>
-      <p class="muted">The website is currently under private development.</p>
-    </section>
-  </main>
-</BaseLayout>
+<LegacyRedirect to="/en/" />

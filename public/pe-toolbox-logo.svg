@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="PE Toolbox icon">
+  <path d="M16 3.2 27.2 9.6v12.8L16 28.8 4.8 22.4V9.6L16 3.2Z" fill="#081827" stroke="#7dd3fc" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M8.2 16h4.5l2.5-5.1 4 10.2 2.2-5.1h2.4" fill="none" stroke="#22d3ee" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="8.2" cy="16" r="2.3" fill="#e0faff"/>
+  <circle cx="23.8" cy="16" r="2.3" fill="#e0faff"/>
+</svg>

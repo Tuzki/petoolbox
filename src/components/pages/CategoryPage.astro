@@ -1,0 +1,31 @@
+---
+import ToolCard from '@/components/ToolCard.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getToolsByCategory, type ToolCategory } from '@/data/tools';
+import { getMessages } from '@/lib/i18n/messages';
+import type { Locale } from '@/lib/i18n/config';
+
+type CategoryRoute = 'tools' | 'topology-designers' | 'magnetics' | 'control' | 'simulation';
+type Props = { locale: Locale; page: CategoryRoute; category: ToolCategory };
+const { locale, page, category } = Astro.props;
+const t = getMessages(locale).pages.categories[page];
+const tools = getToolsByCategory(category, locale);
+const pathname = page === 'tools' ? '/tools/' : `/${page}/`;
+---
+
+<BaseLayout title={t.title} description={t.description} pathname={pathname} locale={locale}>
+  <main class="page-shell category-page">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href={`/${locale}/`}>{getMessages(locale).site.breadcrumbs.home}</a>
+      <span aria-hidden="true">/</span>
+      <span>{t.title}</span>
+    </nav>
+    <section aria-labelledby="category-title">
+      <h1 id="category-title">{t.title}</h1>
+      <p>{t.intro}</p>
+      <div class="tool-card-grid tool-card-grid--category">
+        {tools.map((tool) => <ToolCard tool={tool} locale={locale} />)}
+      </div>
+    </section>
+  </main>
+</BaseLayout>

@@ -1,0 +1,551 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import type { Locale } from '@/lib/i18n/config';
+import { getLocalizedPath } from '@/lib/i18n/routes';
+import { getMessages } from '@/lib/i18n/messages';
+import {
+  calculateShuntCurrentSensing,
+  defaultShuntCurrentSensingInputs
+} from '@/lib/shuntCurrentSensing';
+
+type Props = {
+  locale: Locale;
+};
+
+const { locale } = Astro.props;
+const messages = getMessages(locale);
+const tool = messages.tools.items['shunt-current-sensing-evaluator'];
+const labels = {
+  en: {
+    eyebrow: 'Engineering Calculators',
+    target: 'Browser-side sensing evaluator',
+    breadcrumbTools: 'Tools',
+    summary: 'Design Summary',
+    currentSection: 'Current',
+    currentType: 'Current type',
+    currentPolarity: 'Current polarity',
+    dc: 'DC',
+    ac: 'AC',
+    unidirectional: 'Unidirectional',
+    bidirectional: 'Bidirectional',
+    continuousCurrent: 'Continuous current',
+    rmsCurrent: 'RMS current',
+    peakCurrent: 'Peak current',
+    shuntSection: 'Shunt Bank',
+    resistancePerShunt: 'Resistance per shunt',
+    parallelQuantity: 'Parallel quantity',
+    ratedPowerPerShunt: 'Rated power per shunt',
+    csaAdcSection: 'CSA & ADC',
+    csaGain: 'CSA gain',
+    outputReference: 'Output reference',
+    adcFullScale: 'ADC full-scale',
+    adcResolution: 'ADC resolution',
+    referenceHint: 'Unidirectional sensing often uses a low reference; bidirectional sensing usually centers near mid-ADC.',
+    equivalentResistance: 'Equivalent shunt resistance',
+    peakShuntVoltage: 'Peak shunt voltage',
+    powerPerShunt: 'Power per shunt',
+    currentResolution: 'Current resolution',
+    atPeakCurrent: 'At peak current',
+    singleDeviceRating: 'of single-device rating',
+    adcAtFullScale: 'ADC at full-scale',
+    bankTitle: 'Shunt Bank Evaluation',
+    bankIntro: 'Verify loss, device loading, and equal-sharing assumptions for the selected shunt bank.',
+    totalContinuousLoss: 'Total continuous loss',
+    continuousPerShunt: 'Continuous current per shunt',
+    rmsPerShunt: 'RMS current per shunt',
+    peakPerShunt: 'Peak current per shunt',
+    equalSharing: 'Assumes equal current sharing across parallel shunts.',
+    csaTitle: 'CSA & ADC Evaluation',
+    csaIntro: 'Check amplifier output swing, ADC range usage, and current represented by one ADC count.',
+    positiveOutput: 'Positive output',
+    negativeOutput: 'Negative output',
+    sensitivity: 'Sensitivity',
+    adcRangeUsed: 'ADC range used',
+    currentPerLsb: 'Current per LSB',
+    formula: 'VOUT = VREF + I × REQ × G',
+    notesTitle: 'Engineering Notes',
+    noNotes: 'No review notes for the current inputs.',
+    status: {
+      valid: 'Design is valid',
+      review: 'Design needs review',
+      invalid: 'Check inputs'
+    },
+    statusCopy: {
+      valid: 'The selected shunt, gain, and ADC range satisfy the configured limits.',
+      review: 'The electrical result is usable, but one or more implementation checks should be reviewed.',
+      invalid: 'At least one configured limit is exceeded.'
+    },
+    hints: {
+      'continuous-over-peak': 'Continuous/RMS current is higher than peak current.',
+      'power-over-rating': 'Power per shunt exceeds the single-device rating.',
+      'power-near-rating': 'Power per shunt is above 80% of the single-device rating.',
+      'positive-output-range': 'Positive output is outside the ADC input range.',
+      'negative-output-range': 'Negative output is outside the ADC input range.',
+      'adc-utilization-low': 'ADC range usage is below 25%.',
+      'adc-utilization-high': 'ADC range usage is above 90%.',
+      'parallel-sharing': 'Parallel shunts require current-sharing and Kelvin-routing checks.'
+    }
+  },
+  zh: {
+    eyebrow: '工程计算工具',
+    target: '浏览器端采样评估',
+    breadcrumbTools: '工具',
+    summary: '设计摘要',
+    currentSection: '电流条件',
+    currentType: '电流类型',
+    currentPolarity: '电流方向',
+    dc: '直流',
+    ac: '交流',
+    unidirectional: '单向',
+    bidirectional: '双向',
+    continuousCurrent: '连续电流',
+    rmsCurrent: '有效值电流',
+    peakCurrent: '峰值电流',
+    shuntSection: '分流电阻组',
+    resistancePerShunt: '单个分流电阻',
+    parallelQuantity: '并联数量',
+    ratedPowerPerShunt: '单个额定功率',
+    csaAdcSection: 'CSA 与 ADC',
+    csaGain: 'CSA 增益',
+    outputReference: '输出参考',
+    adcFullScale: 'ADC 满量程',
+    adcResolution: 'ADC 分辨率',
+    referenceHint: '单向采样通常使用较低参考电压；双向采样通常靠近 ADC 中点。',
+    equivalentResistance: '等效分流电阻',
+    peakShuntVoltage: '峰值分流电压',
+    powerPerShunt: '单个分流电阻功耗',
+    currentResolution: '电流分辨率',
+    atPeakCurrent: '对应峰值电流',
+    singleDeviceRating: '占单个额定值',
+    adcAtFullScale: 'ADC 满量程',
+    bankTitle: '分流电阻组评估',
+    bankIntro: '检查所选分流电阻组的损耗、器件负载和均流假设。',
+    totalContinuousLoss: '总连续损耗',
+    continuousPerShunt: '单个连续电流',
+    rmsPerShunt: '单个有效值电流',
+    peakPerShunt: '单个峰值电流',
+    equalSharing: '计算假设并联分流电阻电流均分。',
+    csaTitle: 'CSA 与 ADC 评估',
+    csaIntro: '检查放大器输出摆幅、ADC 量程占用和单个 ADC 码对应的电流。',
+    positiveOutput: '正向输出',
+    negativeOutput: '负向输出',
+    sensitivity: '灵敏度',
+    adcRangeUsed: 'ADC 量程占用',
+    currentPerLsb: '每 LSB 电流',
+    formula: 'VOUT = VREF + I × REQ × G',
+    notesTitle: '工程提示',
+    noNotes: '当前输入没有需要复核的提示。',
+    status: {
+      valid: '设计有效',
+      review: '设计需要复核',
+      invalid: '检查输入'
+    },
+    statusCopy: {
+      valid: '所选分流电阻、增益和 ADC 量程满足配置限制。',
+      review: '电气结果可用，但有一项或多项实现检查需要复核。',
+      invalid: '至少一项配置限制已被超出。'
+    },
+    hints: {
+      'continuous-over-peak': '连续/有效值电流高于峰值电流。',
+      'power-over-rating': '单个分流电阻功耗超过器件额定值。',
+      'power-near-rating': '单个分流电阻功耗超过器件额定值的 80%。',
+      'positive-output-range': '正向输出超出 ADC 输入范围。',
+      'negative-output-range': '负向输出超出 ADC 输入范围。',
+      'adc-utilization-low': 'ADC 量程占用低于 25%。',
+      'adc-utilization-high': 'ADC 量程占用高于 90%。',
+      'parallel-sharing': '并联分流电阻需要检查均流和 Kelvin 走线。'
+    }
+  }
+} as const;
+
+const text = labels[locale];
+const defaults = defaultShuntCurrentSensingInputs;
+const initial = calculateShuntCurrentSensing(defaults);
+
+const format = {
+  mohm: (value: number) => `${value.toFixed(3)} mΩ`,
+  mv: (value: number) => `${value.toFixed(1)} mV`,
+  watts: (value: number) => `${value.toFixed(2)} W`,
+  amps: (value: number) => `${value.toFixed(1)} A`,
+  volts: (value: number) => `${value.toFixed(3)} V`,
+  sensitivity: (value: number) => `${value.toFixed(1)} mV/A`,
+  percent: (value: number) => `${value.toFixed(1)}%`,
+  resolution: (value: number) => `${value.toFixed(1)} mA/LSB`
+};
+
+const statusTone = initial.status === 'valid' ? 'pass' : initial.status === 'review' ? 'review' : 'fail';
+const currentPerShuntLabel = defaults.currentType === 'ac' ? text.rmsPerShunt : text.continuousPerShunt;
+---
+
+<BaseLayout title={tool.title} description={tool.description} pathname="/tools/shunt-current-sensing-evaluator/" locale={locale}>
+  <main class="page-shell tool-workbench shunt-current-tool" data-shunt-current-tool data-locale={locale}>
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href={getLocalizedPath('/', locale)}>PE Toolbox</a>
+      <span aria-hidden="true">/</span>
+      <a href={getLocalizedPath('/tools/', locale)}>{text.breadcrumbTools}</a>
+      <span aria-hidden="true">/</span>
+      <span>{tool.title}</span>
+    </nav>
+
+    <section class="tool-workbench__header">
+      <div>
+        <p class="section-eyebrow">{text.eyebrow}</p>
+        <h1>{tool.title}</h1>
+        <p>{tool.description}</p>
+      </div>
+      <div class="tool-workbench__target">{text.target}</div>
+    </section>
+
+    <section class="tool-workbench__layout" aria-label={tool.title}>
+      <aside class="tool-input-panel">
+        <h2>{text.currentSection}</h2>
+        <div class="tool-form-grid tool-form-grid--two">
+          <label class="tool-field">
+            <span>{text.currentType}</span>
+            <select data-input="currentType" name="currentType">
+              <option value="dc" selected>{text.dc}</option>
+              <option value="ac">{text.ac}</option>
+            </select>
+          </label>
+          <label class="tool-field">
+            <span>{text.currentPolarity}</span>
+            <select data-input="currentPolarity" name="currentPolarity">
+              <option value="unidirectional">{text.unidirectional}</option>
+              <option value="bidirectional" selected>{text.bidirectional}</option>
+            </select>
+          </label>
+          <label class="tool-field">
+            <span data-label="continuousCurrentLabel">{text.continuousCurrent}</span>
+            <input data-input="continuousCurrentA" name="continuousCurrentA" type="number" min="0" step="1" inputmode="numeric" value={defaults.continuousCurrentA} />
+            <small>A</small>
+          </label>
+          <label class="tool-field">
+            <span>{text.peakCurrent}</span>
+            <input data-input="peakCurrentA" name="peakCurrentA" type="number" min="1" step="1" inputmode="numeric" value={defaults.peakCurrentA} />
+            <small>A</small>
+          </label>
+        </div>
+
+        <h2>{text.shuntSection}</h2>
+        <div class="tool-form-grid tool-form-grid--two">
+          <label class="tool-field">
+            <span>{text.resistancePerShunt}</span>
+            <input data-input="resistancePerShuntMohm" name="resistancePerShuntMohm" type="number" min="0.1" step="0.1" value={defaults.resistancePerShuntMohm.toFixed(1)} />
+            <small>mΩ</small>
+          </label>
+          <label class="tool-field">
+            <span>{text.parallelQuantity}</span>
+            <input data-input="parallelQuantity" name="parallelQuantity" type="number" min="1" step="1" inputmode="numeric" value={defaults.parallelQuantity} />
+          </label>
+          <label class="tool-field">
+            <span>{text.ratedPowerPerShunt}</span>
+            <input data-input="ratedPowerPerShuntW" name="ratedPowerPerShuntW" type="number" min="0.1" step="0.1" value={defaults.ratedPowerPerShuntW.toFixed(1)} />
+            <small>W</small>
+          </label>
+        </div>
+
+        <h2>{text.csaAdcSection}</h2>
+        <div class="tool-form-grid tool-form-grid--two">
+          <label class="tool-field">
+            <span>{text.csaGain}</span>
+            <input data-input="csaGain" name="csaGain" type="number" min="1" step="1" inputmode="numeric" value={defaults.csaGain} />
+            <small>V/V</small>
+          </label>
+          <label class="tool-field">
+            <span>{text.outputReference}</span>
+            <input data-input="outputReferenceV" name="outputReferenceV" type="number" step="0.01" value={defaults.outputReferenceV} />
+            <small>V</small>
+          </label>
+          <label class="tool-field">
+            <span>{text.adcFullScale}</span>
+            <input data-input="adcFullScaleV" name="adcFullScaleV" type="number" min="0.1" step="0.1" value={defaults.adcFullScaleV} />
+            <small>V</small>
+          </label>
+          <label class="tool-field">
+            <span>{text.adcResolution}</span>
+            <select data-input="adcResolutionBits" name="adcResolutionBits">
+              <option value="8">8</option>
+              <option value="10">10</option>
+              <option value="12" selected>12</option>
+              <option value="14">14</option>
+              <option value="16">16</option>
+            </select>
+            <small>bit</small>
+          </label>
+        </div>
+        <p class="tool-help-text">{text.referenceHint}</p>
+      </aside>
+
+      <section class="tool-results-stack">
+        <article class={`tool-result-card tool-result-card--primary shunt-status-card shunt-status-card--${initial.status}`}>
+          <div class="tool-result-card__heading">
+            <div>
+              <p>{text.summary}</p>
+              <h2 data-output="statusLabel">{text.status[initial.status]}</h2>
+            </div>
+            <span class={`tool-check-pill tool-check-pill--${statusTone}`} data-output="status">{text.status[initial.status]}</span>
+          </div>
+          <p data-output="statusCopy">{text.statusCopy[initial.status]}</p>
+          <div class="metric-grid">
+            <div class="metric-tile">
+              <span>{text.equivalentResistance}</span>
+              <strong data-output="equivalentResistance">{format.mohm(initial.equivalentResistanceMohm)}</strong>
+              <small data-output="equivalentResistanceSub">{defaults.parallelQuantity} x {format.mohm(defaults.resistancePerShuntMohm)}</small>
+            </div>
+            <div class="metric-tile">
+              <span>{text.peakShuntVoltage}</span>
+              <strong data-output="peakShuntVoltage">{format.mv(initial.peakShuntVoltageMv)}</strong>
+              <small>{text.atPeakCurrent}</small>
+            </div>
+            <div class="metric-tile">
+              <span>{text.powerPerShunt}</span>
+              <strong data-output="powerPerShunt">{format.watts(initial.powerPerShuntW)}</strong>
+              <small data-output="powerPerShuntSub">{format.percent(initial.powerUtilizationPercent)} {text.singleDeviceRating}</small>
+            </div>
+            <div class="metric-tile">
+              <span>{text.currentResolution}</span>
+              <strong data-output="currentResolution">{format.resolution(initial.currentPerLsbMa)}</strong>
+              <small data-output="currentResolutionSub">{defaults.adcResolutionBits}-bit {text.adcAtFullScale}</small>
+            </div>
+          </div>
+        </article>
+
+        <div class="tool-result-grid">
+          <article class="tool-result-card">
+            <h2>{text.bankTitle}</h2>
+            <p>{text.bankIntro}</p>
+            <div class="metric-grid metric-grid--compact">
+              <div class="metric-tile"><span>{text.equivalentResistance}</span><strong data-output="bankEquivalentResistance">{format.mohm(initial.equivalentResistanceMohm)}</strong></div>
+              <div class="metric-tile"><span>{text.peakShuntVoltage}</span><strong data-output="bankPeakShuntVoltage">{format.mv(initial.peakShuntVoltageMv)}</strong></div>
+              <div class="metric-tile"><span>{text.totalContinuousLoss}</span><strong data-output="totalContinuousLoss">{format.watts(initial.totalContinuousLossW)}</strong></div>
+              <div class="metric-tile"><span>{text.powerPerShunt}</span><strong data-output="bankPowerPerShunt">{format.watts(initial.powerPerShuntW)}</strong></div>
+              <div class="metric-tile"><span data-label="currentPerShuntLabel">{currentPerShuntLabel}</span><strong data-output="continuousCurrentPerShunt">{format.amps(initial.continuousCurrentPerShuntA)}</strong></div>
+              <div class="metric-tile"><span>{text.peakPerShunt}</span><strong data-output="peakCurrentPerShunt">{format.amps(initial.peakCurrentPerShuntA)}</strong></div>
+            </div>
+            <p class="tool-help-text" data-output="equalSharingNote">{text.equalSharing}</p>
+          </article>
+
+          <article class="tool-result-card">
+            <h2>{text.csaTitle}</h2>
+            <p>{text.csaIntro}</p>
+            <div class="shunt-relation" data-output="formulaText">{text.formula}</div>
+            <div class="metric-grid metric-grid--compact">
+              <div class="metric-tile"><span>{text.positiveOutput}</span><strong data-output="positiveOutput">{format.volts(initial.positiveOutputV)}</strong></div>
+              <div class="metric-tile" data-negative-output><span>{text.negativeOutput}</span><strong data-output="negativeOutput">{format.volts(initial.negativeOutputV ?? 0)}</strong></div>
+              <div class="metric-tile"><span>{text.sensitivity}</span><strong data-output="sensitivity">{format.sensitivity(initial.sensitivityMvA)}</strong></div>
+              <div class="metric-tile"><span>{text.adcRangeUsed}</span><strong data-output="adcRangeUsed">{format.percent(initial.adcUsagePercent)}</strong></div>
+              <div class="metric-tile"><span>{text.currentPerLsb}</span><strong data-output="currentPerLsb">{format.resolution(initial.currentPerLsbMa)}</strong></div>
+            </div>
+          </article>
+        </div>
+
+        <article class="tool-result-card">
+          <h2>{text.notesTitle}</h2>
+          <ul class="shunt-hints" data-output="engineeringHints">
+            {initial.hints.map((hint) => <li>{text.hints[hint]}</li>)}
+          </ul>
+        </article>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    import { calculateShuntCurrentSensing, normalizeShuntCurrentSensingInputs } from '@/lib/shuntCurrentSensing';
+    import type { ShuntCurrentSensingInputs } from '@/lib/shuntCurrentSensing';
+
+    const root = document.querySelector('[data-shunt-current-tool]');
+    if (root) {
+      const toolRoot = root as HTMLElement;
+      const locale = root.getAttribute('data-locale') === 'zh' ? 'zh' : 'en';
+      const labels = {
+        en: {
+          continuousCurrent: 'Continuous current',
+          rmsCurrent: 'RMS current',
+          continuousPerShunt: 'Continuous current per shunt',
+          rmsPerShunt: 'RMS current per shunt',
+          singleDeviceRating: 'of single-device rating',
+          adcAtFullScale: 'ADC at full-scale',
+          noNotes: 'No review notes for the current inputs.',
+          status: {
+            valid: 'Design is valid',
+            review: 'Design needs review',
+            invalid: 'Check inputs'
+          },
+          statusCopy: {
+            valid: 'The selected shunt, gain, and ADC range satisfy the configured limits.',
+            review: 'The electrical result is usable, but one or more implementation checks should be reviewed.',
+            invalid: 'At least one configured limit is exceeded.'
+          },
+          hints: {
+            'continuous-over-peak': 'Continuous/RMS current is higher than peak current.',
+            'power-over-rating': 'Power per shunt exceeds the single-device rating.',
+            'power-near-rating': 'Power per shunt is above 80% of the single-device rating.',
+            'positive-output-range': 'Positive output is outside the ADC input range.',
+            'negative-output-range': 'Negative output is outside the ADC input range.',
+            'adc-utilization-low': 'ADC range usage is below 25%.',
+            'adc-utilization-high': 'ADC range usage is above 90%.',
+            'parallel-sharing': 'Parallel shunts require current-sharing and Kelvin-routing checks.'
+          }
+        },
+        zh: {
+          continuousCurrent: '连续电流',
+          rmsCurrent: '有效值电流',
+          continuousPerShunt: '单个连续电流',
+          rmsPerShunt: '单个有效值电流',
+          singleDeviceRating: '占单个额定值',
+          adcAtFullScale: 'ADC 满量程',
+          noNotes: '当前输入没有需要复核的提示。',
+          status: {
+            valid: '设计有效',
+            review: '设计需要复核',
+            invalid: '检查输入'
+          },
+          statusCopy: {
+            valid: '所选分流电阻、增益和 ADC 量程满足配置限制。',
+            review: '电气结果可用，但有一项或多项实现检查需要复核。',
+            invalid: '至少一项配置限制已被超出。'
+          },
+          hints: {
+            'continuous-over-peak': '连续/有效值电流高于峰值电流。',
+            'power-over-rating': '单个分流电阻功耗超过器件额定值。',
+            'power-near-rating': '单个分流电阻功耗超过器件额定值的 80%。',
+            'positive-output-range': '正向输出超出 ADC 输入范围。',
+            'negative-output-range': '负向输出超出 ADC 输入范围。',
+            'adc-utilization-low': 'ADC 量程占用低于 25%。',
+            'adc-utilization-high': 'ADC 量程占用高于 90%。',
+            'parallel-sharing': '并联分流电阻需要检查均流和 Kelvin 走线。'
+          }
+        }
+      };
+      const text = labels[locale];
+      type InputElement = HTMLInputElement | HTMLSelectElement;
+      const inputs: Record<string, InputElement> = {};
+      for (const input of Array.from(toolRoot.querySelectorAll<InputElement>('[data-input]'))) {
+        const key = input.getAttribute('data-input');
+        if (key) inputs[key] = input;
+      }
+      const outputs: Record<string, HTMLElement> = {};
+      for (const node of Array.from(toolRoot.querySelectorAll<HTMLElement>('[data-output]'))) {
+        const key = node.getAttribute('data-output');
+        if (key) outputs[key] = node;
+      }
+      const integerFields = ['continuousCurrentA', 'peakCurrentA', 'parallelQuantity', 'csaGain'] as const;
+      const tones = { valid: 'pass', review: 'review', invalid: 'fail' } as const;
+      const format = {
+        mohm: (value: number) => `${value.toFixed(3)} mΩ`,
+        mv: (value: number) => `${value.toFixed(1)} mV`,
+        watts: (value: number) => `${value.toFixed(2)} W`,
+        amps: (value: number) => `${value.toFixed(1)} A`,
+        volts: (value: number) => `${value.toFixed(3)} V`,
+        sensitivity: (value: number) => `${value.toFixed(1)} mV/A`,
+        percent: (value: number) => `${value.toFixed(1)}%`,
+        resolution: (value: number) => `${value.toFixed(1)} mA/LSB`
+      };
+
+      function stringValue(name: string): string {
+        const element = inputs[name];
+        return element?.value ?? '';
+      }
+
+      function numberValue(name: string): number {
+        return Number(stringValue(name));
+      }
+
+      function readInputs(): ShuntCurrentSensingInputs {
+        return normalizeShuntCurrentSensingInputs({
+          currentType: stringValue('currentType') === 'ac' ? 'ac' : 'dc',
+          currentPolarity: stringValue('currentPolarity') === 'unidirectional' ? 'unidirectional' : 'bidirectional',
+          continuousCurrentA: numberValue('continuousCurrentA'),
+          peakCurrentA: numberValue('peakCurrentA'),
+          resistancePerShuntMohm: numberValue('resistancePerShuntMohm'),
+          parallelQuantity: numberValue('parallelQuantity'),
+          ratedPowerPerShuntW: numberValue('ratedPowerPerShuntW'),
+          csaGain: numberValue('csaGain'),
+          outputReferenceV: numberValue('outputReferenceV'),
+          adcFullScaleV: numberValue('adcFullScaleV'),
+          adcResolutionBits: Number(stringValue('adcResolutionBits')) as ShuntCurrentSensingInputs['adcResolutionBits']
+        });
+      }
+
+      function writeOutput(name: string, value: string) {
+        if (outputs[name]) outputs[name].textContent = value;
+      }
+
+      function applyIntegerRounding(normalized: ShuntCurrentSensingInputs) {
+        for (const field of integerFields) {
+          const element = inputs[field];
+          if (element instanceof HTMLInputElement) element.value = String(normalized[field]);
+        }
+      }
+
+      function render() {
+        const normalized = readInputs();
+        applyIntegerRounding(normalized);
+        const result = calculateShuntCurrentSensing(normalized);
+        const currentLabel = normalized.currentType === 'ac' ? text.rmsCurrent : text.continuousCurrent;
+        const currentPerShuntLabel = normalized.currentType === 'ac' ? text.rmsPerShunt : text.continuousPerShunt;
+
+        const continuousLabel = toolRoot.querySelector<HTMLElement>('[data-label="continuousCurrentLabel"]');
+        const perShuntLabel = toolRoot.querySelector<HTMLElement>('[data-label="currentPerShuntLabel"]');
+        if (continuousLabel) continuousLabel.textContent = currentLabel;
+        if (perShuntLabel) perShuntLabel.textContent = currentPerShuntLabel;
+
+        writeOutput('statusLabel', text.status[result.status]);
+        writeOutput('status', text.status[result.status]);
+        writeOutput('statusCopy', text.statusCopy[result.status]);
+        writeOutput('equivalentResistance', format.mohm(result.equivalentResistanceMohm));
+        writeOutput('equivalentResistanceSub', `${normalized.parallelQuantity} x ${format.mohm(normalized.resistancePerShuntMohm)}`);
+        writeOutput('peakShuntVoltage', format.mv(result.peakShuntVoltageMv));
+        writeOutput('powerPerShunt', format.watts(result.powerPerShuntW));
+        writeOutput('powerPerShuntSub', `${format.percent(result.powerUtilizationPercent)} ${text.singleDeviceRating}`);
+        writeOutput('currentResolution', format.resolution(result.currentPerLsbMa));
+        writeOutput('currentResolutionSub', `${normalized.adcResolutionBits}-bit ${text.adcAtFullScale}`);
+        writeOutput('bankEquivalentResistance', format.mohm(result.equivalentResistanceMohm));
+        writeOutput('bankPeakShuntVoltage', format.mv(result.peakShuntVoltageMv));
+        writeOutput('totalContinuousLoss', format.watts(result.totalContinuousLossW));
+        writeOutput('bankPowerPerShunt', format.watts(result.powerPerShuntW));
+        writeOutput('continuousCurrentPerShunt', format.amps(result.continuousCurrentPerShuntA));
+        writeOutput('peakCurrentPerShunt', format.amps(result.peakCurrentPerShuntA));
+        writeOutput('positiveOutput', format.volts(result.positiveOutputV));
+        writeOutput('negativeOutput', result.negativeOutputV === null ? '' : format.volts(result.negativeOutputV));
+        writeOutput('sensitivity', format.sensitivity(result.sensitivityMvA));
+        writeOutput('adcRangeUsed', format.percent(result.adcUsagePercent));
+        writeOutput('currentPerLsb', format.resolution(result.currentPerLsbMa));
+
+        const negativeOutput = toolRoot.querySelector<HTMLElement>('[data-negative-output]');
+        if (negativeOutput) negativeOutput.hidden = result.negativeOutputV === null;
+
+        const statusCard = toolRoot.querySelector<HTMLElement>('.shunt-status-card');
+        statusCard?.classList.remove('shunt-status-card--valid', 'shunt-status-card--review', 'shunt-status-card--invalid');
+        statusCard?.classList.add(`shunt-status-card--${result.status}`);
+        const statusPill = outputs.status;
+        statusPill?.classList.remove('tool-check-pill--pass', 'tool-check-pill--review', 'tool-check-pill--fail');
+        statusPill?.classList.add(`tool-check-pill--${tones[result.status]}`);
+
+        const hints = outputs.engineeringHints;
+        if (hints) {
+          hints.replaceChildren();
+          const hintIds = result.hints.length > 0 ? result.hints : [];
+          if (hintIds.length === 0) {
+            const item = document.createElement('li');
+            item.textContent = text.noNotes;
+            hints.append(item);
+          } else {
+            for (const hint of hintIds) {
+              const item = document.createElement('li');
+              item.textContent = text.hints[hint];
+              hints.append(item);
+            }
+          }
+        }
+      }
+
+      for (const input of Object.values(inputs)) {
+        input?.addEventListener('input', render);
+        input?.addEventListener('change', render);
+        input?.addEventListener('blur', render);
+      }
+      render();
+    }
+  </script>
+</BaseLayout>

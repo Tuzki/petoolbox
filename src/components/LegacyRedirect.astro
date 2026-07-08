@@ -1,0 +1,21 @@
+---
+import { canonicalUrl } from '@/lib/site';
+
+type Props = { to: string };
+const { to } = Astro.props;
+const target = to.startsWith('/') ? to : `/${to}`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex, follow" />
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <link rel="canonical" href={canonicalUrl(target)} />
+    <script is:inline>location.replace(document.querySelector('meta[http-equiv="refresh"]').content.split('url=')[1]);</script>
+  </head>
+  <body>
+    <a href={target}>Continue</a>
+  </body>
+</html>
