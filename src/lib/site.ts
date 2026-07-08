@@ -9,7 +9,7 @@ export const site = {
   name: 'PE Toolbox',
   tagline: 'Practical tools for power electronics engineers',
   mode: siteMode,
-  url: import.meta.env.PUBLIC_SITE_URL || 'https://petoolbox.tech',
+  url: import.meta.env.PUBLIC_SITE_URL || 'https://www.petoolbox.tech',
   lang: 'en'
 } as const;
 

@@ -18,6 +18,14 @@ const t = getMessages(locale).pages.feedback;
     <section aria-labelledby="feedback-title">
       <h1 id="feedback-title">{t.h1}</h1>
       {t.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+      <p>
+        <strong>{t.emailLabel}</strong>
+        <a href={t.mailto}>{t.email}</a>
+      </p>
+      <p>{t.suggestionsLabel}</p>
+      <ul>
+        {t.suggestions.map((item) => <li>{item}</li>)}
+      </ul>
     </section>
   </main>
 </BaseLayout>

@@ -43,9 +43,20 @@ export const pageMessages = {
     title: 'Feedback',
     description: 'Feedback guidance for PE Toolbox calculation issues, assumptions, edge cases, and future power electronics design tools.',
     h1: 'Feedback',
+    emailLabel: 'Email:',
+    email: 'chris.hutao@gmail.com',
+    mailto: 'mailto:chris.hutao@gmail.com?subject=PE%20Toolbox%20Feedback',
     paragraphs: [
-      'PE Toolbox is still in an early public version. If you find a calculation issue, unclear assumption, missing edge case, or a tool that would be useful for power electronics design, please send feedback through the published contact channel once it is available.',
-      'For useful engineering feedback, include the tool name, input values, expected result, actual result, and a short explanation.'
+      'PE Toolbox is still in an early public version. If you find a calculation issue, unclear assumption, missing edge case, or a tool that would be useful for power electronics design, please send feedback by email.'
+    ],
+    suggestionsLabel: 'Suggested information to include:',
+    suggestions: [
+      'Tool name',
+      'Input values',
+      'Expected result',
+      'Actual result',
+      'Short explanation',
+      'Screenshot if useful'
     ]
   },
   articles: {

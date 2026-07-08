@@ -45,9 +45,20 @@ export const pageMessages = {
     title: '反馈',
     description: 'PE Toolbox 关于计算问题、工程假设、边界条件和后续电力电子设计工具的反馈说明。',
     h1: '反馈',
+    emailLabel: '邮箱：',
+    email: 'chris.hutao@gmail.com',
+    mailto: 'mailto:chris.hutao@gmail.com?subject=PE%20Toolbox%20Feedback',
     paragraphs: [
-      'PE Toolbox 仍处于早期公开版本。如果你发现计算问题、边界条件不清楚、假设说明不足，或者希望增加某个电力电子设计工具，欢迎通过后续公布的联系渠道反馈。',
-      '有效的工程反馈最好包括：工具名称、输入参数、期望结果、实际结果，以及简短说明。'
+      'PE Toolbox 仍处于早期公开版本。如果你发现计算问题、假设说明不清楚、边界条件遗漏，或者希望增加某个电力电子设计工具，可以通过邮件反馈。'
+    ],
+    suggestionsLabel: '建议反馈内容包括：',
+    suggestions: [
+      '工具名称',
+      '输入参数',
+      '期望结果',
+      '实际结果',
+      '简短说明',
+      '必要时附截图'
     ]
   },
   articles: {

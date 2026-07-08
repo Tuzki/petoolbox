@@ -83,7 +83,7 @@ test('robots advertises public sitemap on the canonical domain', () => {
   const robots = read(join(dist, 'robots.txt'));
   assert.match(robots, /User-agent: \*/);
   assert.match(robots, /Allow: \//);
-  assert.match(robots, /Sitemap: https:\/\/petoolbox\.tech\/sitemap-index\.xml/);
+  assert.match(robots, /Sitemap: https:\/\/www\.petoolbox\.tech\/sitemap-index\.xml/);
   assert.equal(robots.includes('Disallow: /'), false);
 });
 
@@ -111,9 +111,9 @@ test('sitemap uses canonical domain and excludes draft or retired launch content
     '/en/tools/gate-resistor-power-stress-evaluator/',
     '/zh/tools/gate-resistor-power-stress-evaluator/'
   ]) {
-    assert.match(sitemap, new RegExp(`https://petoolbox\\.tech${route}`));
+    assert.match(sitemap, new RegExp(`https://www\\.petoolbox\\.tech${route}`));
   }
-  for (const term of ['draft-hidden-test', 'buck-inductor-selection', 'rc-time-constant', 'voltage-divider', 'buck-inductor-ripple', 'petoolbox-git', 'petoolbox.vercel.app']) {
+  for (const term of ['https://petoolbox.tech/', 'draft-hidden-test', 'buck-inductor-selection', 'rc-time-constant', 'voltage-divider', 'buck-inductor-ripple', 'petoolbox-git', 'petoolbox.vercel.app']) {
     assert.equal(sitemap.includes(term), false, `sitemap should not include ${term}`);
   }
 });
@@ -130,10 +130,10 @@ test('html lang and SEO alternates are emitted per locale', () => {
   for (const locale of locales) {
     const html = read(pagePath(locale, 'tools/voltage-sensing-adc-scaling'));
     assert.match(html, new RegExp(`<html lang="${locale === 'zh' ? 'zh-CN' : 'en'}"`));
-    assert.match(html, new RegExp(`<link rel="canonical" href="https://petoolbox.tech/${locale}/tools/voltage-sensing-adc-scaling/"`));
-    assert.match(html, /hreflang="en" href="https:\/\/petoolbox.tech\/en\/tools\/voltage-sensing-adc-scaling\/"/);
-    assert.match(html, /hreflang="zh-CN" href="https:\/\/petoolbox.tech\/zh\/tools\/voltage-sensing-adc-scaling\/"/);
-    assert.match(html, /hreflang="x-default" href="https:\/\/petoolbox.tech\/en\/tools\/voltage-sensing-adc-scaling\/"/);
+    assert.match(html, new RegExp(`<link rel="canonical" href="https://www.petoolbox.tech/${locale}/tools/voltage-sensing-adc-scaling/"`));
+    assert.match(html, /hreflang="en" href="https:\/\/www\.petoolbox\.tech\/en\/tools\/voltage-sensing-adc-scaling\/"/);
+    assert.match(html, /hreflang="zh-CN" href="https:\/\/www\.petoolbox\.tech\/zh\/tools\/voltage-sensing-adc-scaling\/"/);
+    assert.match(html, /hreflang="x-default" href="https:\/\/www\.petoolbox\.tech\/en\/tools\/voltage-sensing-adc-scaling\/"/);
   }
 });
 
@@ -266,17 +266,31 @@ test('internal links stay within the active locale', () => {
   assert.match(zhHtml, /href="\/zh\/feedback\/"/);
 });
 
-test('feedback pages are localized and do not invent a contact channel', () => {
+test('feedback pages publish the launch email contact', () => {
   const enHtml = read(pagePath('en', 'feedback'));
   const zhHtml = read(pagePath('zh', 'feedback'));
 
   assert.match(enHtml, /<h1 id="feedback-title">Feedback<\/h1>/);
-  assert.match(enHtml, /published contact channel once it is available/);
+  assert.match(enHtml, /chris\.hutao@gmail\.com/);
+  assert.match(enHtml, /mailto:chris\.hutao@gmail\.com\?subject=PE%20Toolbox%20Feedback/);
+  assert.match(enHtml, /Suggested information to include/);
   assert.match(zhHtml, /<h1 id="feedback-title">反馈<\/h1>/);
-  assert.match(zhHtml, /后续公布的联系渠道反馈/);
+  assert.match(zhHtml, /chris\.hutao@gmail\.com/);
+  assert.match(zhHtml, /mailto:chris\.hutao@gmail\.com\?subject=PE%20Toolbox%20Feedback/);
+  assert.match(zhHtml, /建议反馈内容包括/);
   for (const html of [enHtml, zhHtml]) {
-    assert.equal(html.includes('mailto:'), false);
+    assert.equal(html.includes('published contact channel once it is available'), false);
+    assert.equal(html.includes('后续公布的联系渠道反馈'), false);
     assert.equal(/github\.com\/[^"]*issues/i.test(html), false);
+  }
+});
+
+test('public pages do not expose the project repository link', () => {
+  for (const route of ['', 'about', 'feedback', 'tools', 'articles']) {
+    for (const locale of locales) {
+      const html = read(pagePath(locale, route));
+      assert.equal(html.includes('github.com/Tuzki/petoolbox'), false, `/${locale}/${route} should not link to the project repository`);
+    }
   }
 });
 
