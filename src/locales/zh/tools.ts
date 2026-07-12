@@ -19,6 +19,7 @@ export const toolMessages = {
     'sensing-rc-filter-designer': { title: '采样 RC 滤波器设计器', description: '用于传感与 ADC 接口的 RC 输入滤波器设计，评估截止频率、建立时间、源阻抗和采样约束。' },
     'shunt-current-sensing-evaluator': { title: '分流电阻电流采样评估器', description: '评估分流电阻电流采样电路的采样电压、功耗、放大器输出范围、分辨率和热应力。' },
     'gate-resistor-power-stress-evaluator': { title: '栅极电阻功率与应力评估器', description: '估算功率器件栅极驱动电阻的平均功率、脉冲能量、峰值应力、封装余量和并联分流情况。' },
+    'rc-snubber-first-pass-designer': { title: 'RC 吸收电路初步设计器', description: '通过两次振铃频率测量反推等效寄生电感和电容，并估算串联 RC Snubber 初始值、损耗、应力与台架调试候选值。' },
     'capacitor-ripple-current-calculator': { title: '电容纹波电流计算器', description: '估算功率级滤波与热校核中的电容 RMS 纹波电流。' },
     'rc-snubber-calculator': { title: 'RC 吸收电路计算器', description: '基于实测振铃频率和电路假设估算阻尼网络取值。' },
     'rcd-snubber-calculator': { title: 'RCD 吸收电路计算器', description: '估算漏感能量吸收设计中的钳位和损耗范围。' },

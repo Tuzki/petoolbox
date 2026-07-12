@@ -14,6 +14,7 @@ const formalRoutes = [
   'tools/sensing-rc-filter-designer',
   'tools/shunt-current-sensing-evaluator',
   'tools/gate-resistor-power-stress-evaluator',
+  'tools/rc-snubber-first-pass-designer',
   'tools/llc-resonant-converter-designer',
   'topology-designers',
   'magnetics',
@@ -110,6 +111,8 @@ test('sitemap uses canonical domain and excludes draft or retired launch content
     '/zh/tools/shunt-current-sensing-evaluator/',
     '/en/tools/gate-resistor-power-stress-evaluator/',
     '/zh/tools/gate-resistor-power-stress-evaluator/'
+    ,'/en/tools/rc-snubber-first-pass-designer/'
+    ,'/zh/tools/rc-snubber-first-pass-designer/'
   ]) {
     assert.match(sitemap, new RegExp(`https://www\\.petoolbox\\.tech${route}`));
   }
@@ -119,7 +122,7 @@ test('sitemap uses canonical domain and excludes draft or retired launch content
 });
 
 test('legacy routes are noindex redirects to English', () => {
-  for (const route of ['tools', 'articles', 'about', 'tools/voltage-sensing-adc-scaling', 'tools/shunt-current-sensing-evaluator', 'tools/gate-resistor-power-stress-evaluator']) {
+  for (const route of ['tools', 'articles', 'about', 'tools/voltage-sensing-adc-scaling', 'tools/shunt-current-sensing-evaluator', 'tools/gate-resistor-power-stress-evaluator', 'tools/rc-snubber-first-pass-designer']) {
     const html = read(join(dist, route, 'index.html'));
     assert.match(html, /noindex, follow/);
     assert.match(html, /url=\/en\//);

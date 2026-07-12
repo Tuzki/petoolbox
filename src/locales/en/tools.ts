@@ -17,6 +17,7 @@ export const toolMessages = {
     'sensing-rc-filter-designer': { title: 'Sensing RC Filter Designer', description: 'Design RC input filters for sensing and ADC interfaces, including cutoff frequency, settling behavior, source impedance, and sampling constraints.' },
     'shunt-current-sensing-evaluator': { title: 'Shunt Current Sensing Evaluator', description: 'Evaluate shunt resistor current sensing circuits, including sense voltage, power loss, amplifier output range, resolution, and thermal stress.' },
     'gate-resistor-power-stress-evaluator': { title: 'Gate Resistor Power and Stress Evaluator', description: 'Estimate gate resistor average power, pulse energy, peak stress, package margin, and parallel resistor sharing for power switch gate-drive design.' },
+    'rc-snubber-first-pass-designer': { title: 'RC Snubber First-Pass Designer', description: 'Extract equivalent parasitic inductance and capacitance from two ringing measurements, then estimate series RC snubber values, loss, stress, and bench-tuning candidates.' },
     'capacitor-ripple-current-calculator': { title: 'Capacitor Ripple Current Calculator', description: 'Estimate capacitor RMS ripple current for power-stage filtering and thermal checks.' },
     'rc-snubber-calculator': { title: 'RC Snubber Calculator', description: 'Size damping networks for ringing control using measured frequency and circuit assumptions.' },
     'rcd-snubber-calculator': { title: 'RCD Snubber Calculator', description: 'Estimate clamp and dissipation ranges for leakage-energy snubber design.' },

@@ -29,6 +29,7 @@ const symmetricRoutes = [
   '/tools/sensing-rc-filter-designer/',
   '/tools/shunt-current-sensing-evaluator/',
   '/tools/gate-resistor-power-stress-evaluator/',
+  '/tools/rc-snubber-first-pass-designer/',
   '/tools/llc-resonant-converter-designer/',
   '/articles/nvidia-800v-power-architecture/'
 ];
