@@ -1,3 +1,8 @@
+# Required reading
+
+- Before changing tool structure, tool boundaries, shared code, page organization, or site-wide design rules, read `docs/architecture.md`.
+- Before changing routes, localization, metadata, canonical URLs, hreflang, redirects, robots, sitemap, navigation, or a published slug, read `docs/seo-contract.md`.
+
 # Repository purpose
 
 - PE Toolbox is a website composed of multiple independent power-electronics engineering tools.
