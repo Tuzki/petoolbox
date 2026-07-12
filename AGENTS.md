@@ -73,11 +73,13 @@ Do not casually rename, remove, or change the canonical of a published URL submi
 
 Before completing a code task, normally run:
 
-- `npm run check`
-- `npm run test`
-- `npm run build`
+1. `npm run check`
+2. `npm run build`
+3. `npm run test`
 
-Also run `npm run test:browser` when the task affects page interactions, responsive layout, routes, navigation, SEO-visible output, or browser behavior.
+When the task affects page interactions, responsive layout, routes, navigation, SEO-visible output, or browser behavior, then run:
+
+4. `npm run test:browser`
 
 When changing calculation logic, add or update numerical tests covering:
 
