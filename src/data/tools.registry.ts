@@ -25,7 +25,6 @@ export const toolsRegistry: ToolRegistryItem[] = [
   { id: 'gate-resistor-power-stress-evaluator', slug: 'gate-resistor-power-stress-evaluator', category: 'calculators', symbol: 'Qg · Vg', status: 'available', route: '/tools/gate-resistor-power-stress-evaluator/' },
   { id: 'rc-snubber-first-pass-designer', slug: 'rc-snubber-first-pass-designer', category: 'calculators', symbol: 'Rs — Cs', status: 'available', route: '/tools/rc-snubber-first-pass-designer/' },
   { id: 'capacitor-ripple-current-calculator', slug: 'capacitor-ripple-current-calculator', category: 'calculators', symbol: 'IC,RMS', status: 'coming-soon' },
-  { id: 'rc-snubber-calculator', slug: 'rc-snubber-calculator', category: 'calculators', symbol: 'R · C', status: 'coming-soon' },
   { id: 'rcd-snubber-calculator', slug: 'rcd-snubber-calculator', category: 'calculators', symbol: 'RCD', status: 'coming-soon' },
   { id: 'output-capacitor-calculator', slug: 'output-capacitor-calculator', category: 'calculators', symbol: 'COUT', status: 'coming-soon', directory: false },
   { id: 'magnetics-designer', slug: 'magnetics-designer', category: 'magnetics', symbol: 'B · Ae', status: 'coming-soon' },

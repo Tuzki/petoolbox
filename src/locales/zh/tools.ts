@@ -21,7 +21,6 @@ export const toolMessages = {
     'gate-resistor-power-stress-evaluator': { title: '栅极电阻功率与应力评估器', description: '估算功率器件栅极驱动电阻的平均功率、脉冲能量、峰值应力、封装余量和并联分流情况。' },
     'rc-snubber-first-pass-designer': { title: 'RC 吸收电路初步设计器', description: '通过两次振铃频率测量反推等效寄生电感和电容，并估算串联 RC Snubber 初始值、损耗、应力与台架调试候选值。' },
     'capacitor-ripple-current-calculator': { title: '电容纹波电流计算器', description: '估算功率级滤波与热校核中的电容 RMS 纹波电流。' },
-    'rc-snubber-calculator': { title: 'RC 吸收电路计算器', description: '基于实测振铃频率和电路假设估算阻尼网络取值。' },
     'rcd-snubber-calculator': { title: 'RCD 吸收电路计算器', description: '估算漏感能量吸收设计中的钳位和损耗范围。' },
     'output-capacitor-calculator': { title: '输出电容计算器', description: '用于输出纹波和电容选择流程的占位工具。' },
     'magnetics-designer': { title: '磁性元件设计工具', description: '梳理功率磁性元件的磁芯面积、磁通密度、匝数和绕组假设。' },

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 const source = readFileSync(new URL('../src/lib/rcSnubberFirstPass.ts', import.meta.url), 'utf8');
 const transpiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022, strict: true } }).outputText;
-const { calculateRCSnubber, defaultRCSnubberInputs, nearestE24, nearestStandardCapacitancePf } = await import(`data:text/javascript;base64,${Buffer.from(transpiled).toString('base64')}`);
+const { calculateRCSnubber, defaultRCSnubberInputs, nearestE24, nearestStandardCapacitancePf, rcSnubberErrorCodes, rcSnubberWarningCodes } = await import(`data:text/javascript;base64,${Buffer.from(transpiled).toString('base64')}`);
 
 const calc = (overrides={}) => calculateRCSnubber({...defaultRCSnubberInputs,...overrides});
 test('default TI-style example matches baseline',()=>{const r=calc();assert.equal(r.status,'review');assert.ok(Math.abs(r.ratio-1.6)<1e-12);assert.ok(Math.abs(r.cp*1e12-64.102564)<1e-5);assert.ok(Math.abs(r.lp*1e6-1.071)<.002);assert.ok(Math.abs(r.z0-129.3)<.2);assert.equal(r.cs*1e12,200);assert.equal(r.rs,130);assert.ok(Math.abs(r.averageLoss-.2)<1e-12);assert.ok(Math.abs(r.eventEnergy-1e-6)<1e-15)});
@@ -17,3 +17,7 @@ test('ratings yield fail or review at correct boundaries',()=>{assert.equal(calc
 test('adequate shift, ratings, and settling can pass while retaining hardware cautions',()=>{const r=calc({resistorRatedPowerW:1,capacitorVoltageRatingV:200});assert.equal(r.status,'pass');assert.ok(r.warnings.includes('pulse-rating'));assert.ok(r.warnings.includes('measurement-parasitics'))});
 test('settling conflict produces review',()=>{const r=calc({switchingFrequencyKhz:10000,eventsPerCycle:2});assert.equal(r.status,'review');assert.ok(r.warnings.includes('settling'))});
 test('valid computed physical values never contain NaN, Infinity, or negatives',()=>{const r=calc();for(const key of ['ratio','cp','lp','z0','csRaw','rsRaw','cs','rs','eventEnergy','averageLoss','peakCurrent','rmsCurrent','peakPower','tau','eventInterval'])assert.ok(Number.isFinite(r[key])&&r[key]>0,key)});
+test('derating limits above 100% fail with an explicit code',()=>{const r=calc({powerDeratingLimit:1.01});assert.equal(r.status,'fail');assert.ok(r.errors.includes('derating-limit'))});
+test('invalid inputs return stable explicit codes',()=>{assert.ok(calc({f1MHz:20}).errors.includes('frequency-order'));assert.ok(calc({cTestPf:0}).errors.includes('positive-inputs'));assert.ok(calc({eventsPerCycle:3}).errors.includes('events'))});
+test('all calculation status codes are declared for bilingual mapping',()=>{const all=[...rcSnubberErrorCodes,...rcSnubberWarningCodes];assert.equal(new Set(all).size,all.length);for(const code of [...calc({f1MHz:20}).errors,...calc().warnings])assert.ok(all.includes(code),code)});
+test('default SSR values are calculation-derived and complete',()=>{const r=calc();for(const key of ['eventEnergy','eventsPerSecond','averageLoss','peakCurrent','rmsCurrent','peakPower','tau','eventInterval','settlingRatio'])assert.ok(Number.isFinite(r[key]),key)});

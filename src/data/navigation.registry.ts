@@ -26,7 +26,7 @@ export const navigationRegistry: NavigationRegistryItem[] = [
     sections: [
       { id: 'basic-circuits', toolIds: ['voltage-sensing-adc-scaling', 'sensing-rc-filter-designer', 'shunt-current-sensing-evaluator', 'gate-resistor-power-stress-evaluator'] },
       { id: 'power-stage', toolIds: ['capacitor-ripple-current-calculator'] },
-      { id: 'protection', toolIds: ['rc-snubber-first-pass-designer', 'rc-snubber-calculator', 'rcd-snubber-calculator'] }
+      { id: 'protection', toolIds: ['rc-snubber-first-pass-designer', 'rcd-snubber-calculator'] }
     ]
   },
   { id: 'magnetics', route: '/magnetics/' },

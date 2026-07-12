@@ -19,7 +19,6 @@ export const toolMessages = {
     'gate-resistor-power-stress-evaluator': { title: 'Gate Resistor Power and Stress Evaluator', description: 'Estimate gate resistor average power, pulse energy, peak stress, package margin, and parallel resistor sharing for power switch gate-drive design.' },
     'rc-snubber-first-pass-designer': { title: 'RC Snubber First-Pass Designer', description: 'Extract equivalent parasitic inductance and capacitance from two ringing measurements, then estimate series RC snubber values, loss, stress, and bench-tuning candidates.' },
     'capacitor-ripple-current-calculator': { title: 'Capacitor Ripple Current Calculator', description: 'Estimate capacitor RMS ripple current for power-stage filtering and thermal checks.' },
-    'rc-snubber-calculator': { title: 'RC Snubber Calculator', description: 'Size damping networks for ringing control using measured frequency and circuit assumptions.' },
     'rcd-snubber-calculator': { title: 'RCD Snubber Calculator', description: 'Estimate clamp and dissipation ranges for leakage-energy snubber design.' },
     'output-capacitor-calculator': { title: 'Output Capacitor Calculator', description: 'Placeholder for output ripple and capacitance selection workflows.' },
     'magnetics-designer': { title: 'Magnetics Designer', description: 'Work through core area, flux density, turns and winding assumptions for power magnetics.' },

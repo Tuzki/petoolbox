@@ -307,6 +307,70 @@ async function assertVoltageTool(page) {
   assertNoZhLeak(await documentText(page), 'zh voltage invalid state');
 }
 
+async function assertRCSnubberTool(page) {
+  for (const locale of ['en', 'zh']) {
+    await page.goto(`${baseUrl}/${locale}/tools/rc-snubber-first-pass-designer/`, { waitUntil: 'domcontentloaded' });
+    const structure = await page.evaluate(() => {
+      const shell = document.querySelector('.input-shell');
+      const input = document.querySelector('[data-input="f0MHz"]');
+      const metric = document.querySelector('.metric-tile');
+      const select = document.querySelector('[data-input="eventsPerCycle"]');
+      const formula = document.querySelector('.equation-block');
+      const svg = document.querySelector('.connection-card svg');
+      const styles = (el) => el ? getComputedStyle(el) : null;
+      return {
+        inputBorder: styles(shell)?.borderTopWidth,
+        inputBackground: styles(shell)?.backgroundColor,
+        metricBackground: styles(metric)?.backgroundColor,
+        selectBorder: styles(select?.closest('.input-shell'))?.borderTopWidth,
+        unitCount: document.querySelectorAll('.input-unit').length,
+        math: document.querySelectorAll('math').length,
+        mfrac: document.querySelectorAll('mfrac').length,
+        msqrt: document.querySelectorAll('msqrt').length,
+        msup: document.querySelectorAll('msup').length,
+        msub: document.querySelectorAll('msub').length,
+        formulaOverflowLocal: formula ? formula.scrollWidth >= formula.clientWidth : false,
+        svgText: svg?.textContent ?? '',
+        noOverflow: document.documentElement.scrollWidth <= innerWidth,
+        inputTag: input?.tagName
+      };
+    });
+    assert.equal(structure.inputTag, 'INPUT');
+    assert.equal(structure.inputBorder, '1px');
+    assert.equal(structure.selectBorder, '1px');
+    assert.ok(structure.unitCount >= 10);
+    assert.notEqual(structure.inputBackground, structure.metricBackground);
+    assert.ok(structure.math >= 5 && structure.mfrac > 0 && structure.msqrt > 0 && structure.msup > 0 && structure.msub > 0);
+    assert.match(structure.svgText, /Rs/); assert.match(structure.svgText, /Cs/); assert.match(structure.svgText, /SW/); assert.match(structure.svgText, /PGND/); assert.match(structure.svgText, /ΔV/);
+    assert.equal(structure.noOverflow, true);
+
+    const initialLoss = Number((await page.locator('[data-output="loss"]').textContent()).match(/[\d.]+/)?.[0]);
+    await page.selectOption('[data-input="eventsPerCycle"]', '1');
+    const halfLoss = Number((await page.locator('[data-output="loss"]').textContent()).match(/[\d.]+/)?.[0]);
+    assert.ok(Math.abs(halfLoss * 2 - initialLoss) < 1e-9);
+
+    await setInput(page, 'f1MHz', 20);
+    assert.equal(await page.locator('[data-status]').textContent(), locale === 'en' ? 'Fail' : '不通过');
+    assert.equal(await page.locator('[data-output="cs"]').textContent(), '—');
+    assert.equal(await page.locator('[data-candidates] tr').count(), 0);
+    assert.equal((await documentText(page)).includes('NaN'), false);
+    assert.equal((await documentText(page)).includes('Infinity'), false);
+
+    await setInput(page, 'f1MHz', 12);
+    await setInput(page, 'resistorRatedPowerW', 1);
+    await setInput(page, 'capacitorVoltageRatingV', 200);
+    const missingCount = await page.locator('[data-check-code="power-rating-missing"], [data-check-code="voltage-rating-missing"]').count();
+    assert.equal(missingCount, 0);
+    await setInput(page, 'resistorRatedPowerW', 0.15);
+    assert.equal(await page.locator('[data-check-code="power-derating"]').count(), 1);
+    if (locale === 'zh') {
+      const status = await page.locator('[data-status]').textContent();
+      assert.ok(['通过', '复核', '不通过'].includes(status));
+      assert.equal(['Pass', 'Review', 'Fail'].some((term) => (page.locator('[data-status]')) && status.includes(term)), false);
+    }
+  }
+}
+
 async function assertRcTool(page) {
   const scenarios = [
     { name: 'default', values: {} },
@@ -555,6 +619,7 @@ try {
 
     if (viewport.name === 'desktop-1280') {
       await assertVoltageTool(page);
+      await assertRCSnubberTool(page);
       await assertRcTool(page);
       await assertShuntTool(page);
       await assertGateResistorTool(page);

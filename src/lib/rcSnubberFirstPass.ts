@@ -1,4 +1,6 @@
 export type RCSnubberStatus = 'pass' | 'review' | 'fail';
+export const rcSnubberErrorCodes = ['positive-inputs', 'frequency-order', 'events', 'derating-limit', 'numerical', 'power-rating-invalid', 'power-rating-fail', 'voltage-rating-invalid', 'voltage-rating-fail'] as const;
+export const rcSnubberWarningCodes = ['shift-too-small', 'shift-sensitive', 'power-rating-missing', 'power-derating', 'voltage-rating-missing', 'voltage-derating', 'settling', 'pulse-rating', 'measurement-parasitics'] as const;
 
 export type RCSnubberInputs = {
   f0MHz: number; cTestPf: number; f1MHz: number; deltaVV: number;
@@ -30,6 +32,7 @@ export function calculateRCSnubber(input: RCSnubberInputs) {
   const errors: string[] = [];
   const warnings: string[] = [];
   if (required.some((v) => !Number.isFinite(v) || v <= 0)) errors.push('positive-inputs');
+  if (input.powerDeratingLimit > 1 || input.voltageDeratingLimit > 1) errors.push('derating-limit');
   if (input.f1MHz >= input.f0MHz) errors.push('frequency-order');
   if (input.eventsPerCycle !== 1 && input.eventsPerCycle !== 2) errors.push('events');
   if (errors.length) return { status: 'fail' as const, errors, warnings };
